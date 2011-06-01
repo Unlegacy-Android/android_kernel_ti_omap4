@@ -1975,8 +1975,10 @@ static void *__slab_alloc(struct kmem_cache *s, gfp_t gfpflags, int node,
 	if (!page)
 		goto new_slab;
 
-	if (unlikely(!node_match(c, node)))
-		goto another_slab;
+	if (unlikely(!node_match(c, node))) {
+		deactivate_slab(s, c);
+		goto new_slab;
+	}
 
 	/* must check again c->freelist in case of cpu migration or IRQ */
 	object = c->freelist;
@@ -2001,7 +2003,7 @@ load_freelist:
 	VM_BUG_ON(!page->frozen);
 
 	if (unlikely(!object))
-		goto another_slab;
+		goto new_slab;
 
 update_freelist:
 	stat(s, ALLOC_REFILL);
@@ -2010,9 +2012,6 @@ update_freelist:
 	c->tid = next_tid(c->tid);
 	local_irq_restore(flags);
 	return object;
-
-another_slab:
-	deactivate_slab(s, c);
 
 new_slab:
 	page = get_partial(s, gfpflags, node);
