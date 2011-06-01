@@ -2012,9 +2012,6 @@ static void *__slab_alloc(struct kmem_cache *s, gfp_t gfpflags, int node,
 			NULL, new.counters,
 			"__slab_alloc"));
 
-load_freelist:
-	VM_BUG_ON(!page->frozen);
-
 	if (unlikely(!object)) {
 		c->page = NULL;
 		stat(s, DEACTIVATE_BYPASS);
@@ -2024,6 +2021,8 @@ load_freelist:
 update_freelist:
 	stat(s, ALLOC_REFILL);
 
+load_freelist:
+	VM_BUG_ON(!page->frozen);
 	c->freelist = get_freepointer(s, object);
 	c->tid = next_tid(c->tid);
 	local_irq_restore(flags);
