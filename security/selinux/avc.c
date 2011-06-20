@@ -754,7 +754,7 @@ static noinline int slow_avc_audit(u32 ssid, u32 tsid, u16 tclass,
 	 * happened a little later.
 	 */
 	if ((a->type == LSM_AUDIT_DATA_INODE) &&
-	    (flags & IPERM_FLAG_RCU))
+	    (flags & MAY_NOT_BLOCK))
 		return -ECHILD;
 
 	a->selinux_audit_data->tclass = tclass;
