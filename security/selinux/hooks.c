@@ -2779,7 +2779,7 @@ static int selinux_inode_permission(struct inode *inode, int mask)
 	struct selinux_audit_data sad = {0,};
 	u32 perms;
 	bool from_access;
-	unsigned __flags = mask & MAY_NOT_BLOCK ? IPERM_FLAG_RCU : 0;
+	unsigned flags = mask & MAY_NOT_BLOCK;
 
 	from_access = mask & MAY_ACCESS;
 	mask &= (MAY_READ|MAY_WRITE|MAY_EXEC|MAY_APPEND);
@@ -2797,7 +2797,7 @@ static int selinux_inode_permission(struct inode *inode, int mask)
 
 	perms = file_mask_to_av(inode->i_mode, mask);
 
-	return inode_has_perm(cred, inode, perms, &ad, __flags);
+	return inode_has_perm(cred, inode, perms, &ad, flags);
 }
 
 static int selinux_inode_setattr(struct dentry *dentry, struct iattr *iattr)
