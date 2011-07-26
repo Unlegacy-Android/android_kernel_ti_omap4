@@ -9,7 +9,7 @@
 
 #include <linux/socket.h>
 #include <linux/in6.h>
-#include <asm/atomic.h>
+#include <linux/atomic.h>
 
 /*
  * ifindex generation is per-net namespace, and loopback is

@@ -61,7 +61,7 @@
 #include <linux/poll.h>
 #include <linux/flex_array.h> /* used in cgroup_attach_proc */
 
-#include <asm/atomic.h>
+#include <linux/atomic.h>
 
 /*
  * cgroup_mutex is the master lock.  Any modification to cgroup or its
