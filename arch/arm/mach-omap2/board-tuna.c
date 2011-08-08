@@ -599,6 +599,12 @@ static struct regulator_init_data tuna_vcxio = {
 
 };
 
+static struct regulator_consumer_supply tuna_vdac_supply[] = {
+	{
+		.supply = "hdmi_vref",
+	},
+};
+
 static struct regulator_init_data tuna_vdac = {
 	.constraints = {
 		.min_uV			= 1800000,
@@ -608,6 +614,8 @@ static struct regulator_init_data tuna_vdac = {
 		.valid_ops_mask	 = REGULATOR_CHANGE_MODE
 					| REGULATOR_CHANGE_STATUS,
 	},
+	.num_consumer_supplies	= ARRAY_SIZE(tuna_vdac_supply),
+	.consumer_supplies	= tuna_vdac_supply,
 };
 
 static struct regulator_consumer_supply tuna_vusb_supply[] = {
