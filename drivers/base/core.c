@@ -1769,8 +1769,8 @@ void device_shutdown(void)
 
 #ifdef CONFIG_PRINTK
 
-static int __dev_printk(const char *level, const struct device *dev,
-			struct va_format *vaf)
+int __dev_printk(const char *level, const struct device *dev,
+		 struct va_format *vaf)
 {
 	if (!dev)
 		return printk("%s(NULL device *): %pV", level, vaf);
@@ -1778,6 +1778,7 @@ static int __dev_printk(const char *level, const struct device *dev,
 	return printk("%s%s %s: %pV",
 		      level, dev_driver_string(dev), dev_name(dev), vaf);
 }
+EXPORT_SYMBOL(__dev_printk);
 
 int dev_printk(const char *level, const struct device *dev,
 	       const char *fmt, ...)
