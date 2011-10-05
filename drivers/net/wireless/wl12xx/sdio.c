@@ -25,6 +25,7 @@
 #include <linux/module.h>
 #include <linux/crc7.h>
 #include <linux/vmalloc.h>
+#include <linux/platform_device.h>
 #include <linux/mmc/sdio_func.h>
 #include <linux/mmc/sdio_ids.h>
 #include <linux/mmc/card.h>
@@ -48,6 +49,7 @@
 struct wl12xx_sdio_glue {
 	struct device *dev;
 	struct wl1271 *wl;
+	struct platform_device *core;
 };
 
 static const struct sdio_device_id wl1271_devices[] = {
@@ -240,6 +242,7 @@ static int __devinit wl1271_probe(struct sdio_func *func,
 	const struct wl12xx_platform_data *wlan_data;
 	struct wl1271 *wl;
 	struct wl12xx_sdio_glue *glue;
+	struct resource res[1];
 	unsigned long irqflags;
 	mmc_pm_flag_t mmcflags;
 	int ret = -ENOMEM;
@@ -325,9 +328,49 @@ static int __devinit wl1271_probe(struct sdio_func *func,
 	/* Tell PM core that we don't need the card to be powered now */
 	pm_runtime_put_noidle(&func->dev);
 
+	glue->core = platform_device_alloc("wl12xx-sdio", -1);
+	if (!glue->core) {
+		wl1271_error("can't allocate platform_device");
+		ret = -ENOMEM;
+		goto out_unreg_hw;
+	}
+
+	glue->core->dev.parent = &func->dev;
+
+	memset(res, 0x00, sizeof(res));
+
+	res[0].start = wlan_data->irq;
+	res[0].flags = IORESOURCE_IRQ;
+	res[0].name = "irq";
+
+	ret = platform_device_add_resources(glue->core, res, ARRAY_SIZE(res));
+	if (ret) {
+		wl1271_error("can't add resources");
+		goto out_dev_put;
+	}
+
+	ret = platform_device_add_data(glue->core, wlan_data,
+				       sizeof(*wlan_data));
+	if (ret) {
+		wl1271_error("can't add platform data");
+		goto out_dev_put;
+	}
+
+	ret = platform_device_add(glue->core);
+	if (ret) {
+		wl1271_error("can't add platform device");
+		goto out_dev_put;
+	}
+
 	wl1271_notice("initialized");
 
 	return 0;
+
+out_dev_put:
+	platform_device_put(glue->core);
+
+out_unreg_hw:
+	wl1271_unregister_hw(wl);
 
 out_irq:
 	free_irq(wl->irq, wl);
@@ -354,6 +397,8 @@ static void __devexit wl1271_remove(struct sdio_func *func)
 	disable_irq_wake(wl->irq);
 	free_irq(wl->irq, wl);
 	wl1271_free_hw(wl);
+	platform_device_del(glue->core);
+	platform_device_put(glue->core);
 	kfree(glue);
 }
 
