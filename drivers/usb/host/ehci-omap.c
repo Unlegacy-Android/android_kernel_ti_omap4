@@ -682,6 +682,8 @@ static irqreturn_t hsic_aux_irq(int irq, void *__hcd)
  * then invokes the start() method for the HCD associated with it
  * through the hotplug entry's driver_data.
  */
+struct usb_hcd	*ghcd_omap;
+
 static int ehci_hcd_omap_probe(struct platform_device *pdev)
 {
 	struct device				*dev = &pdev->dev;
@@ -772,6 +774,7 @@ static int ehci_hcd_omap_probe(struct platform_device *pdev)
 		}
 	}
 
+	ghcd_omap = hcd;
 	hcd->rsrc_start = res->start;
 	hcd->rsrc_len = resource_size(res);
 	hcd->regs = regs;
