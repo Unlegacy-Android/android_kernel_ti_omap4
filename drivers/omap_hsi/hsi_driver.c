@@ -1114,6 +1114,10 @@ static int hsi_pm_resume(struct device *dev)
 *
 *
 */
+#ifdef CONFIG_MACH_TUNA
+#define HSI_HSR_MODE_FRAME	0x2
+#define HSI_PORT1	0x1
+#endif
 int hsi_runtime_resume(struct device *dev)
 {
 	struct platform_device *pd = to_platform_device(dev);
@@ -1136,6 +1140,13 @@ int hsi_runtime_resume(struct device *dev)
 #ifdef CONFIG_MACH_TUNA
 	/* Allow data reception */
 	hsi_hsr_resume(hsi_ctrl);
+
+	/* Restore HSR_MODE register value */
+	/* WARNING: works only in this configuration: */
+	/* - Flow = Synchronized */
+	/* - Mode = frame */
+	hsi_outl(HSI_HSR_MODE_FRAME, hsi_ctrl->base,
+			HSI_HSR_MODE_REG(HSI_PORT1));
 
 	/* When HSI is ON, no need for IO wakeup mechanism on any HSI port */
 	for (i = 0; i < hsi_ctrl->max_p; i++)
@@ -1178,6 +1189,11 @@ int hsi_runtime_suspend(struct device *dev)
 #ifdef CONFIG_MACH_TUNA
 	/* Forbid data reception */
 	hsi_hsr_suspend(hsi_ctrl);
+
+	/* Save context */
+	hsi_save_ctx(hsi_ctrl);
+
+	hsi_ctrl->clock_enabled = false;
 
 	/* HSI is going to IDLE, it needs IO wakeup mechanism enabled */
 	if (device_may_wakeup(dev))
