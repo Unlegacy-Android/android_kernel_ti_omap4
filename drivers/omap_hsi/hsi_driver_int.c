@@ -613,6 +613,16 @@ int hsi_do_cawake_process(struct hsi_port *pport)
 		spin_lock(&hsi_ctrl->lock);
 	}
 
+	/* If another CAWAKE event occured while previous is still processed */
+	/* do not clear the status bit */
+	cawake_status = hsi_get_cawake(pport);
+	if (cawake_status != pport->cawake_status) {
+		dev_warn(hsi_ctrl->dev, "CAWAKE line changed to %d while CAWAKE"
+					"event is still being processed\n",
+					cawake_status);
+		return -EAGAIN;
+	}
+
 	return 0;
 }
 
