@@ -744,9 +744,10 @@ int omapdss_hdmi_display_set_mode2(struct omap_dss_device *dssdev,
 int omapdss_hdmi_display_set_mode(struct omap_dss_device *dssdev,
 				  struct fb_videomode *vm)
 {
-	int r1, r2;
+	int r1, r2, deep_color;
 	DSSINFO("Enter omapdss_hdmi_display_set_mode\n");
 	/* turn the hdmi off and on to get new timings to use */
+	deep_color = hdmi.deep_color;
 	hdmi.set_mode = true;
 	dssdev->driver->disable(dssdev);
 	hdmi.set_mode = false;
@@ -754,6 +755,7 @@ int omapdss_hdmi_display_set_mode(struct omap_dss_device *dssdev,
 	hdmi.custom_set = 1;
 	hdmi.code = hdmi.cfg.cm.code;
 	hdmi.mode = hdmi.cfg.cm.mode;
+	hdmi.deep_color = deep_color;
 	r2 = dssdev->driver->enable(dssdev);
 	return r1 ? : r2;
 }
