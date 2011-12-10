@@ -110,6 +110,10 @@ endif
 PHONY := _all
 _all:
 
+# A simple target for testing variables
+PHONY += print-%
+print-%: ; @echo $* = $($*)
+
 # Cancel implicit rules on top Makefile
 $(CURDIR)/Makefile Makefile: ;
 
@@ -245,8 +249,9 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 
 HOSTCC       = gcc
 HOSTCXX      = g++
-HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer
-HOSTCXXFLAGS = -O2
+HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes $(COMMONFLAGS) \
+	-fomit-frame-pointer -floop-parallelize-all -ftree-parallelize-loops=4
+HOSTCXXFLAGS = $(COMMONFLAGS) -floop-parallelize-all -ftree-parallelize-loops=4
 
 # Decide whether to build built-in, modular, or both.
 # Normally, just do built-in.
@@ -347,6 +352,10 @@ CHECK		= sparse
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
+KERNELFLAGS	= $(COMMONFLAGS) -mtune=cortex-a9 -mcpu=cortex-a9 -marm -mfpu=neon \
+				-mvectorize-with-neon-quad -munaligned-access
+# Bad options: -floop-parallelize-all -ftree-parallelize-loops=4
+MODFLAGS	= -DMODULE $(KERNELFLAGS)
 CFLAGS_MODULE   =
 AFLAGS_MODULE   =
 LDFLAGS_MODULE  =
@@ -558,11 +567,30 @@ endif # $(dot-config)
 # Defaults to vmlinux, but the arch makefile usually adds further targets
 all: vmlinux
 
+# Define common optimization flags
+COMMONFLAGS	+= -pipe -DNDEBUG -fdiagnostics-color
+
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
-KBUILD_CFLAGS	+= -Os
+COMMONFLAGS	+= -Os -finline-functions -funswitch-loops -fpredictive-commoning \
+	-fgcse-after-reload -ftree-loop-vectorize -ftree-loop-distribute-patterns \
+	-ftree-slp-vectorize -fvect-cost-model -ftree-partial-pre -fipa-cp-clone
 else
-KBUILD_CFLAGS	+= -O2
+COMMONFLAGS	+= -O3 -falign-functions=1 -falign-jumps=1 -falign-loops=1 -falign-labels=1
 endif
+
+COMMONFLAGS	+= -ffast-math -fsingle-precision-constant -ftree-vectorize \
+	-fgcse-lm -fgcse-sm -fgcse-las -fsched-spec-load -floop-nest-optimize \
+	-fgraphite -fgraphite-identity -ftree-loop-linear -floop-interchange \
+	-floop-strip-mine -floop-block -floop-flatten
+
+KBUILD_CFLAGS  += $(call cc-disable-warning,maybe-uninitialized,) $(KERNELFLAGS)
+
+# Tell gcc to never replace conditional load with a non-conditional one
+KBUILD_CFLAGS	+= $(call cc-option,--param=allow-store-data-races=0)
+
+# conserve stack if available
+# do this early so that an architecture can override it.
+KBUILD_CFLAGS   += $(call cc-option,-fconserve-stack)
 
 include $(srctree)/arch/$(SRCARCH)/Makefile
 
@@ -630,9 +658,6 @@ KBUILD_CFLAGS += $(call cc-disable-warning, pointer-sign)
 
 # disable invalid "can't wrap" optimizations for signed / pointers
 KBUILD_CFLAGS	+= $(call cc-option,-fno-strict-overflow)
-
-# conserve stack if available
-KBUILD_CFLAGS   += $(call cc-option,-fconserve-stack)
 
 # use the deterministic mode of AR if available
 KBUILD_ARFLAGS := $(call ar-option,D)
