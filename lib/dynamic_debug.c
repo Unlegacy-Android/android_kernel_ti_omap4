@@ -156,10 +156,6 @@ static void ddebug_change(const struct ddebug_query *query,
 			else if (!dp->flags)
 				dt->num_enabled++;
 			dp->flags = newflags;
-			if (newflags)
-				dp->enabled = 1;
-			else
-				dp->enabled = 0;
 			if (verbose)
 				printk(KERN_INFO
 					"ddebug: changed %s:%d [%s]%s %s\n",
