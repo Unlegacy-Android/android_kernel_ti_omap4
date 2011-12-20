@@ -217,6 +217,7 @@ int opp_get_opp_count(struct device *dev)
 
 	return count;
 }
+EXPORT_SYMBOL(opp_get_opp_count);
 
 /**
  * opp_find_freq_exact() - search for an exact frequency
@@ -352,6 +353,7 @@ struct opp *opp_find_freq_floor(struct device *dev, unsigned long *freq)
 
 	return opp;
 }
+EXPORT_SYMBOL(opp_find_freq_floor);
 
 /**
  * opp_find_volt_ceil() - Search for an rounded ceil voltage
