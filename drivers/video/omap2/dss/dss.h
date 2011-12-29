@@ -610,6 +610,7 @@ int omapdss_hdmi_register_cec_callbacks(void (*hdmi_cec_enable_cb)(int status),
 					void (*hdmi_cec_hpd)(int phy_addr,
 					int status));
 int omapdss_hdmi_unregister_cec_callbacks(void);
+extern struct device_attribute dev_attr_hdmi_timings;
 
 int omap_dss_ovl_set_info(struct omap_overlay *ovl,
 		struct omap_overlay_info *info);
