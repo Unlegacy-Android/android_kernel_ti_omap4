@@ -207,6 +207,11 @@ extern int regs_query_register_offset(const char *name);
 extern const char *regs_query_register_name(unsigned int offset);
 #define MAX_REG_OFFSET (offsetof(struct pt_regs, ss))
 
+static inline long regs_return_value(struct uml_pt_regs *regs)
+{
+	return UPT_SYSCALL_RET(regs);
+}
+
 /**
  * regs_get_register() - get register value from its offset
  * @regs:	pt_regs from which register value is gotten.
