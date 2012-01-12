@@ -3,7 +3,7 @@
  * TrueTouch(TM) Standard Product I2C touchscreen driver. This driver can be found here:
  * drivers/input/touchscreen/cyttsp-i2c.c
  *
- * drivers/input/touchscreen/ft5x06-i2c.c
+ * drivers/input/touchscreen/ft5x06_bn.c
  *
  * Copyright (C) 2009, 2010 Cypress Semiconductor, Inc.
  *
@@ -42,7 +42,7 @@
 #include <linux/earlysuspend.h>
 #include <linux/firmware.h>
 #include <linux/regulator/consumer.h>
-#include <linux/input/ft5x06.h>
+#include <linux/input/ft5x06_bn.h>
 
 #if defined(CONFIG_DEBUG_FS)
 #include <linux/debugfs.h>

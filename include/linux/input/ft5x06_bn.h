@@ -2,7 +2,7 @@
  * Focaltech 5x06 touch screen controller. Some parts of the code are based on the Cypress
  * TrueTouch(TM) Standard Product I2C touchscreen driver.
  *
- * drivers/input/touchscreen/ft5x06-i2c.c
+ * drivers/input/touchscreen/ft5x06_bn.c
  *
  * Copyright (C) 2009, 2010 Cypress Semiconductor, Inc.
  *
@@ -35,7 +35,7 @@
 #include <linux/delay.h>
 
 #define FT_DRIVER_NAME      "ft5x06"
-#define FT_DEVICE_5x06_NAME  "ft5x06-i2c"
+#define FT_DEVICE_5x06_NAME  "ft5x06_bn"
 #define FT5x06_I2C_SLAVEADDRESS  (0x70 >> 1)
 
 /********************************************************************

@@ -27,9 +27,9 @@
 #include <linux/delay.h>
 #include <linux/regulator/consumer.h>
 
-#if defined(CONFIG_TOUCHSCREEN_FT5X06) || defined(CONFIG_TOUCHSCREEN_FT5X06_MODULE)
-#include <linux/input/ft5x06.h>
-#endif /* defined(CONFIG_TOUCHSCREEN_FT5X06) || defined(CONFIG_TOUCHSCREEN_FT5X06_MODULE) */
+#if defined(CONFIG_TOUCHSCREEN_FT5X06_BN) || defined(CONFIG_TOUCHSCREEN_FT5X06_BN_MODULE)
+#include <linux/input/ft5x06_bn.h>
+#endif
 
 #define TOUCHPANEL_GPIO_IRQ     37
 #define TOUCHPANEL_GPIO_RESET   39
@@ -173,7 +173,7 @@ static int hummingbird_touch_power_off(struct device  *dev)
 	return 0;
 }
 
-#if defined(CONFIG_TOUCHSCREEN_FT5X06) || defined(CONFIG_TOUCHSCREEN_FT5X06_MODULE)
+#if defined(CONFIG_TOUCHSCREEN_FT5X06_BN) || defined(CONFIG_TOUCHSCREEN_FT5X06_BN_MODULE)
 static struct ft5x06_platform_data ft5x06_platform_data = {
 	.max_tx_lines = 32,
 	.max_rx_lines = 20,
@@ -191,16 +191,16 @@ static struct ft5x06_platform_data ft5x06_platform_data = {
 	.power_on          = hummingbird_touch_power_on,
 	.power_off         = hummingbird_touch_power_off,
 };
-#endif /* defined(CONFIG_TOUCHSCREEN_FT5X06) || defined(CONFIG_TOUCHSCREEN_FT5X06_MODULE) */
+#endif
 
 static struct i2c_board_info __initdata hummingbird_i2c_3_boardinfo[] = {
-#if defined(CONFIG_TOUCHSCREEN_FT5X06) || defined(CONFIG_TOUCHSCREEN_FT5X06_MODULE)
+#if defined(CONFIG_TOUCHSCREEN_FT5X06_BN) || defined(CONFIG_TOUCHSCREEN_FT5X06_BN_MODULE)
         {
                 I2C_BOARD_INFO(FT_DEVICE_5x06_NAME, FT5x06_I2C_SLAVEADDRESS),
                 .platform_data = &ft5x06_platform_data,
                 .irq = OMAP_GPIO_IRQ(TOUCHPANEL_GPIO_IRQ),
         },
-#endif /* defined(CONFIG_TOUCHSCREEN_FT5X06) || defined(CONFIG_TOUCHSCREEN_FT5X06_MODULE) */
+#endif
 };
 
 int __init hummingbird_touch_init(void)
