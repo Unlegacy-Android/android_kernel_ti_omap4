@@ -22,7 +22,7 @@
 #include <linux/io.h>
 #include <linux/gpio.h>
 #include <plat/i2c.h>
-#include <linux/input/ft5x06.h>
+#include <linux/input/ft5x06_bn.h>
 
 #include "board-acclaim.h"
 #include "mux.h"

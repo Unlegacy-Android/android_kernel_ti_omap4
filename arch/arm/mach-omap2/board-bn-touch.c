@@ -28,8 +28,8 @@
 #include "board-bn-hd.h"
 #include "mux.h"
 
-#if defined(CONFIG_TOUCHSCREEN_FT5X06) || defined(CONFIG_TOUCHSCREEN_FT5X06_MODULE)
-#include <linux/input/ft5x06.h>
+#if defined(CONFIG_TOUCHSCREEN_FT5X06_BN) || defined(CONFIG_TOUCHSCREEN_FT5X06_BN_MODULE)
+#include <linux/input/ft5x06_bn.h>
 #endif
 
 #define TOUCHPANEL_GPIO_IRQ     37
@@ -110,7 +110,7 @@ static int bn_touch_power_off(struct device  *dev)
 	return 0;
 }
 
-#if defined(CONFIG_TOUCHSCREEN_FT5X06) || defined(CONFIG_TOUCHSCREEN_FT5X06_MODULE)
+#if defined(CONFIG_TOUCHSCREEN_FT5X06_BN) || defined(CONFIG_TOUCHSCREEN_FT5X06_BN_MODULE)
 static struct ft5x06_platform_data ft5x06_platform_data = {
 	.max_tx_lines		= machine_is_omap_ovation() ? 38 : 32,
 	.max_rx_lines		= machine_is_omap_ovation() ? 26 : 20,
@@ -132,7 +132,7 @@ static struct ft5x06_platform_data ft5x06_platform_data = {
 #endif
 
 static struct i2c_board_info __initdata bn_i2c_3_boardinfo[] = {
-#if defined(CONFIG_TOUCHSCREEN_FT5X06) || defined(CONFIG_TOUCHSCREEN_FT5X06_MODULE)
+#if defined(CONFIG_TOUCHSCREEN_FT5X06_BN) || defined(CONFIG_TOUCHSCREEN_FT5X06_BN_MODULE)
 	{
 		I2C_BOARD_INFO(FT_DEVICE_5x06_NAME, FT5x06_I2C_SLAVEADDRESS),
 		.platform_data = &ft5x06_platform_data,

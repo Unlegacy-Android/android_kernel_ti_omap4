@@ -870,14 +870,27 @@ config TOUCHSCREEN_QUANTUM_OBP
 
 	  If unsure, say N.
 
-config TOUCHSCREEN_FT5X06
-        tristate "Focaltech FT5x06 based touchscreens"
+config TOUCHSCREEN_FT5X06_BN
+        tristate "Focaltech touchscreens (B&N)"
         depends on I2C
         help
           Say Y here if you have a Focaltech FT5x06
-          based touchscreen controller.
+          based touchscreen controller (from B&N OSS).
           If unsure, say N.
 
           To compile this driver as a module, choose M here
+
+config TOUCHSCREEN_FT5X06
+       tristate "FocalTech touchscreens"
+       depends on I2C
+       help
+         Say Y here if you have a ft5X06 touchscreen.
+	 Ft5x06 controllers are multi touch controllers which can
+	 report 5 touches at a time.
+
+         If unsure, say N.
+
+         To compile this driver as a module, choose M here: the
+         module will be called ft5x06_ts.
 
 endif
