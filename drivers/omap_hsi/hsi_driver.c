@@ -123,7 +123,6 @@ void hsi_save_ctx(struct hsi_dev *hsi_ctrl)
 		p->hst.arb_mode = hsi_inl(base, HSI_HST_ARBMODE_REG(port));
 
 		/* HSR */
-		p->hsr.mode = hsi_inl(base, HSI_HSR_MODE_REG(port));
 		if (!hsi_driver_device_is_hsi(pdev))
 			p->hsr.frame_size = hsi_inl(base,
 						HSI_HSR_FRAMESIZE_REG(port));
@@ -1138,9 +1137,6 @@ int hsi_runtime_resume(struct device *dev)
 	/* Restore context */
 	hsi_restore_ctx(hsi_ctrl);
 
-	/* Allow data reception */
-	hsi_hsr_resume(hsi_ctrl);
-
 	/* Restore HSR_MODE register value */
 	/* WARNING: works only in this configuration: */
 	/* - Flow = Synchronized */
@@ -1181,9 +1177,6 @@ int hsi_runtime_suspend(struct device *dev)
 
 	if (!hsi_ctrl->clock_enabled)
 		dev_warn(dev, "Warning: clock status mismatch vs runtime PM\n");
-
-	/* Forbid data reception */
-	hsi_hsr_suspend(hsi_ctrl);
 
 #ifdef CONFIG_MACH_TUNA
 	/* HSI is going to IDLE, it needs IO wakeup mechanism enabled */
