@@ -22,6 +22,7 @@
 #include <linux/perf_event.h>
 #include <linux/hw_breakpoint.h>
 #include <linux/regset.h>
+#include <linux/audit.h>
 
 #include <asm/pgtable.h>
 #include <asm/system.h>
@@ -924,6 +925,12 @@ long arch_ptrace(struct task_struct *child, long request,
 	return ret;
 }
 
+#ifdef __ARMEB__
+#define AUDIT_ARCH_NR AUDIT_ARCH_ARMEB
+#else
+#define AUDIT_ARCH_NR AUDIT_ARCH_ARM
+#endif
+
 asmlinkage int syscall_trace(int why, struct pt_regs *regs, int scno)
 {
 	unsigned long ip;
@@ -931,7 +938,7 @@ asmlinkage int syscall_trace(int why, struct pt_regs *regs, int scno)
 	if (why)
 		audit_syscall_exit(regs);
 	else
-		audit_syscall_entry(AUDIT_ARCH_ARMEB, scno, regs->ARM_r0,
+		audit_syscall_entry(AUDIT_ARCH_NR, scno, regs->ARM_r0,
 				    regs->ARM_r1, regs->ARM_r2, regs->ARM_r3);
 
 	if (!test_thread_flag(TIF_SYSCALL_TRACE))
