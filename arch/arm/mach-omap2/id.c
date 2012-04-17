@@ -234,7 +234,11 @@ static void __init omap4_check_features(void)
 	omap4_features = 0;
 
 	si_type =
+#ifdef CONFIG_FORCE_SILICON_PERFORMANCE
+	  OMAP4_SILICON_TYPE_PERFORMANCE;
+#else
 	  (read_tap_reg(OMAP4_CTRL_MODULE_CORE_STD_FUSE_PROD_ID_1) >> 16) & 3;
+#endif
 
 	switch (si_type) {
 	case OMAP4_SILICON_TYPE_PERFORMANCE:

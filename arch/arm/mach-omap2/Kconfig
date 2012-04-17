@@ -56,6 +56,13 @@ config ARCH_OMAP4
 	select ARCH_HAS_BARRIERS
 	select ARM_HAS_SG_CHAIN
 
+config FORCE_SILICON_PERFORMANCE
+	bool "Force OMAP4_SILICON_TYPE_PERFORMANCE"
+	depends on ARCH_OMAP4
+	default n
+	help
+	  Ignores silicon type in OMAP4_CTRL_MODULE_CORE_STD_FUSE_PROD_ID_1
+
 comment "OMAP Core Type"
 	depends on ARCH_OMAP2
 
