@@ -5929,6 +5929,7 @@ static int ftx_input_device_initialize(struct ft5x06 *ts)
 #endif /* defined(FTX_SUPPORT_ST) */
 
 	set_bit(BTN_TOUCH, input_device->keybit);
+	set_bit(INPUT_PROP_DIRECT, input_device->propbit);
 
 	if (ts->platform_data->use_gestures)
 	{
