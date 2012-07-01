@@ -532,6 +532,11 @@ config OMAP_RFKILL_STE_MODEM
 	  of the modem as well as necessary dynamic pin muxing of AP/CP
 	  interfaces (platform data dependant)
 
+config OMAP4_VOLTAGE_CONTROL
+	bool "Enables OMAP4 Voltage Control"
+	depends on ARCH_OMAP4
+	default n
+
 config OMAP4430_CPU_OVERCLOCK
 	bool "Enables OMAP 4430 CPU overclock"
 	depends on ARCH_OMAP4
