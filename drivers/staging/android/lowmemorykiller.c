@@ -62,7 +62,7 @@ static int lowmem_minfree_size = 4;
 
 static unsigned long lowmem_deathpending_timeout;
 
-extern int compact_nodes();
+extern int compact_nodes(bool sync);
 
 #define lowmem_print(level, x...)			\
 	do {						\
@@ -200,7 +200,7 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 		     nr_to_scan, sc->gfp_mask, rem);
 	mutex_unlock(&scan_mutex);
 	if (selected)
-		compact_nodes();
+		compact_nodes(false);
 	return rem;
 }
 
