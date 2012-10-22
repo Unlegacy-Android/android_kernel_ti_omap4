@@ -286,6 +286,62 @@ static const struct dispc_coef coef5_M32[8] = {
 	{   5,  29,  48,  36,  10 },
 };
 
+/* Enhaced sharpness filters */
+static const struct dispc_coef coef5_M12S_2P0[8] = {
+	{    -27,    25,  147,     6,    -23 },
+	{    -31,    46,  140,   -10,    -18 },
+	{    -32,    67,  127,   -21,    -13 },
+	{    -31,    88,  108,   -28,     -9 },
+	{     -9,   -28,  108,    88,    -31 },
+	{    -13,   -21,  127,    67,    -32 },
+	{    -18,   -10,  140,    46,    -31 },
+	{    -23,     6,  147,    25,    -27 },
+};
+
+static const struct dispc_coef coef5_M11S_2P0[8] = {
+	{    -34,    17,  178,    -6,    -27 },
+	{    -39,    43,  168,   -23,    -21 },
+	{    -42,    71,  149,   -35,    -15 },
+	{    -43,    97,  124,   -41,    -10 },
+	{    -10,   -41,  124,    97,    -43 },
+	{    -15,   -35,  149,    71,    -42 },
+	{    -21,   -23,  168,    43,    -39 },
+	{    -27,    -6,  178,    17,    -34 },
+};
+
+static const struct dispc_coef coef5_M10S_2P0[8] = {
+	{    -27,     0,  197,   -24,    -18 },
+	{    -37,    31,  186,   -42,    -11 },
+	{    -46,    66,  164,   -52,     -5 },
+	{    -52,   100,  134,   -54,     -1 },
+	{     -1,   -54,  134,   100,    -52 },
+	{     -5,   -52,  164,    66,    -46 },
+	{    -11,   -42,  186,    31,    -37 },
+	{    -18,   -24,  197,     0,    -27 },
+};
+
+static const struct dispc_coef coef5_M9S_2P0[8] = {
+	{    -22,   -11,  209,   -35,    -13 },
+	{    -33,    21,  196,   -50,     -6 },
+	{    -43,    58,  170,   -57,      0 },
+	{    -52,    97,  135,   -56,      4 },
+	{      3,   -56,  135,    97,    -51 },
+	{     -1,   -57,  170,    58,    -42 },
+	{     -7,   -50,  196,    21,    -32 },
+	{    -13,   -35,  209,   -11,    -22 },
+};
+
+static const struct dispc_coef coef5_M8S_2P0[8] = {
+	{     -4,   -37,  221,   -57,      5 },
+	{    -16,    -6,  205,   -67,     11 },
+	{    -31,    36,  175,   -66,     14 },
+	{    -46,    84,  133,   -58,     15 },
+	{     14,   -58,  133,    84,    -45 },
+	{     13,   -66,  175,    36,    -30 },
+	{     11,   -67,  205,    -6,    -16 },
+	{      5,   -57,  221,   -37,     -4 },
+};
+
 const struct dispc_coef *dispc_ovl_get_scale_coef(int inc, int five_taps)
 {
 	int i;
@@ -302,11 +358,12 @@ const struct dispc_coef *dispc_ovl_get_scale_coef(int inc, int five_taps)
 		{ 15, 16, coef3_M16, coef5_M16 },
 		{ 14, 14, coef3_M14, coef5_M14 },
 		{ 13, 13, coef3_M13, coef5_M13 },
-		{ 12, 12, coef3_M12, coef5_M12 },
-		{ 11, 11, coef3_M11, coef5_M11 },
-		{ 10, 10, coef3_M10, coef5_M10 },
-		{  9,  9,  coef3_M9,  coef5_M9 },
-		{  4,  8,  coef3_M8,  coef5_M8 },
+		{ 12, 12, coef3_M12, coef5_M12S_2P0 },
+		{ 11, 11, coef3_M11, coef5_M11S_2P0 },
+		{ 10, 10, coef3_M10, coef5_M10S_2P0 },
+		{  9,  9,  coef3_M9, coef5_M9S_2P0 },
+		{  6,  8,  coef3_M8, coef5_M8S_2P0 },
+		{  4,  5,  coef3_M8, coef5_M9S_2P0 },
 		/*
 		 * When upscaling more than two times, blockiness and outlines
 		 * around the image are observed when M8 tables are used. M11,
