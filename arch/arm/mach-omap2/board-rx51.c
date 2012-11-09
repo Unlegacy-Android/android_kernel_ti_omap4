@@ -36,8 +36,6 @@
 
 #define RX51_GPIO_SLEEP_IND 162
 
-extern void rx51_video_mem_init(void);
-
 static struct gpio_led gpio_leds[] = {
 	{
 		.name	= "sleep_ind",
@@ -116,7 +114,6 @@ static void __init rx51_init(void)
 
 static void __init rx51_reserve(void)
 {
-	rx51_video_mem_init();
 	omap_reserve();
 }
 
