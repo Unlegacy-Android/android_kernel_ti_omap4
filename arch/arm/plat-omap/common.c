@@ -20,7 +20,6 @@
 
 #include <plat/common.h>
 #include <plat/board.h>
-#include <plat/vram.h>
 #include <plat/dsp.h>
 #include <plat/drm.h>
 
@@ -72,7 +71,6 @@ void __init omap_reserve(void)
 {
 	omap_reserve_secure_workspace_addr();
 
-	omap_vram_reserve_sdram_memblock();
 	omap_dsp_reserve_sdram_memblock();
 	omap_secure_ram_reserve_memblock();
 	omap_barrier_reserve_memblock();
