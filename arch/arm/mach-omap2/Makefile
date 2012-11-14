@@ -399,4 +399,5 @@ endif
 obj-$(CONFIG_ION_OMAP)			+= omap4_ion.o omap5_ion.o
 obj-$(CONFIG_OMAP_RAM_CONSOLE)		+= omap_ram_console.o
 obj-$(CONFIG_OMAP_REBOOT_REASON)	+= omap-reboot-reason.o
+obj-$(CONFIG_TI_SHARED_GFX_BUF) 	+= ti_shared_gfx_buf_plat_device.o
 obj-$(CONFIG_ARCH_OMAP4) += omap_gcxxx.o

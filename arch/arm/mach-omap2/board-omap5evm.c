@@ -62,6 +62,7 @@
 #include "hsmmc.h"
 #include "mux.h"
 #include "omap5_ion.h"
+#include "omap5_ti_shared_gfx_buf.h"
 #include "omap_ram_console.h"
 #include "control.h"
 
@@ -1071,6 +1072,7 @@ static void __init omap_5430evm_init(void)
 
 	omap_init_dmm_tiler();
 	omap5_register_ion();
+	omap5_register_ti_gfx_buf_mgr();
 	sevm_panel_init();
 	sevm_battery_init();
 	omap_rprm_regulator_init(omap5evm_rprm_regulators,

@@ -51,6 +51,7 @@
 #include "common-board-devices.h"
 #include "mux.h"
 #include "omap5_ion.h"
+#include "omap5_ti_shared_gfx_buf.h"
 #include "board-54xx-sevm.h"
 #include "board-omap5evm.h"
 #include "control.h"
@@ -1158,6 +1159,7 @@ static void __init omap_5_panda_init(void)
 	platform_add_devices(panda5_devices, ARRAY_SIZE(panda5_devices));
 
 	omap_init_dmm_tiler();
+	omap5_register_ti_gfx_buf_mgr();
 	omap5_register_ion();
 	omap5panda_display_init();
 }
