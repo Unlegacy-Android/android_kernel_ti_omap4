@@ -1,0 +1,8 @@
+menuconfig TI_GFX_SUPPORT
+	tristate "Enable TI GPU components support"
+	depends on (ARCH_OMAP5 || ARCH_OMAP4) 
+	default y
+	help
+	  Kernel-level support for TI's GPU components.
+
+source "drivers/gpu/ti/shared_gfx_buf/Kconfig"

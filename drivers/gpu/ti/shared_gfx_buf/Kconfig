@@ -1,0 +1,14 @@
+menuconfig TI_SHARED_GFX_BUF
+	tristate "Enable TI Shared Graphics Buffer Manager"
+	select GENERIC_ALLOCATOR
+	select DMA_SHARED_BUFFER
+	select ION
+	select ION_OMAP
+	depends on (ARCH_OMAP5 || ARCH_OMAP4) && TI_GFX_SUPPORT
+	default y
+	help
+	  Chose this option to enable Shared Graphics Buffer Manager.
+	  The purpose of the manager is to allocate an manage the
+	  sharing of graphics buffer resources - allocation, freeing,
+	  mapping, un-mapping & low-level synchronization.
+
