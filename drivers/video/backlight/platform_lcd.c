@@ -154,7 +154,7 @@ static struct platform_driver platform_lcd_driver = {
 #endif
 	},
 	.probe		= platform_lcd_probe,
-	.remove		= __devexit_p(platform_lcd_remove),
+	.remove		= platform_lcd_remove,
 };
 
 module_platform_driver(platform_lcd_driver);
