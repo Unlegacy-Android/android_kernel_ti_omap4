@@ -323,7 +323,7 @@ static int __devinit adp8870_led_probe(struct i2c_client *client)
 	return ret;
 }
 
-static int __devexit adp8870_led_remove(struct i2c_client *client)
+static int adp8870_led_remove(struct i2c_client *client)
 {
 	struct adp8870_backlight_platform_data *pdata =
 		client->dev.platform_data;
@@ -344,7 +344,7 @@ static int __devinit adp8870_led_probe(struct i2c_client *client)
 	return 0;
 }
 
-static int __devexit adp8870_led_remove(struct i2c_client *client)
+static int adp8870_led_remove(struct i2c_client *client)
 {
 	return 0;
 }
@@ -936,7 +936,7 @@ out2:
 	return ret;
 }
 
-static int __devexit adp8870_remove(struct i2c_client *client)
+static int adp8870_remove(struct i2c_client *client)
 {
 	struct adp8870_bl *data = i2c_get_clientdata(client);
 

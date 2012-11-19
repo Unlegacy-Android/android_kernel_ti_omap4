@@ -268,7 +268,7 @@ out_free_lcd:
 	return ret;
 }
 
-static int __devexit ltv350qv_remove(struct spi_device *spi)
+static int ltv350qv_remove(struct spi_device *spi)
 {
 	struct ltv350qv *lcd = dev_get_drvdata(&spi->dev);
 

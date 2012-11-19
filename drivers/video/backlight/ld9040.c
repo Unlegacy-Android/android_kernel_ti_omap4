@@ -789,7 +789,7 @@ out_free_lcd:
 	return ret;
 }
 
-static int __devexit ld9040_remove(struct spi_device *spi)
+static int ld9040_remove(struct spi_device *spi)
 {
 	struct ld9040 *lcd = dev_get_drvdata(&spi->dev);
 
