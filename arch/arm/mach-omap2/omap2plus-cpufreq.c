@@ -469,7 +469,11 @@ static int __cpuinit omap_cpu_init(struct cpufreq_policy *policy)
 	}
 
 	/* FIXME: what's the actual transition time? */
+#ifdef CONFIG_OMAP_IPU_DEEPIDLE
+	policy->cpuinfo.transition_latency = 40 * 1000;
+#else
 	policy->cpuinfo.transition_latency = 300 * 1000;
+#endif
 
 	return 0;
 

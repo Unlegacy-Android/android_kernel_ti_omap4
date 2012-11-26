@@ -545,6 +545,12 @@ config OMAP4460_GPU_OVERCLOCK
 	help
 	  Enables the 512 MHz GPU frequency for OMAP4460 devices.
 
+config OMAP_IPU_DEEPIDLE
+	bool "Enable C-states > C1 when IPU is active"
+	default n
+	help
+	  Enable C-states > C1 during hardware-accelerated video playback.
+
 endmenu
 
 endif
