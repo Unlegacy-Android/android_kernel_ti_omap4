@@ -114,11 +114,19 @@ struct omap_fbmem_config {
 	u32 size;
 };
 
+/*
+enum omap_pwm_led_pwm_type {
+	OMAP_PWM_LED_PWM_TYPE_DMTIMER = 0,
+	OMAP_PWM_LED_PWM_TYPE_TWL6030
+	};
+	*/
 struct omap_pwm_led_platform_data {
 	const char *name;
-	int intensity_timer;
-	int blink_timer;
+	//enum omap_pwm_led_pwm_type pwm_module_type;
+	int pwm_module_id;
+	int def_on;
 	void (*set_power)(struct omap_pwm_led_platform_data *self, int on_off);
+	int def_brightness;
 };
 
 struct omap_uart_config {
