@@ -555,6 +555,23 @@ config INPUT_TSL2771
 	  Say Y here if you want to use TSL2771 ALS/Proximity Sensor Driver
 	  through I2C interface.
 
+config INPUT_KXTF9
+	tristate "Kionix KXTF9 tri-axis digital accelerometer"
+	depends on I2C && SYSFS
+	default y
+	  help
+	  if you say yes here you get support for the Kionix KXTF9 digital tri axis- accelerometer.
+
+	  This driver can also be built as a module.  If so, the module
+	  will be called kxtf9.
+
+config INPUT_TWL6040_HSKEYS
+	bool "TWL6040 HSKEYS Driver"
+	depends on TWL4030_CORE && TWL6030_GPADC && TWL6040_CODEC
+	default n
+	 help
+	 enable TWL6040 headset buttons driver
+
 config OPTICAL_GP2A
 	depends on I2C && GENERIC_GPIO
 	tristate "GP2A ambient light and proximity input device"
