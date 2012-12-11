@@ -275,4 +275,9 @@ config AVERAGE
 
 	  If unsure, say N.
 
+config MEM_POOL_STATS
+	boolean
+	depends on CONFIG_DEBUG_FS
+	default n
+
 endmenu

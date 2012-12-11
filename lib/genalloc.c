@@ -15,6 +15,86 @@
 #include <linux/bitmap.h>
 #include <linux/genalloc.h>
 
+#ifdef CONFIG_DEBUG_FS
+#include <linux/debugfs.h>
+#define DEBUG_FS_MAX_POOLS	16
+static struct dentry *debugfs_root = 0;
+static int pool_id = 0;
+static struct {
+	char name[16];
+	struct dentry* dir;
+	u32 base;
+	u32 size;
+	u32 used;
+	u32 peak;
+	u32 failed;
+} stats[DEBUG_FS_MAX_POOLS];
+
+static void debugfs_create_files(struct gen_pool *pool)
+{
+	int id = pool_id;
+	struct dentry* file;
+
+	if (id == DEBUG_FS_MAX_POOLS) {
+		pool->id = -1;
+		return;
+	}
+
+	pool->id = id;
+
+	if (IS_ERR_OR_NULL(debugfs_root)) {
+		debugfs_root = debugfs_create_dir("genalloc", NULL);
+		if (IS_ERR(debugfs_root)) {
+			pr_warn("genalloc: failed to create debugfs dir\n");
+			return;
+		}
+	}
+
+	snprintf(stats[id].name, sizeof(stats[id].name), "pool%d", id);
+	stats[id].dir = debugfs_create_dir(stats[id].name, debugfs_root);
+	file = debugfs_create_u32("base", S_IRUGO, stats[id].dir, &stats[id].base);
+	if (IS_ERR(file))
+		pr_warn("genalloc: failed to create debugfs file\n");
+	file = debugfs_create_u32("size", S_IRUGO, stats[id].dir, &stats[id].size);
+	if (IS_ERR(file))
+		pr_warn("genalloc: failed to create debugfs file\n");
+	file = debugfs_create_u32("used", S_IRUGO, stats[id].dir, &stats[id].used);
+	if (IS_ERR(file))
+		pr_warn("genalloc: failed to create debugfs file\n");
+	file = debugfs_create_u32("peak", S_IRUGO, stats[id].dir, &stats[id].peak);
+	if (IS_ERR(file))
+		pr_warn("genalloc: failed to create debugfs file\n");
+	file = debugfs_create_u32("failed", S_IRUGO, stats[id].dir, &stats[id].failed);
+	if (IS_ERR(file))
+		pr_warn("genalloc: failed to create debugfs file\n");
+
+	++pool_id;
+}
+
+void debugfs_update_stats(const struct gen_pool *pool)
+{
+	struct list_head *_chunk;
+	struct gen_pool_chunk *chunk;
+	unsigned long flags;
+	int id = pool->id;
+	int order = pool->min_alloc_order;
+	int nbits;
+	int weight;
+
+	list_for_each(_chunk, &pool->chunks) {
+		chunk = list_entry(_chunk, struct gen_pool_chunk, next_chunk);
+
+		spin_lock_irqsave(&chunk->lock, flags);
+		nbits = (chunk->end_addr - chunk->start_addr) >> order;
+		weight = bitmap_weight(chunk->bits, nbits);
+		spin_unlock_irqrestore(&chunk->lock, flags);
+
+		stats[id].used = weight << order;
+		if (stats[id].used > stats[id].peak)
+			stats[id].peak = stats[id].used;
+	}
+}
+#endif
 
 /**
  * gen_pool_create - create a new special memory pool
@@ -34,6 +114,11 @@ struct gen_pool *gen_pool_create(int min_alloc_order, int nid)
 		INIT_LIST_HEAD(&pool->chunks);
 		pool->min_alloc_order = min_alloc_order;
 	}
+
+#ifdef CONFIG_DEBUG_FS
+	debugfs_create_files(pool);
+#endif
+
 	return pool;
 }
 EXPORT_SYMBOL(gen_pool_create);
@@ -69,6 +154,16 @@ int gen_pool_add_virt(struct gen_pool *pool, unsigned long virt, phys_addr_t phy
 	chunk->end_addr = virt + size;
 
 	write_lock(&pool->lock);
+#ifdef CONFIG_DEBUG_FS
+	if (list_empty(&pool->chunks)) {
+		stats[pool->id].base = virt;
+		stats[pool->id].size = size;
+	} else {
+		/* multiple chunks not supported for debugfs base and size */
+		stats[pool->id].base = -1;
+		stats[pool->id].size = -1;
+	}
+#endif
 	list_add(&chunk->next_chunk, &pool->chunks);
 	write_unlock(&pool->lock);
 
@@ -171,8 +266,14 @@ unsigned long gen_pool_alloc(struct gen_pool *pool, size_t size)
 		bitmap_set(chunk->bits, start_bit, nbits);
 		spin_unlock_irqrestore(&chunk->lock, flags);
 		read_unlock(&pool->lock);
+#ifdef MEM_POOL_STATS
+		debugfs_update_stats(pool);
+#endif
 		return addr;
 	}
+#ifdef CONFIG_DEBUG_FS
+	stats[pool->id].failed++;
+#endif
 	read_unlock(&pool->lock);
 	return 0;
 }
@@ -211,6 +312,9 @@ void gen_pool_free(struct gen_pool *pool, unsigned long addr, size_t size)
 		}
 	}
 	BUG_ON(nbits > 0);
+#ifdef CONFIG_DEBUG_FS
+	debugfs_update_stats(pool);
+#endif
 	read_unlock(&pool->lock);
 }
 EXPORT_SYMBOL(gen_pool_free);
