@@ -18,6 +18,9 @@ struct gen_pool {
 	rwlock_t lock;
 	struct list_head chunks;	/* list of chunks in this pool */
 	int min_alloc_order;		/* minimum allocation order */
+#ifdef CONFIG_DEBUG_FS
+	int id;
+#endif
 };
 
 /*
