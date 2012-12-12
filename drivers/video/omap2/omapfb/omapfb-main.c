@@ -30,6 +30,7 @@
 #include <linux/platform_device.h>
 #include <linux/omapfb.h>
 #include <linux/wait.h>
+#include <linux/memblock.h>
 
 #include <video/omapdss.h>
 #include <plat/vram.h>
@@ -1761,6 +1762,7 @@ static int omapfb_allocate_all_fbs(struct omapfb2_device *fbdev)
 	int i, r;
 	unsigned long vram_sizes[10];
 	unsigned long vram_paddrs[10];
+	struct omapfb_platform_data *opd = NULL;
 
 	memset(&vram_sizes, 0, sizeof(vram_sizes));
 	memset(&vram_paddrs, 0, sizeof(vram_paddrs));
@@ -1774,7 +1776,6 @@ static int omapfb_allocate_all_fbs(struct omapfb2_device *fbdev)
 	}
 
 	if (fbdev->dev->platform_data) {
-		struct omapfb_platform_data *opd;
 		opd = fbdev->dev->platform_data;
 		for (i = 0; i < opd->mem_desc.region_cnt; ++i) {
 			if (!vram_sizes[i]) {
@@ -1812,6 +1813,20 @@ static int omapfb_allocate_all_fbs(struct omapfb2_device *fbdev)
 				rg->paddr,
 				rg->vaddr,
 				rg->size);
+	}
+
+	if ( (opd) && (opd->boot_fb_addr) ) {
+		struct omapfb_info *ofbi = FB2OFB(fbdev->fbs[0]);
+		struct omapfb2_mem_region *rg = ofbi->region;
+		void __iomem *boot_fb_vaddr = ioremap(opd->boot_fb_addr, rg->size);
+
+		if (boot_fb_vaddr) {
+			pr_info("copying uboot splash: %d bytes from 0x%x to 0x%x",
+				rg->size, boot_fb_vaddr, rg->vaddr);
+			memcpy(rg->vaddr, boot_fb_vaddr, rg->size);
+			iounmap(boot_fb_vaddr);
+		}
+		memblock_add(opd->boot_fb_addr, opd->boot_fb_size);
 	}
 
 	return 0;

@@ -252,6 +252,8 @@ struct omapfb_platform_data {
 	struct omap_lcd_config		lcd;
 	struct omapfb_mem_desc		mem_desc;
 	void				*ctrl_platform_data;
+	u32				boot_fb_addr;
+	u32				boot_fb_size;
 };
 
 /* in arch/arm/plat-omap/fb.c */
