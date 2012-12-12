@@ -604,7 +604,9 @@ EXPORT_SYMBOL(read_ti_4xxx_edid);
 static void hdmi_core_init(enum hdmi_deep_color_mode deep_color,
 			struct hdmi_core_video_config *video_cfg,
 			struct hdmi_core_infoframe_avi *avi_cfg,
-			struct hdmi_core_packet_enable_repeat *repeat_cfg)
+			struct hdmi_core_packet_enable_repeat *repeat_cfg,
+			struct hdmi_video_format *video_fmt,
+			struct hdmi_video_interface *video_int)
 {
 	pr_debug("Enter hdmi_core_init\n");
 
@@ -615,19 +617,25 @@ static void hdmi_core_init(enum hdmi_deep_color_mode deep_color,
 		video_cfg->op_dither_truc = HDMI_OUTPUTTRUNCATION_10BIT;
 		video_cfg->deep_color_pkt = HDMI_DEEPCOLORPACKECTENABLE;
 		video_cfg->pkt_mode = HDMI_PACKETMODE30BITPERPIXEL;
+		video_fmt->packing_mode = HDMI_PACK_10b_RGB_YUV444;
+		video_int->tm = HDMI_TIMING_MASTER_30BIT;
 		break;
 	case HDMI_DEEP_COLOR_36BIT:
 		video_cfg->ip_bus_width = HDMI_INPUT_12BIT;
 		video_cfg->op_dither_truc = HDMI_OUTPUTTRUNCATION_12BIT;
 		video_cfg->deep_color_pkt = HDMI_DEEPCOLORPACKECTENABLE;
 		video_cfg->pkt_mode = HDMI_PACKETMODE36BITPERPIXEL;
+		video_fmt->packing_mode = HDMI_PACK_ALREADYPACKED;
+		video_int->tm = HDMI_TIMING_MASTER_36BIT;
 		break;
 	case HDMI_DEEP_COLOR_24BIT:
 	default:
 		video_cfg->ip_bus_width = HDMI_INPUT_8BIT;
 		video_cfg->op_dither_truc = HDMI_OUTPUTTRUNCATION_8BIT;
 		video_cfg->deep_color_pkt = HDMI_DEEPCOLORPACKECTDISABLE;
-		video_cfg->pkt_mode = HDMI_PACKETMODERESERVEDVALUE;
+		video_cfg->pkt_mode = HDMI_PACKETMODE24BITPERPIXEL;
+		video_fmt->packing_mode = HDMI_PACK_24b_RGB_YUV444_YUV422;
+		video_int->tm = HDMI_TIMING_MASTER_24BIT;
 		break;
 	}
 
@@ -1007,7 +1015,7 @@ void hdmi_ti_4xxx_basic_configure(struct hdmi_ip_data *ip_data,
 
 	hdmi_core_init(cfg->deep_color, &v_core_cfg,
 		&avi_cfg,
-		&repeat_cfg);
+		&repeat_cfg, &video_format, &video_interface);
 
 	hdmi_wp_core_interrupt_set(ip_data, HDMI_WP_IRQENABLE_CORE |
 				HDMI_WP_AUDIO_FIFO_UNDERFLOW);
@@ -1016,15 +1024,11 @@ void hdmi_ti_4xxx_basic_configure(struct hdmi_ip_data *ip_data,
 
 	hdmi_wp_video_config_timing(ip_data, &video_timing);
 
-	/* video config */
-	video_format.packing_mode = HDMI_PACK_24b_RGB_YUV444_YUV422;
-
 	hdmi_wp_video_config_format(ip_data, &video_format);
 
 	video_interface.vsp = !!(cfg->timings.sync & FB_SYNC_VERT_HIGH_ACT);
 	video_interface.hsp = !!(cfg->timings.sync & FB_SYNC_HOR_HIGH_ACT);
 	video_interface.interlacing = cfg->timings.vmode & FB_VMODE_INTERLACED;
-	video_interface.tm = 1 ; /* HDMI_TIMING_MASTER_24BIT */
 
 	hdmi_wp_video_config_interface(ip_data, &video_interface);
 
@@ -1037,7 +1041,6 @@ void hdmi_ti_4xxx_basic_configure(struct hdmi_ip_data *ip_data,
 	/* power down off */
 	hdmi_core_powerdown_disable(ip_data);
 
-	v_core_cfg.pkt_mode = HDMI_PACKETMODE24BITPERPIXEL;
 	v_core_cfg.hdmi_dvi = cfg->cm.mode;
 
 	hdmi_core_video_config(ip_data, &v_core_cfg);
