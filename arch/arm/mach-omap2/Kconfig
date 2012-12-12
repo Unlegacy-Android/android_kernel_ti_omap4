@@ -352,21 +352,53 @@ config MACH_OMAP_BLAZE
 	select TOUCHSCREEN_CYPRESS_TTSP
 	select LEDS_OMAP4430_SDP_DISPLAY
 	select LEDS_OMAP4430_SDP_KEYPAD
-	select INPUT_TSL2771
-	select INPUT_BMP085
-	select INPUT_HMC5843
-	select INPUT_MPU3050
-	select INPUT_BMA180
 	select PANEL_TC358765
 	select KEYBOARD_GPIO
-	select TWL6040_VIB
+	select REGULATOR_FIXED_VOLTAGE
+	select HWMON
 	select OMAP_REBOOT_REASON
 	select OMAP_RAM_CONSOLE
 	select CDC_TCXO
 
+config MACH_OMAP_ACCLAIM
+	bool "OMAP 4430 Acclaim Board"
+	default y
+	depends on ARCH_OMAP4
+	select OMAP_PACKAGE_CBL
+	select OMAP_PACKAGE_CBS
+	select KEYBOARD_GPIO
+	select REGULATOR_FIXED_VOLTAGE
+	select HWMON
+	select OMAP_REBOOT_REASON
+	select WIRELESS_EXT
+
+config MACH_OMAP_OVATION
+	bool "OMAP 44xx Ovation Board"
+	default n
+	depends on ARCH_OMAP4
+	select OMAP_PACKAGE_CBL
+	select OMAP_PACKAGE_CBS
+	select LEDS_OMAP4430_SDP_DISPLAY
+	select LEDS_OMAP4430_SDP_KEYPAD
+	select KEYBOARD_GPIO
+	select HWMON
+	select OMAP_REBOOT_REASON
+
+config MACH_OMAP_HUMMINGBIRD
+	bool "OMAP 44xx Hummingbird Board"
+	default n
+	depends on ARCH_OMAP4
+	select OMAP_PACKAGE_CBL
+	select OMAP_PACKAGE_CBS
+	select LEDS_OMAP4430_SDP_DISPLAY
+	select LEDS_OMAP4430_SDP_KEYPAD
+	select KEYBOARD_GPIO
+	select HWMON
+	select OMAP_REBOOT_REASON
+
 config MACH_OMAP4_PANDA
 	bool "OMAP4 Panda Board"
-	default y
+	default n
 	depends on ARCH_OMAP4
 	select OMAP_PACKAGE_CBL
 	select OMAP_PACKAGE_CBS
