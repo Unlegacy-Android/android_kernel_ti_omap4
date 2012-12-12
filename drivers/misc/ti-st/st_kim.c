@@ -448,11 +448,11 @@ long st_kim_start(void *kim_data)
 	pr_info(" %s", __func__);
 	pdata = kim_gdata->kim_pdev->dev.platform_data;
 
-	do {
-		/* platform specific enabling code here */
-		if (pdata->chip_enable)
-			pdata->chip_enable();
+	/* platform specific enabling code here */
+	if (pdata->chip_enable)
+		pdata->chip_enable();
 
+	do {
 		/* Configure BT nShutdown to HIGH state */
 		gpio_set_value(kim_gdata->nshutdown, GPIO_LOW);
 		mdelay(5);	/* FIXME: a proper toggle */
@@ -473,6 +473,8 @@ long st_kim_start(void *kim_data)
 			 * flush uart, power cycle BT_EN */
 			pr_err("ldisc installation timeout");
 			err = st_kim_stop(kim_gdata);
+			if (pdata->chip_enable)
+				pdata->chip_enable();
 			continue;
 		} else {
 			/* ldisc installed now */
@@ -483,12 +485,20 @@ long st_kim_start(void *kim_data)
 				 * flush uart & power cycle BT_EN */
 				pr_err("download firmware failed");
 				err = st_kim_stop(kim_gdata);
+				if (pdata->chip_enable)
+					pdata->chip_enable();
 				continue;
 			} else {	/* on success don't retry */
 				break;
 			}
 		}
 	} while (retry--);
+
+	if (err < 0) {
+		if (pdata->chip_disable)
+			pdata->chip_disable();
+	}
+
 	return err;
 }
 
