@@ -30,7 +30,7 @@ clock-common				= clock.o clock_common_data.o \
 obj-$(CONFIG_ARCH_OMAP2) += $(omap-2-3-common) $(hwmod-common)
 obj-$(CONFIG_ARCH_OMAP3) += $(omap-2-3-common) $(hwmod-common)
 obj-$(CONFIG_ARCH_OMAP4) += prm44xx.o $(hwmod-common)
-obj-$(CONFIG_ARCH_OMAP4) += emif.o lpddr2_jedec_data.o lpddr2_elpida_data.o
+obj-$(CONFIG_ARCH_OMAP4) += emif.o lpddr2_jedec_data.o lpddr2_elpida_data.o lpddr2_hynix_data.o lpddr2_samsung_data.o
 
 obj-$(CONFIG_OMAP_MCBSP) += mcbsp.o
 
@@ -286,6 +286,35 @@ obj-$(CONFIG_MACH_OMAP_BLAZE)		+= board-44xx-tablet.o \
 					   board-44xx-tablet-sensors.o \
 					   board-44xx-tablet-panel.o \
 					   board-44xx-tablet-buttons.o \
+					   omap4_apps_brd_id.o
+obj-$(CONFIG_MACH_OMAP_ACCLAIM)		+= board-acclaim.o \
+					   board-44xx-identity.o \
+					   board-acclaim-touch.o \
+					   board-acclaim-panel.o \
+					   board-acclaim-buttons.o \
+					   omap4_apps_brd_id.o \
+					   omap_phy_internal.o \
+					   hsmmc.o
+obj-$(CONFIG_MACH_OMAP_OVATION)		+= board-ovation.o \
+					   board-ovation-touch.o \
+					   board-ovation-panel.o \
+					   board-ovation-buttons.o \
+					   board-bn-power.o \
+					   board-bn-wifi.o \
+					   board-44xx-identity.o \
+					   hsmmc.o \
+					   omap_phy_internal.o \
+					   omap4_apps_brd_id.o
+obj-$(CONFIG_MACH_OMAP_HUMMINGBIRD)     += board-hummingbird.o \
+					   board-hummingbird-touch.o \
+					   board-hummingbird-sensors.o \
+					   board-hummingbird-panel.o \
+					   board-hummingbird-buttons.o \
+					   board-bn-power.o \
+					   board-bn-wifi.o \
+					   board-44xx-identity.o \
+					   hsmmc.o \
+					   omap_phy_internal.o \
 					   omap4_apps_brd_id.o
 obj-$(CONFIG_TOUCHSCREEN_CYPRESS_TTSP)  += board-touch-cyttsp4_core.o
 obj-$(CONFIG_MACH_OMAP4_PANDA)		+= board-omap4panda.o \
