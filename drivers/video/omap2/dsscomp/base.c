@@ -94,7 +94,8 @@ static const struct color_info *get_color_info(enum omap_color_mode mode)
 static int color_mode_to_bpp(enum omap_color_mode color_mode)
 {
 	const struct color_info *ci = get_color_info(color_mode);
-	BUG_ON(!ci);
+	if (!ci)
+		return 0;
 
 	return ci->a_bt + ci->r_bt + ci->g_bt + ci->b_bt + ci->x_bt;
 }
@@ -308,6 +309,13 @@ int set_dss_ovl_info(struct dss2_ovl_info *oi)
 		/* program tiler 1D as SDMA */
 
 		int bpp = color_mode_to_bpp(cfg->color_mode);
+		if (!bpp) {
+			pr_warn("invalid color format %u for ovl%d\n",
+						cfg->color_mode, cfg->ix);
+			info.enabled = false;
+			goto done;
+		}
+
 		info.screen_width = cfg->stride * 8 / (bpp == 12 ? 8 : bpp);
 		info.paddr += crop.x * (bpp / 8) + crop.y * cfg->stride;
 
@@ -458,6 +466,29 @@ struct omap_overlay_manager *find_dss_mgr(int display_ix)
 	return NULL;
 }
 
+static struct omap_dss_cpr_coefs cpr_merge(struct omap_dss_cpr_coefs sysc, struct omap_dss_cpr_coefs mic, u8 swap_rb)
+{
+	struct omap_dss_cpr_coefs c;
+
+	if  (swap_rb) {
+		swap(sysc.rr, sysc.br);
+		swap(sysc.rg, sysc.bg);
+		swap(sysc.rb, sysc.bb);
+	}
+
+	c.rr = sysc.rr + mic.rr;
+	c.rg = sysc.rg + mic.rg;
+	c.rb = sysc.rb + mic.rb;
+	c.gr = sysc.gr + mic.gr;
+	c.gg = sysc.gg + mic.gg;
+	c.gb = sysc.gb + mic.gb;
+	c.br = sysc.br + mic.br;
+	c.bg = sysc.bg + mic.bg;
+	c.bb = sysc.bb + mic.bb;
+
+	return c;
+}
+
 int set_dss_mgr_info(struct dss2_mgr_info *mi, struct omapdss_ovl_cb *cb,
 								bool m2m_mode)
 {
@@ -488,6 +519,8 @@ int set_dss_mgr_info(struct dss2_mgr_info *mi, struct omapdss_ovl_cb *cb,
 void swap_rb_in_mgr_info(struct dss2_mgr_info *mi)
 {
 	const struct omap_dss_cpr_coefs c = { 256, 0, 0, 0, 256, 0, 0, 0, 256 };
+	struct omap_overlay_manager_info info;
+	struct omap_overlay_manager *mgr;
 
 	/* set default CPR */
 	if (!mi->cpr_enabled)
@@ -523,7 +556,7 @@ void dump_ovl_info(struct dsscomp_dev *cdev, struct dss2_ovl_info *oi)
 	dev_info(DEV(cdev), "ovl%d(%s z%d %s%s *%d%% %d*%d:%d,%d+%d,%d rot%d%s"
 						" => %d,%d+%d,%d %p/%p|%d)\n",
 		c->ix, c->enabled ? "ON" : "off", c->zorder,
-		ci->name ? : "(none)",
+		ci ? (ci->name ? : "(none)") : "(invalid)",
 		c->pre_mult_alpha ? " premult" : "",
 		(c->global_alpha * 100 + 128) / 255,
 		c->width, c->height, c->crop.x, c->crop.y,

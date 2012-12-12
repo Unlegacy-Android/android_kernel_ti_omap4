@@ -153,14 +153,14 @@ static DEVICE_ATTR(s3d_enable, S_IRUGO | S_IWUSR, hdmi_s3d_enable_show,
 static DEVICE_ATTR(s3d_type, S_IRUGO | S_IWUSR, hdmi_s3d_mode_show,
 							hdmi_s3d_mode_store);
 static DEVICE_ATTR(edid, S_IRUGO, hdmi_edid_show, NULL);
-static DEVICE_ATTR(deepcolor, S_IRUGO | S_IWUSR, hdmi_deepcolor_show,
+static DEVICE_ATTR(deepcolor, S_IWUGO | S_IWUSR, hdmi_deepcolor_show,
 							hdmi_deepcolor_store);
-
 static struct attribute *hdmi_panel_attrs[] = {
 	&dev_attr_s3d_enable.attr,
 	&dev_attr_s3d_type.attr,
 	&dev_attr_edid.attr,
 	&dev_attr_deepcolor.attr,
+	&dev_attr_hdmi_timings,
 	NULL,
 };
 
@@ -380,10 +380,11 @@ static void hdmi_set_timings(struct omap_dss_device *dssdev,
 
 	dssdev->panel.timings = *timings;
 
+	mutex_unlock(&hdmi.hdmi_lock);
+
 	if (dssdev->state == OMAP_DSS_DISPLAY_ACTIVE)
 		omapdss_hdmi_display_set_timing(dssdev);
 
-	mutex_unlock(&hdmi.hdmi_lock);
 }
 
 static int hdmi_check_timings(struct omap_dss_device *dssdev,

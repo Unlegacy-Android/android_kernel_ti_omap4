@@ -268,23 +268,29 @@ int dsi_vc_gen_write_nosync(struct omap_dss_device *dssdev, int channel,
 		u8 *data, int len);
 int dsi_vc_gen_write(struct omap_dss_device *dssdev, int channel,
 		u8 *data, int len);
+int dsi_vc_gen_short_write_nosync(struct omap_dss_device *dssdev, int channel, 
+		u8 *data, int len);
 int dsi_vc_set_max_rx_packet_size(struct omap_dss_device *dssdev, int channel,
 		u16 len);
 int dsi_vc_send_null(struct omap_dss_device *dssdev, int channel);
 int dsi_vc_send_bta_sync(struct omap_dss_device *dssdev, int channel);
 
 int dsi_video_mode_enable(struct omap_dss_device *dssdev, u8 data_type);
-void dsi_video_mode_disable(struct omap_dss_device *dssdev);
+void dsi_video_mode_disable(struct omap_dss_device *dssdev, bool cmd_mode);
 
 int dsi_vc_gen_read_2(struct omap_dss_device *dssdev, int channel, u16 cmd,
 		u8 *buf, int buflen);
+int dsi_vc_gen_read_1(struct omap_dss_device *dssdev, int channel, u16 cmd,
+		u8 *buf, int buflen);
 void dsi_videomode_panel_preinit(struct omap_dss_device *dssdev);
-
+int dsi_vc_turn_on_peripheral(struct omap_dss_device *dssdev, int channel);
+int dsi_interleave_vc_gen_short_write_nosync(struct omap_dss_device *dssdev, int channel, u8 *data, size_t len);
 
 /* Board specific data */
 struct omap_dss_board_info {
 	int (*get_context_loss_count)(struct device *dev);
 	int num_devices;
+	bool move_wb_buffers;
 	struct omap_dss_device **devices;
 	struct omap_dss_device *default_device;
 	void (*dsi_mux_pads)(bool enable);
@@ -482,8 +488,15 @@ struct omap_overlay_manager_info {
 
 	struct omapdss_ovl_cb cb;
 
+	/* merged cpr settings, this is the union of
+	   cpr settings provided by dsscomp and sysfs entry
+	 */
 	bool cpr_enable;
 	struct omap_dss_cpr_coefs cpr_coefs;
+
+	/* cpr settings provided via the sysfs entry */
+	bool cpr_enable_sys;
+	struct omap_dss_cpr_coefs cpr_coefs_sys;
 };
 
 struct omap_overlay_manager {
@@ -703,6 +716,7 @@ struct omap_dss_device {
 	struct {
 		u8 pixel_size;
 		struct rfbi_timings rfbi_timings;
+		u8 dither;
 	} ctrl;
 
 	int reset_gpio;
@@ -872,6 +886,7 @@ void omap_dsi_release_vc(struct omap_dss_device *dssdev, int channel);
 int omapdss_dsi_display_enable(struct omap_dss_device *dssdev);
 void omapdss_dsi_display_disable(struct omap_dss_device *dssdev,
 		bool disconnect_lanes, bool enter_ulps);
+int omap_dsi_reconfigure_dsi_clocks(struct omap_dss_device *dssdev);
 
 int omapdss_dpi_display_enable(struct omap_dss_device *dssdev);
 void omapdss_dpi_display_disable(struct omap_dss_device *dssdev);

@@ -437,6 +437,7 @@ void dispc_runtime_put(void);
 
 void dispc_enable_sidle(void);
 void dispc_disable_sidle(void);
+void dispc_disable_clk(void);
 
 void dispc_lcd_enable_signal_polarity(bool act_high);
 void dispc_lcd_enable_signal(bool enable);
@@ -505,6 +506,7 @@ void dispc_set_tft_data_lines(enum omap_channel channel, u8 data_lines);
 void dispc_set_lcd_display_type(enum omap_channel channel,
 		enum omap_lcd_display_type type);
 void dispc_set_loadmode(enum omap_dss_load_mode mode);
+void dispc_set_dither(enum omap_channel channel, bool enable);
 
 void dispc_set_default_color(enum omap_channel channel, u32 color);
 u32 dispc_get_default_color(enum omap_channel channel);
@@ -539,6 +541,7 @@ u32 sa_calc_wrap(struct dispc_config *dispc_reg_config, u32 channel_no);
 int dispc_setup_wb(struct writeback_cache_data *wb);
 void dispc_setup_wb_source(enum omap_writeback_source source);
 void dispc_go_wb(void);
+u16 dispc_line_status(void);
 
 /* VENC */
 #ifdef CONFIG_OMAP2_DSS_VENC
@@ -610,6 +613,7 @@ int omapdss_hdmi_register_cec_callbacks(void (*hdmi_cec_enable_cb)(int status),
 					void (*hdmi_cec_hpd)(int phy_addr,
 					int status));
 int omapdss_hdmi_unregister_cec_callbacks(void);
+extern struct device_attribute dev_attr_hdmi_timings;
 
 int omap_dss_ovl_set_info(struct omap_overlay *ovl,
 		struct omap_overlay_info *info);
