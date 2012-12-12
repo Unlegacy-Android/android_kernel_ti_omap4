@@ -45,6 +45,14 @@
 #include "workqueue_sched.h"
 
 enum {
+	DEBUG_NONE = 1U << 0,
+	DEBUG_SUSPEND = 1U << 1,
+	DEBUG_VERBOSE = 1U << 2,
+};
+static int debug_mask = DEBUG_NONE;
+module_param_named(debug_mask, debug_mask, int, S_IRUGO | S_IWUSR | S_IWGRP);
+
+enum {
 	/* global_cwq flags */
 	GCWQ_MANAGE_WORKERS	= 1 << 0,	/* need to manage workers */
 	GCWQ_MANAGING_WORKERS	= 1 << 1,	/* managing workers */
@@ -1065,6 +1073,7 @@ static void __queue_work(unsigned int cpu, struct workqueue_struct *wq,
  * We queue the work to the CPU on which it was submitted, but if the CPU dies
  * it can be processed by another CPU.
  */
+extern struct workqueue_struct *suspend_work_queue;
 int queue_work(struct workqueue_struct *wq, struct work_struct *work)
 {
 	int ret;
@@ -1095,6 +1104,9 @@ queue_work_on(int cpu, struct workqueue_struct *wq, struct work_struct *work)
 	if (!test_and_set_bit(WORK_STRUCT_PENDING_BIT, work_data_bits(work))) {
 		__queue_work(cpu, wq, work);
 		ret = 1;
+	}
+	if ((debug_mask & DEBUG_SUSPEND) && (wq == suspend_work_queue)) {
+		pr_info("suspend_work_queue: %s(): cpu = %d, ret = %d\n", __func__, cpu, ret);
 	}
 	return ret;
 }

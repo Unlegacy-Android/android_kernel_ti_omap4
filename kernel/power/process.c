@@ -84,6 +84,7 @@ static int try_to_freeze_tasks(bool sig_only)
 		}
 
 		if (todo && has_wake_lock(WAKE_LOCK_SUSPEND)) {
+			dump_active_locks(WAKE_LOCK_SUSPEND);
 			wakeup = 1;
 			break;
 		}

@@ -45,6 +45,9 @@ enum {
 };
 static int state;
 
+static unsigned char recover_flag = 0;
+static struct timespec last_attempt = { 0, 0};
+
 void register_early_suspend(struct early_suspend *handler)
 {
 	struct list_head *pos;
@@ -76,9 +79,9 @@ static void early_suspend(struct work_struct *work)
 	struct early_suspend *pos;
 	unsigned long irqflags;
 	int abort = 0;
-
 	mutex_lock(&early_suspend_lock);
 	spin_lock_irqsave(&state_lock, irqflags);
+	recover_flag = 0;
 	if (state == SUSPEND_REQUESTED)
 		state |= SUSPENDED;
 	else
@@ -86,25 +89,29 @@ static void early_suspend(struct work_struct *work)
 	spin_unlock_irqrestore(&state_lock, irqflags);
 
 	if (abort) {
-		if (debug_mask & DEBUG_SUSPEND)
+		if (debug_mask & DEBUG_SUSPEND) {
 			pr_info("early_suspend: abort, state %d\n", state);
+		}
 		mutex_unlock(&early_suspend_lock);
 		goto abort;
 	}
 
-	if (debug_mask & DEBUG_SUSPEND)
+	if (debug_mask & DEBUG_SUSPEND) {
 		pr_info("early_suspend: call handlers\n");
+	}
 	list_for_each_entry(pos, &early_suspend_handlers, link) {
 		if (pos->suspend != NULL) {
-			if (debug_mask & DEBUG_VERBOSE)
+			if (debug_mask & DEBUG_VERBOSE) {
 				pr_info("early_suspend: calling %pf\n", pos->suspend);
+			}
 			pos->suspend(pos);
 		}
 	}
 	mutex_unlock(&early_suspend_lock);
 
-	if (debug_mask & DEBUG_SUSPEND)
+	if (debug_mask & DEBUG_SUSPEND) {
 		pr_info("early_suspend: sync\n");
+	}
 
 	sys_sync();
 abort:
@@ -119,7 +126,6 @@ static void late_resume(struct work_struct *work)
 	struct early_suspend *pos;
 	unsigned long irqflags;
 	int abort = 0;
-
 	mutex_lock(&early_suspend_lock);
 	spin_lock_irqsave(&state_lock, irqflags);
 	if (state == SUSPENDED)
@@ -129,22 +135,25 @@ static void late_resume(struct work_struct *work)
 	spin_unlock_irqrestore(&state_lock, irqflags);
 
 	if (abort) {
-		if (debug_mask & DEBUG_SUSPEND)
+		if (debug_mask & DEBUG_SUSPEND) {
 			pr_info("late_resume: abort, state %d\n", state);
+		}
 		goto abort;
 	}
-	if (debug_mask & DEBUG_SUSPEND)
+	if (debug_mask & DEBUG_SUSPEND) {
 		pr_info("late_resume: call handlers\n");
+	}
 	list_for_each_entry_reverse(pos, &early_suspend_handlers, link) {
 		if (pos->resume != NULL) {
-			if (debug_mask & DEBUG_VERBOSE)
+			if (debug_mask & DEBUG_VERBOSE) {
 				pr_info("late_resume: calling %pf\n", pos->resume);
-
+			}
 			pos->resume(pos);
 		}
 	}
-	if (debug_mask & DEBUG_SUSPEND)
+	if (debug_mask & DEBUG_SUSPEND) {
 		pr_info("late_resume: done\n");
+	}
 abort:
 	mutex_unlock(&early_suspend_lock);
 }
@@ -153,6 +162,8 @@ void request_suspend_state(suspend_state_t new_state)
 {
 	unsigned long irqflags;
 	int old_sleep;
+	int ret;
+	struct timespec ts;
 
 	spin_lock_irqsave(&state_lock, irqflags);
 	old_sleep = state & SUSPEND_REQUESTED;
@@ -169,13 +180,33 @@ void request_suspend_state(suspend_state_t new_state)
 			tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
 			tm.tm_hour, tm.tm_min, tm.tm_sec, ts.tv_nsec);
 	}
+
+	if ( recover_flag >= 3) {
+		BUG_ON(recover_flag);
+	}
+
+	if (debug_mask & DEBUG_VERBOSE) {
+		pr_info("bn debug:: old_sleep = %d,  new_state = %d \n", old_sleep, new_state);
+	}
 	if (!old_sleep && new_state != PM_SUSPEND_ON) {
 		state |= SUSPEND_REQUESTED;
-		queue_work(suspend_work_queue, &early_suspend_work);
+		getnstimeofday(&ts);
+		/* Increment recovery flag only after a min of 8 seconds */
+		if( ( last_attempt.tv_sec + 8 ) < ( ts.tv_sec ) ) {
+			recover_flag++;
+		}
+		last_attempt = ts;
+		ret = queue_work_on(0, suspend_work_queue, &early_suspend_work);
+		if (debug_mask & DEBUG_VERBOSE) {
+			pr_info("bn debug: %s(): %d: early suspend wq=%p; ret = %d\n", __func__, __LINE__, suspend_work_queue, ret);
+		}
 	} else if (old_sleep && new_state == PM_SUSPEND_ON) {
 		state &= ~SUSPEND_REQUESTED;
 		wake_lock(&main_wake_lock);
-		queue_work(suspend_work_queue, &late_resume_work);
+		ret = queue_work_on(0, suspend_work_queue, &late_resume_work);
+		if (debug_mask & DEBUG_VERBOSE) {
+			pr_info("bn debug: %s(): %d: late resume wq=%p; ret = %d\n", __func__, __LINE__, suspend_work_queue, ret);
+		}
 	}
 	requested_suspend_state = new_state;
 	spin_unlock_irqrestore(&state_lock, irqflags);

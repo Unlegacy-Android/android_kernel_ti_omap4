@@ -30,6 +30,7 @@ enum {
 	DEBUG_SUSPEND = 1U << 2,
 	DEBUG_EXPIRE = 1U << 3,
 	DEBUG_WAKE_LOCK = 1U << 4,
+	DEBUG_VERBOSE = 1U << 5,
 };
 static int debug_mask = DEBUG_EXIT_SUSPEND | DEBUG_WAKEUP;
 module_param_named(debug_mask, debug_mask, int, S_IRUGO | S_IWUSR | S_IWGRP);
@@ -230,6 +231,14 @@ static void print_active_locks(int type)
 	}
 }
 
+void dump_active_locks(int type)
+{
+	unsigned long irqflags;
+	spin_lock_irqsave(&list_lock, irqflags);
+	print_active_locks(type);
+	spin_unlock_irqrestore(&list_lock, irqflags);
+}
+
 static long has_wake_lock_locked(int type)
 {
 	struct wake_lock *lock, *n;
@@ -320,6 +329,7 @@ static void expire_wake_locks(unsigned long data)
 {
 	long has_lock;
 	unsigned long irqflags;
+	int ret;
 	if (debug_mask & DEBUG_EXPIRE)
 		pr_info("expire_wake_locks: start\n");
 	spin_lock_irqsave(&list_lock, irqflags);
@@ -328,8 +338,12 @@ static void expire_wake_locks(unsigned long data)
 	has_lock = has_wake_lock_locked(WAKE_LOCK_SUSPEND);
 	if (debug_mask & DEBUG_EXPIRE)
 		pr_info("expire_wake_locks: done, has_lock %ld\n", has_lock);
-	if (has_lock == 0)
-		queue_work(suspend_work_queue, &suspend_work);
+	if (has_lock == 0) {
+		ret = queue_work_on(0, suspend_work_queue, &suspend_work);
+		if (debug_mask & DEBUG_VERBOSE) {
+			pr_info("bn debug: %s(): %d: suspend_work_queue %p; ret = %d\n", __func__, __LINE__, suspend_work_queue, ret);
+		}
+	}
 	spin_unlock_irqrestore(&list_lock, irqflags);
 }
 static DEFINE_TIMER(expire_timer, expire_wake_locks, 0, 0);
@@ -418,6 +432,7 @@ static void wake_lock_internal(
 	int type;
 	unsigned long irqflags;
 	long expire_in;
+	int ret;
 
 	spin_lock_irqsave(&list_lock, irqflags);
 	type = lock->flags & WAKE_LOCK_TYPE_MASK;
@@ -480,8 +495,12 @@ static void wake_lock_internal(
 				if (debug_mask & DEBUG_EXPIRE)
 					pr_info("wake_lock: %s, stop expire timer\n",
 						lock->name);
-			if (expire_in == 0)
-				queue_work(suspend_work_queue, &suspend_work);
+			if (expire_in == 0) {
+				ret = queue_work_on(0, suspend_work_queue, &suspend_work);
+				if (debug_mask & DEBUG_VERBOSE) {
+					pr_info("bn debug: %s(): %d: suspend_work_queue %p; ret = %d\n", __func__, __LINE__, suspend_work_queue, ret);
+				}
+			}
 		}
 	}
 	spin_unlock_irqrestore(&list_lock, irqflags);
@@ -503,6 +522,8 @@ void wake_unlock(struct wake_lock *lock)
 {
 	int type;
 	unsigned long irqflags;
+	int ret;
+
 	spin_lock_irqsave(&list_lock, irqflags);
 	type = lock->flags & WAKE_LOCK_TYPE_MASK;
 #ifdef CONFIG_WAKELOCK_STAT
@@ -526,7 +547,12 @@ void wake_unlock(struct wake_lock *lock)
 					pr_info("wake_unlock: %s, stop expire "
 						"timer\n", lock->name);
 			if (has_lock == 0)
-				queue_work(suspend_work_queue, &suspend_work);
+			{
+				ret = queue_work_on(0, suspend_work_queue, &suspend_work);
+				if (debug_mask & DEBUG_VERBOSE) {
+					pr_info("bn debug: %s(): %d: suspend_work_queue %p; ret = %d\n", __func__, __LINE__, suspend_work_queue, ret);
+				}
+			}
 		}
 		if (lock == &main_wake_lock) {
 			if (debug_mask & DEBUG_SUSPEND)
@@ -588,7 +614,7 @@ static int __init wakelocks_init(void)
 		goto err_platform_driver_register;
 	}
 
-	suspend_work_queue = create_singlethread_workqueue("suspend");
+	suspend_work_queue = alloc_workqueue("suspend", WQ_NON_REENTRANT | WQ_MEM_RECLAIM, 1);
 	if (suspend_work_queue == NULL) {
 		ret = -ENOMEM;
 		goto err_suspend_work_queue;
