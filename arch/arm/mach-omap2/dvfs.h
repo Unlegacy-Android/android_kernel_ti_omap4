@@ -44,4 +44,5 @@ static inline bool omap_dvfs_is_any_dev_scaling(void)
 	return false;
 }
 #endif
+struct clk* dvfs_get_dev_clk(struct device *dev);
 #endif

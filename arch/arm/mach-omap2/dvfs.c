@@ -698,6 +698,20 @@ next:
 	return ret;
 }
 
+struct clk* dvfs_get_dev_clk(struct device *dev)
+{
+	struct omap_vdd_dev_list *temp_dev;
+	struct omap_vdd_dvfs_info *tdvfs_info;
+
+	tdvfs_info = _dev_to_dvfs_info(dev);
+	list_for_each_entry(temp_dev, &tdvfs_info->dev_list, node) {
+		if (temp_dev->dev == dev) {
+			return temp_dev->clk;
+		}
+	}
+
+	return NULL;
+}
 /**
  * _dvfs_scale() : Scale the devices associated with a voltage domain
  * @req_dev:	Device requesting the scale
