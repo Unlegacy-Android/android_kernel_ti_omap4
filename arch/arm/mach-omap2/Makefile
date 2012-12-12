@@ -294,6 +294,7 @@ obj-$(CONFIG_MACH_OMAP_ACCLAIM) 	+= board-acclaim.o \
 obj-$(CONFIG_MACH_OMAP_BN) 		+= board-44xx-identity.o \
 					   omap4_apps_brd_id.o \
 					   omap_phy_internal.o \
+					   lpddr2_samsung_data.o \
 					   hsmmc.o
 obj-$(CONFIG_MACH_OMAP_OVATION) 	+= board-ovation.o \
 					   board-ovation-touch.o \
@@ -305,6 +306,7 @@ obj-$(CONFIG_MACH_OMAP_HUMMINGBIRD)	+= board-hummingbird.o \
 					   board-hummingbird-panel.o \
 					   board-hummingbird-buttons.o
 obj-$(CONFIG_MACH_OMAP_BN_HD)		+= board-bn-power.o \
+					   lpddr2_hynix_data.o \
 					   board-bn-wifi.o
 obj-$(CONFIG_TOUCHSCREEN_CYPRESS_TTSP)  += board-touch-cyttsp4_core.o
 obj-$(CONFIG_MACH_OMAP4_PANDA)		+= board-omap4panda.o \
