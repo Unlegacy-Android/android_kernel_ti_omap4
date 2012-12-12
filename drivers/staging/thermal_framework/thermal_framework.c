@@ -323,7 +323,7 @@ int thermal_lookup_temp(const char *name)
 
 	thermal_domain = thermal_domain_find(name);
 	if (!thermal_domain) {
-		pr_err("%s: %s is a non existing domain\n", __func__, name);
+		pr_debug("%s: %s is a non existing domain\n", __func__, name);
 		return ret;
 	}
 
