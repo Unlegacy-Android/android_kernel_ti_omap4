@@ -40,6 +40,7 @@ enum usb_xceiv_events {
 	USB_EVENT_VBUS,         /* vbus valid event */
 	USB_EVENT_ID,           /* id was grounded */
 	USB_EVENT_CHARGER,      /* usb dedicated charger */
+	USB_EVENT_NO_CONTACT,	/* usb no contact */
 	USB_EVENT_ENUMERATED,   /* gadget driver enumerated */
 };
 
@@ -114,6 +115,10 @@ struct otg_transceiver {
 
 	/* start or continue HNP role switch */
 	int	(*start_hnp)(struct otg_transceiver *otg);
+
+	/* get current status of the link */
+	int	(*get_link_status)(struct otg_transceiver *otg);
+
 
 };
 
@@ -249,6 +254,19 @@ static inline int
 otg_start_srp(struct otg_transceiver *otg)
 {
 	return otg->start_srp(otg);
+}
+
+/* */
+static inline int otg_get_link_status(struct otg_transceiver *otg)
+{
+	if ((otg != NULL) && (otg->get_link_status != NULL))
+	{
+		return otg->get_link_status(otg);
+	}
+	else
+	{
+		return 0;
+	}
 }
 
 /* notifiers */

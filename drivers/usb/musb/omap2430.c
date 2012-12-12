@@ -340,6 +340,10 @@ static void musb_otg_notifier_work(struct work_struct *data_notifier_work)
 		pm_runtime_mark_last_busy(dev->parent);
 		pm_runtime_put_autosuspend(dev->parent);
 		break;
+	case USB_EVENT_NO_CONTACT:
+		dev_dbg(musb->controller, "USB no contact\n");
+		musb->is_ac_charger = true;
+		break;
 
 	case USB_EVENT_NONE:
 		if (musb->is_ac_charger) {
