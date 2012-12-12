@@ -469,6 +469,8 @@ static u32 get_ddr_phy_ctrl_1(u32 freq, u8 RL)
 		val = EMIF_DLL_SLAVE_DLY_CTRL_100_MHZ_AND_LESS;
 	else if (freq <= 200000000)
 		val = EMIF_DLL_SLAVE_DLY_CTRL_200_MHZ;
+	else if (freq <= 233333333)
+		val = EMIF_DLL_SLAVE_DLY_CTRL_233_MHZ;
 	else if (freq <= 400000000)
 		if (cpu_is_omap447x())
 			val = EMIF_DLL_SLAVE_DLY_CTRL_466_MHZ;
@@ -963,6 +965,36 @@ static void emif_calculate_regs(const struct emif_device_details *devices,
 
 	regs->RL_final = timings->RL;
 
+#if 0
+	/*
+	 * Initial value of EMIF_SDRAM_CONFIG corresponds to the base
+	 * frequency - 19.2 MHz
+	 */
+	regs->sdram_config_init =
+	    get_sdram_config_reg(cs0_device, cs1_device, addressing,
+				 RL_19_2_MHZ);
+
+	regs->sdram_config_final = regs->sdram_config_init;
+	mask_n_set(regs->sdram_config_final, OMAP44XX_REG_CL_SHIFT,
+		   OMAP44XX_REG_CL_MASK, timings->RL);
+
+	regs->ref_ctrl = get_sdram_ref_ctrl(freq, addressing);
+	regs->ref_ctrl_derated = regs->ref_ctrl / 4;
+	switch (freq) {
+	case LPDDR2_466MHZ:
+		regs->ref_ctrl -= 2;
+		break;
+	case LPDDR2_233MHZ:
+		regs->ref_ctrl -= 1;
+		break;
+	default:
+		break;
+	}
+
+	pr_debug("\nEMIF freq=%d ref_ctrl=0x%x derated=0x%x\n",
+				freq, regs->ref_ctrl, regs->ref_ctrl_derated);
+#endif
+
 	regs->ref_ctrl_shdw = get_sdram_ref_ctrl(freq, addressing);
 	regs->ref_ctrl_shdw_derated = regs->ref_ctrl_shdw / 4;
 
@@ -975,6 +1007,22 @@ static void emif_calculate_regs(const struct emif_device_details *devices,
 
 	regs->sdram_tim3_shdw =
 	    get_sdram_tim_3_reg(freq, timings, min_tck, addressing);
+#if 0
+	switch (freq) {
+	case LPDDR2_466MHZ:
+		regs->sdram_tim3 = 0x00D4E3CF;
+		break;
+	case LPDDR2_233MHZ:
+		regs->sdram_tim3 = 0x006A21EF;
+		break;
+	default:
+		regs->sdram_tim3 =
+			get_sdram_tim_3_reg(timings, min_tck, addressing);
+		break;
+	}
+
+	pr_debug("\nSDRAM_TIM_3=0x%x\n", regs->sdram_tim3);
+#endif
 
 	regs->read_idle_ctrl_shdw_normal =
 	    get_read_idle_ctrl_reg(LPDDR2_VOLTAGE_STABLE);
@@ -1500,3 +1548,15 @@ static int __init omap_init_emif_timings(void)
 	return ret;
 }
 late_initcall(omap_init_emif_timings);
+
+int sdram_vendor(void)
+{
+	int ddr_manufact_id = 0;
+	void __iomem *base;
+
+	base = emif[EMIF1].base;
+	__raw_writel(LPDDR2_MR5, base + OMAP44XX_EMIF_LPDDR2_MODE_REG_CFG);
+	ddr_manufact_id =  __raw_readb(base  +  OMAP44XX_EMIF_LPDDR2_MODE_REG_DATA);
+
+	return ddr_manufact_id;
+}

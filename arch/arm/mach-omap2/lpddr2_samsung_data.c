@@ -12,9 +12,9 @@
  */
 
 #include <mach/emif.h>
-#include <mach/lpddr2-elpida.h>
+#include <mach/lpddr2-samsung.h>
 
-const struct lpddr2_timings lpddr2_elpida_timings_466_mhz = {
+const struct lpddr2_timings lpddr2_samsung_timings_466_mhz = {
 	.max_freq	= 466666666,
 	.RL		= 7,
 	.tRPab		= 21,
@@ -37,7 +37,7 @@ const struct lpddr2_timings lpddr2_elpida_timings_466_mhz = {
 	.tFAW		= 50,
 };
 
-const struct lpddr2_timings lpddr2_elpida_timings_400_mhz = {
+const struct lpddr2_timings lpddr2_samsung_timings_400_mhz = {
 	.max_freq	= 400000000,
 	.RL		= 6,
 	.tRPab		= 21,
@@ -60,7 +60,7 @@ const struct lpddr2_timings lpddr2_elpida_timings_400_mhz = {
 	.tFAW		= 50,
 };
 
-const struct lpddr2_timings lpddr2_elpida_timings_333_mhz = {
+const struct lpddr2_timings lpddr2_samsung_timings_333_mhz = {
 	.max_freq	= 333000000,
 	.RL		= 5,
 	.tRPab		= 21,
@@ -83,7 +83,7 @@ const struct lpddr2_timings lpddr2_elpida_timings_333_mhz = {
 	.tFAW		= 50,
 };
 
-const struct lpddr2_timings lpddr2_elpida_timings_200_mhz = {
+const struct lpddr2_timings lpddr2_samsung_timings_200_mhz = {
 	.max_freq	= 200000000,
 	.RL		= 3,
 	.tRPab		= 21,
@@ -106,7 +106,7 @@ const struct lpddr2_timings lpddr2_elpida_timings_200_mhz = {
 	.tFAW		= 50,
 };
 
-const struct lpddr2_min_tck lpddr2_elpida_min_tck = {
+const struct lpddr2_min_tck lpddr2_samsung_min_tck = {
 	.tRL		= 3,
 	.tRP_AB		= 3,
 	.tRCD		= 3,
@@ -121,28 +121,28 @@ const struct lpddr2_min_tck lpddr2_elpida_min_tck = {
 	.tFAW		= 8
 };
 
-struct lpddr2_device_info lpddr2_elpida_2G_S4_dev = {
+struct lpddr2_device_info lpddr2_samsung_2G_S4_dev = {
 	.device_timings = {
-		&lpddr2_elpida_timings_200_mhz,
-		&lpddr2_elpida_timings_333_mhz,
-		&lpddr2_elpida_timings_400_mhz,
-		&lpddr2_elpida_timings_466_mhz,
+		&lpddr2_samsung_timings_200_mhz,
+		&lpddr2_samsung_timings_333_mhz,
+		&lpddr2_samsung_timings_400_mhz,
+		&lpddr2_samsung_timings_466_mhz,
 	},
-	.min_tck	= &lpddr2_elpida_min_tck,
+	.min_tck	= &lpddr2_samsung_min_tck,
 	.type		= LPDDR2_TYPE_S4,
 	.density	= LPDDR2_DENSITY_2Gb,
 	.io_width	= LPDDR2_IO_WIDTH_32,
 	.emif_ddr_selfrefresh_cycles = 262144,
 };
 
-struct lpddr2_device_info lpddr2_elpida_4G_S4_dev = {
+struct lpddr2_device_info lpddr2_samsung_4G_S4_dev = {
 	.device_timings = {
-		&lpddr2_elpida_timings_200_mhz,
-		&lpddr2_elpida_timings_333_mhz,
-		&lpddr2_elpida_timings_400_mhz,
-		&lpddr2_elpida_timings_466_mhz,
+		&lpddr2_samsung_timings_200_mhz,
+		&lpddr2_samsung_timings_333_mhz,
+		&lpddr2_samsung_timings_400_mhz,
+		&lpddr2_samsung_timings_466_mhz,
 	},
-	.min_tck	= &lpddr2_elpida_min_tck,
+	.min_tck	= &lpddr2_samsung_min_tck,
 	.type		= LPDDR2_TYPE_S4,
 	.density	= LPDDR2_DENSITY_4Gb,
 	.io_width	= LPDDR2_IO_WIDTH_32,
