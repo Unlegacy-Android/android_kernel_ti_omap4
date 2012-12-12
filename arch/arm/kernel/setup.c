@@ -97,6 +97,11 @@ EXPORT_SYMBOL(system_serial_high);
 unsigned int elf_hwcap __read_mostly;
 EXPORT_SYMBOL(elf_hwcap);
 
+unsigned int system_modelid;
+EXPORT_SYMBOL(system_modelid);
+
+unsigned char system_cpuid[20];
+EXPORT_SYMBOL(system_cpuid);
 
 #ifdef MULTI_CPU
 struct processor processor __read_mostly;
@@ -676,6 +681,24 @@ static int __init parse_tag_cmdline(const struct tag *tag)
 }
 
 __tagtable(ATAG_CMDLINE, parse_tag_cmdline);
+
+
+static int __init parse_tag_modelid(const struct tag *tag)
+{
+	system_modelid = tag->u.modelid.id;
+	return 0;
+}
+
+__tagtable(ATAG_MODELID , parse_tag_modelid);
+
+static int __init parse_tag_cpuid(const struct tag *tag)
+{
+	memcpy(system_cpuid, tag->u.cpuid.id, 20);
+	return 0;
+}
+
+__tagtable(ATAG_CPUID , parse_tag_cpuid);
+
 
 /*
  * Scan the tag table for this tag, and call its parse function.
