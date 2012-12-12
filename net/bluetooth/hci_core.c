@@ -1120,15 +1120,16 @@ EXPORT_SYMBOL(hci_free_dev);
 static void hci_power_on(struct work_struct *work)
 {
 	struct hci_dev *hdev = container_of(work, struct hci_dev, power_on);
-	int err;
 
 	BT_DBG("%s", hdev->name);
 
-	err = hci_dev_open(hdev->id);
+#ifndef CONFIG_MACH_OMAP_BN_HD
+	int err = hci_dev_open(hdev->id);
 	if (err < 0) {
 		mgmt_set_powered_failed(hdev, err);
 		return;
 	}
+#endif
 
 	if (test_bit(HCI_AUTO_OFF, &hdev->dev_flags))
 		schedule_delayed_work(&hdev->power_off,
@@ -1145,7 +1146,9 @@ static void hci_power_off(struct work_struct *work)
 
 	BT_DBG("%s", hdev->name);
 
+#ifndef CONFIG_MACH_OMAP_BN_HD
 	hci_dev_do_close(hdev);
+#endif
 }
 
 static void hci_discov_off(struct work_struct *work)
