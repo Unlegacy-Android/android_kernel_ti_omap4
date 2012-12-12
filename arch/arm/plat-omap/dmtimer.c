@@ -53,6 +53,7 @@
 #define _OMAP_TIMER_SYS_STAT_OFFSET	0x14
 #define _OMAP_TIMER_STAT_OFFSET		0x18
 #define _OMAP_TIMER_INT_EN_OFFSET	0x1c
+#define _OMAP_TIMER_INT_CLR_OFFSET	0x30
 #define _OMAP_TIMER_WAKEUP_EN_OFFSET	0x20
 #define _OMAP_TIMER_CTRL_OFFSET		0x24
 #define		OMAP_TIMER_CTRL_GPOCFG		(1 << 14)
@@ -109,6 +110,9 @@
 							| (WP_NONE << WPSHIFT))
 
 #define OMAP_TIMER_INT_EN_REG			(_OMAP_TIMER_INT_EN_OFFSET \
+							| (WP_NONE << WPSHIFT))
+
+#define	OMAP_TIMER_INT_CLR_REG			(_OMAP_TIMER_INT_CLR_OFFSET \
 							| (WP_NONE << WPSHIFT))
 
 #define OMAP_TIMER_WAKEUP_EN_REG		(_OMAP_TIMER_WAKEUP_EN_OFFSET \
@@ -181,10 +185,13 @@ static inline u32 omap_dm_timer_read_reg(struct omap_dm_timer *timer, u32 reg)
 {
 	int i = 0;
 
-	if (reg >= OMAP_TIMER_WAKEUP_EN_REG)
-		reg += timer->func_offset;
-	else if (reg >= OMAP_TIMER_STAT_REG)
-		reg += timer->intr_offset;
+	if (reg != OMAP_TIMER_INT_CLR_REG)
+	{
+		if (reg >= OMAP_TIMER_WAKEUP_EN_REG)
+			reg += timer->func_offset;
+		else if (reg >= OMAP_TIMER_STAT_REG)
+			reg += timer->intr_offset;
+	}
 
 	if (timer->posted) {
 		omap_test_timeout(!(readl(timer->io_base +
@@ -214,10 +221,13 @@ static void omap_dm_timer_write_reg(struct omap_dm_timer *timer, u32 reg,
 {
 	int i = 0;
 
-	if (reg >= OMAP_TIMER_WAKEUP_EN_REG)
-		reg += timer->func_offset;
-	else if (reg >= OMAP_TIMER_STAT_REG)
-		reg += timer->intr_offset;
+	if (reg != OMAP_TIMER_INT_CLR_REG)
+	{
+		if (reg >= OMAP_TIMER_WAKEUP_EN_REG)
+			reg += timer->func_offset;
+		else if (reg >= OMAP_TIMER_STAT_REG)
+			reg += timer->intr_offset;
+	}
 
 	if (timer->posted) {
 		omap_test_timeout(!(readl(timer->io_base +
@@ -784,6 +794,23 @@ int omap_dm_timer_set_match(struct omap_dm_timer *timer, int enable,
 }
 EXPORT_SYMBOL_GPL(omap_dm_timer_set_match);
 
+unsigned int omap_dm_timer_get_match(struct omap_dm_timer *timer)
+{
+	u32 match_val;
+	unsigned long flags;
+
+	if (!timer)
+		return -EINVAL;
+
+	spin_lock_irqsave(&timer->lock, flags);
+	__timer_enable(timer);
+	match_val = omap_dm_timer_read_reg(timer, OMAP_TIMER_MATCH_REG);
+	__timer_disable(timer);
+	spin_unlock_irqrestore(&timer->lock, flags);
+	return match_val;
+}
+EXPORT_SYMBOL_GPL(omap_dm_timer_get_match);
+
 int omap_dm_timer_set_pwm(struct omap_dm_timer *timer, int def_on,
 			   int toggle, int trigger)
 {
@@ -853,6 +880,37 @@ int omap_dm_timer_set_int_enable(struct omap_dm_timer *timer,
 	return 0;
 }
 EXPORT_SYMBOL_GPL(omap_dm_timer_set_int_enable);
+
+int omap_dm_timer_set_int_disable(struct omap_dm_timer *timer,
+				 unsigned int value)
+{
+	u32 l;
+	struct dmtimer_platform_data *pdata = timer->pdev->dev.platform_data;
+	unsigned long flags;
+
+	if (!timer)
+		return -EINVAL;
+
+	spin_lock_irqsave(&timer->lock, flags);
+	if (!timer->is_early_init)
+		__timer_enable(timer);
+
+	l = omap_dm_timer_read_reg(timer, OMAP_TIMER_WAKEUP_EN_REG);
+	if (pdata->timer_ip_type == OMAP_TIMER_IP_VERSION_2) {
+		l |= value;
+		omap_dm_timer_write_reg(timer, OMAP_TIMER_INT_CLR_REG, value);
+	} else {
+		l &= ~value;
+		omap_dm_timer_write_reg(timer, OMAP_TIMER_INT_EN_REG, l);
+	}
+	omap_dm_timer_write_reg(timer, OMAP_TIMER_WAKEUP_EN_REG, l);
+
+	if (!timer->is_early_init)
+		__timer_disable(timer);
+	spin_unlock_irqrestore(&timer->lock, flags);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(omap_dm_timer_set_int_disable);
 
 unsigned int omap_dm_timer_read_status(struct omap_dm_timer *timer)
 {
