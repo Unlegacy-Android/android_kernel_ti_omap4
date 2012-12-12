@@ -693,7 +693,7 @@ static struct omap_rpmsg_vproc omap_rpmsg_vprocs[] = {
 		.hardcoded_chnls = omap_ipuc0_hardcoded_chnls,
 		.slave_next	= &omap_rpmsg_vprocs[1],
 #ifndef CONFIG_MACH_TUNA
-		.bootcstr_freq	= 400000000,
+		.bootcstr_freq	= 1000000,
 		.bootcstr_type	= RPROC_CONSTRAINT_BANDWIDTH,
 #endif
 	},
