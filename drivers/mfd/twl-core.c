@@ -248,6 +248,11 @@
 /* need to access USB_PRODUCT_ID_LSB to identify which 6030 varient we are */
 #define USB_PRODUCT_ID_LSB	0x02
 
+#define BBSPOR_CFG		0xE6
+#define	BB_CHG_EN		(1 << 3)
+#define ENABLE_BB_CHRG		1
+#define DISABLE_BB_CHRG		0
+
 /* need to check eeprom revision and jtagver number */
 #define TWL6030_REG_EPROM_REV	0xdf
 #define TWL6030_REG_JTAGVERNUM	0x87
@@ -362,6 +367,40 @@ static struct twl_mapping twl6030_map[] = {
 	{ SUB_CHIP_ID1, TWL6032_BASEADD_CHARGER },
 	{ SUB_CHIP_ID0, TWL6030_BASEADD_PM_SLAVE_RES },
 };
+
+/*----------------------------------------------------------------------*/
+
+/* Internal Functions */
+
+/**
+ * twl6030backupbatt_setup - Set state on backup battery charger
+ * @state: State on backup battery charger.
+ *		- ENABLE_BB_CHRG
+ *		- DISABLE_BB_CHRG
+ */
+static int twl6030backupbatt_setup(int state)
+{
+	int ret;
+	u8 rd_reg = 0;
+
+	ret = twl_i2c_read_u8(TWL6030_MODULE_ID0, &rd_reg, BBSPOR_CFG);
+	if (ret)
+		return ret;
+
+	switch (state) {
+	case ENABLE_BB_CHRG:
+		rd_reg |= BB_CHG_EN;
+		break;
+	case DISABLE_BB_CHRG:
+	default:
+		rd_reg &= ~BB_CHG_EN;
+		break;
+	}
+
+	ret = twl_i2c_write_u8(TWL6030_MODULE_ID0, rd_reg, BBSPOR_CFG);
+
+	return ret;
+}
 
 /*----------------------------------------------------------------------*/
 
@@ -1438,6 +1477,12 @@ twl_probe(struct i2c_client *client, const struct i2c_device_id *id)
 		I2C_SDA_CTRL_PU | I2C_SCL_CTRL_PU);
 		twl_i2c_write_u8(TWL4030_MODULE_INTBR, temp, REG_GPPUPDCTR1);
 	}
+
+
+	/* Set backup battery charger state */
+	status = twl6030backupbatt_setup(DISABLE_BB_CHRG);
+	if (status < 0)
+		goto fail;
 
 	status = add_children(pdata, features, errata);
 fail:

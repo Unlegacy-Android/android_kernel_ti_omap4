@@ -44,11 +44,16 @@
 #define	IDDIG				BIT(4)
 
 #define CONTROL_USB2PHYCORE		0x620
+#define CHARGER_TYPE_WAIT		0x0
+#define CHARGER_TYPE_NO_CONTACT		0x1
 #define CHARGER_TYPE_PS2		0x2
+#define CHARGER_TYPE_UNKOWN_ERR		0x3
 #define CHARGER_TYPE_DEDICATED		0x4
 #define CHARGER_TYPE_HOST		0x5
 #define CHARGER_TYPE_PC			0x6
+#define CHARGER_TYPE_INTERRUPT		0x7
 #define USB2PHY_CHGDETECTED		BIT(13)
+#define USB2PHY_CHGDETDONE		BIT(14)
 #define USB2PHY_RESTARTCHGDET		BIT(15)
 #define USB2PHY_DISCHGDET		BIT(30)
 
@@ -208,7 +213,7 @@ static int omap4430_phy_set_clk(struct device *dev, int on)
 int omap4_charger_detect(void)
 {
 	unsigned long timeout;
-	int charger = POWER_SUPPLY_TYPE_USB;
+	int charger = CHARGER_TYPE_NO_CONTACT;
 	u32 usb2phycore = 0;
 	u32 chargertype = 0;
 
@@ -222,16 +227,34 @@ int omap4_charger_detect(void)
 	usb2phycore &= ~USB2PHY_RESTARTCHGDET;
 	omap4_ctrl_pad_writel(usb2phycore, CONTROL_USB2PHYCORE);
 
-	timeout = jiffies + msecs_to_jiffies(500);
+	timeout = jiffies + msecs_to_jiffies(4000);
 	do {
 		usb2phycore = omap4_ctrl_pad_readl(CONTROL_USB2PHYCORE);
 		chargertype = ((usb2phycore >> 21) & 0x7);
-		if (usb2phycore & USB2PHY_CHGDETECTED)
+
+		if (usb2phycore & USB2PHY_CHGDETDONE)
 			break;
+
+		if(chargertype != CHARGER_TYPE_WAIT)
+			break;
+
 		msleep_interruptible(10);
 	} while (!time_after(jiffies, timeout));
 
 	switch (chargertype) {
+	case CHARGER_TYPE_WAIT:
+		pr_info("Wait state\n");
+		break;
+	case CHARGER_TYPE_NO_CONTACT:
+		pr_info("No contact\n");
+		charger = CHARGER_TYPE_NO_CONTACT;
+		break;
+	case CHARGER_TYPE_PS2:
+		pr_info("PS/2 detected!\n");
+		break;
+	case CHARGER_TYPE_UNKOWN_ERR:
+		pr_info("Unknown error!\n");
+		break;
 	case CHARGER_TYPE_DEDICATED:
 		charger = POWER_SUPPLY_TYPE_USB_DCP;
 		pr_info("DCP detected\n");
@@ -244,8 +267,9 @@ int omap4_charger_detect(void)
 		charger = POWER_SUPPLY_TYPE_USB;
 		pr_info("PC detected\n");
 		break;
-	case CHARGER_TYPE_PS2:
-		pr_info("PS/2 detected!\n");
+	case CHARGER_TYPE_INTERRUPT:
+		pr_info("Interrupt\n");
+		charger = -ENODEV;
 		break;
 	default:
 		pr_err("Unknown charger detected! %d\n", chargertype);
@@ -286,9 +310,17 @@ int omap4430_phy_power(struct device *dev, int ID, int on)
 	return 0;
 }
 
+static int force_awake = 0;
+int omap4430_phy_no_suspend(struct device *dev, int disable){
+	force_awake = disable;
+	return force_awake;
+}
+
 int omap4430_phy_suspend(struct device *dev, int suspend)
 {
 	if (suspend) {
+		if (force_awake)
+			return 0;
 		/* Disable the clocks */
 		omap4430_phy_set_clk(dev, 0);
 		/* Power down the phy */

@@ -39,6 +39,7 @@
 #include <linux/platform_device.h>
 #include <linux/suspend.h>
 #include <linux/reboot.h>
+#include <asm/mach-types.h>
 
 #include "twl-core.h"
 
@@ -363,26 +364,36 @@ EXPORT_SYMBOL(twl6030_mmc_card_detect_config);
 
 int twl6030_mmc_card_detect(struct device *dev, int slot)
 {
-	int ret = -EIO;
-	u8 read_reg = 0;
-	struct platform_device *pdev = to_platform_device(dev);
+        int ret = -EIO;
+        u8 read_reg = 0;
+        int polarity = 0;
+        struct platform_device *pdev = container_of(dev,
+                                        struct platform_device, dev);
 
-	if (pdev->id) {
-		/* TWL6030 provide's Card detect support for
-		 * only MMC1 controller.
-		 */
-		pr_err("Unknown MMC controller %d in %s\n", pdev->id, __func__);
-		return ret;
-	}
-	/*
-	 * BIT0 of MMC_CTRL on TWL6030 provides card status for MMC1
-	 * 0 - Card not present ,1 - Card present
-	 */
-	ret = twl_i2c_read_u8(TWL6030_MODULE_ID0, &read_reg,
-						TWL6030_MMCCTRL);
-	if (ret >= 0)
-		ret = read_reg & STS_MMC;
-	return ret;
+        switch (pdev->id) {
+        case 0:
+                /*
+                 * BIT0 of REG_MMC_CTRL
+                 * 0 - Card not present ,1 - Card present
+                 */
+                ret = twl_i2c_read_u8(TWL6030_MODULE_ID0, &read_reg,
+                                                        TWL6030_MMCCTRL);
+                if (ret >= 0)
+                        ret = read_reg & STS_MMC;
+
+                if(machine_is_omap_acclaim()){
+                    if ( read_reg & 0x04 )
+                        polarity = 1;
+
+                    if (polarity == 1 )
+                        ret ^= 1;
+                }
+
+                break;
+        default:
+                pr_err("Unkown MMC controller %d in %s\n", pdev->id, __func__);
+        }
+        return ret;
 }
 EXPORT_SYMBOL(twl6030_mmc_card_detect);
 
@@ -440,6 +451,7 @@ int twl6030_vlow_init(int vlow_irq)
 	twl_i2c_read_u8(TWL_MODULE_PM_MASTER, &vbatmin_hi_threshold,
 			TWL6030_VBATMIN_HI_THRESHOLD);
 
+#if 0
 	/* install an irq handler for vlow */
 	status = request_threaded_irq(vlow_irq, NULL, handle_twl6030_vlow,
 			IRQF_ONESHOT,
@@ -449,6 +461,7 @@ int twl6030_vlow_init(int vlow_irq)
 				status);
 		return status;
 	}
+#endif
 
 	return 0;
 }

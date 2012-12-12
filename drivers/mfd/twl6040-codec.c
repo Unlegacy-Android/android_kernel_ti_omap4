@@ -578,10 +578,12 @@ static int twl6040_power_up_completion(struct twl6040 *twl6040,
 	u8 intid;
 
 	do {
-		INIT_COMPLETION(twl6040->ready);
-		gpio_set_value(twl6040->audpwron, 1);
-		time_left = wait_for_completion_timeout(&twl6040->ready,
-							msecs_to_jiffies(700));
+		if (!gpio_get_value(twl6040->audpwron)) {
+			INIT_COMPLETION(twl6040->ready);
+			gpio_set_value(twl6040->audpwron, 1);
+			time_left = wait_for_completion_timeout(&twl6040->ready,
+								msecs_to_jiffies(700));
+		}
 
 		if (twl6040_is_powered(twl6040))
 			return 0;
@@ -621,6 +623,7 @@ static int twl6040_power(struct twl6040 *twl6040, int enable)
 	int audpwron = twl6040->audpwron;
 	int naudint = twl6040->irq;
 	int ret = 0;
+	u8 hsplug = 0;
 
 	if (enable) {
 		/* enable 32kHz external clock */
@@ -672,8 +675,13 @@ static int twl6040_power(struct twl6040 *twl6040, int enable)
 		twl6040->sysclk = 19200000;
 	} else {
 		if (gpio_is_valid(audpwron)) {
+			/*
+			  Workaround for reducing POP on BN platforms
+			  in case when High Impedance headset are used.
+			*/
+			hsplug = twl6040_reg_read(twl6040, TWL6040_REG_STATUS);
 			/* use AUDPWRON line */
-			gpio_set_value(audpwron, 0);
+			gpio_set_value(audpwron, hsplug & TWL6040_PLUGCOMP);
 
 			/* power-down sequence latency */
 			udelay(500);
@@ -1032,6 +1040,14 @@ static int __devinit twl6040_probe(struct platform_device *pdev)
 		cell->name = "twl6040-vibra";
 		cell->platform_data = pdata->vibra;
 		cell->pdata_size = sizeof(*pdata->vibra);
+		children++;
+	}
+
+	if (pdata->hskeys) {
+		cell = &twl6040->cells[children];
+		cell->name = "twl6040-hskeys";
+		cell->platform_data = pdata->hskeys;
+		cell->pdata_size = sizeof(*pdata->hskeys);
 		children++;
 	}
 
