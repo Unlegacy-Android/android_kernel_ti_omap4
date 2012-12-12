@@ -23,6 +23,10 @@
 #include "hsmmc.h"
 #include "control.h"
 
+#include <generated/mach-types.h>
+#include "board-hummingbird.h"
+#include "board-ovation.h"
+
 #if defined(CONFIG_MMC_OMAP_HS) || defined(CONFIG_MMC_OMAP_HS_MODULE)
 
 static u16 control_pbias_offset;
