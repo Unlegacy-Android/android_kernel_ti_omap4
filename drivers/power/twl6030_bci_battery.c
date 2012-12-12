@@ -1526,9 +1526,6 @@ static int twl6030battery_current_setup(bool enable)
 }
 
 static enum power_supply_property twl6030_bci_battery_props[] = {
-	POWER_SUPPLY_PROP_STATUS,
-	POWER_SUPPLY_PROP_HEALTH,
-	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 	POWER_SUPPLY_PROP_CURRENT_NOW,
 	POWER_SUPPLY_PROP_CURRENT_AVG,
@@ -3036,10 +3033,6 @@ static int __devinit twl6030_bci_battery_probe(struct platform_device *pdev)
 					twl6030_get_discharge_status(di);
 		}
 	}
-
-	ret = twl6030backupbatt_setup();
-	if (ret)
-		dev_dbg(&pdev->dev, "Backup Bat charging setup failed\n");
 
 	twl6030_interrupt_unmask(TWL6030_CHARGER_CTRL_INT_MASK,
 						REG_INT_MSK_LINE_C);

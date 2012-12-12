@@ -111,6 +111,12 @@ config CHARGER_BQ2415x
 	help
 	  Say Y to enable support for BQ24156 battery charger.
 
+config CHARGER_BQ2419x
+	tristate "BQ2419x charger"
+	default y
+	help
+	  Say Y to enable support for BQ24196 battery charger.
+
 config BATTERY_OLPC
 	tristate "One Laptop Per Child battery"
 	depends on X86_32 && OLPC
@@ -160,7 +166,6 @@ config BATTERY_BQ27X00_I2C
 config BATTERY_BQ27X00_PLATFORM
 	bool "BQ27000 support"
 	depends on BATTERY_BQ27x00
-	default y
 	help
 	  Say Y here to enable support for batteries with BQ27000 (HDQ) chips.
 
