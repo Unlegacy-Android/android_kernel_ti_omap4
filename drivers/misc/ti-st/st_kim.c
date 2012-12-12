@@ -463,10 +463,18 @@ long st_kim_start(void *kim_data)
 	pr_info(" %s", __func__);
 	pdata = kim_gdata->kim_pdev->dev.platform_data;
 
+#ifdef CONFIG_MACH_OMAP_BN_HD
+	/* platform specific enabling code here */
+	if (pdata->chip_enable)
+		pdata->chip_enable();
+#endif
+
 	do {
+#ifndef CONFIG_MACH_OMAP_BN_HD
 		/* platform specific enabling code here */
 		if (pdata->chip_enable)
 			pdata->chip_enable();
+#endif
 
 		/* Configure BT nShutdown to HIGH state */
 		gpio_set_value(kim_gdata->nshutdown, GPIO_LOW);
@@ -488,6 +496,10 @@ long st_kim_start(void *kim_data)
 			 * flush uart, power cycle BT_EN */
 			pr_err("ldisc installation timeout");
 			err = st_kim_stop(kim_gdata);
+#ifdef CONFIG_MACH_OMAP_BN_HD
+			if (pdata->chip_enable)
+				pdata->chip_enable();
+#endif
 			continue;
 		} else {
 			/* ldisc installed now */
@@ -498,12 +510,24 @@ long st_kim_start(void *kim_data)
 				 * flush uart & power cycle BT_EN */
 				pr_err("download firmware failed");
 				err = st_kim_stop(kim_gdata);
+#ifdef CONFIG_MACH_OMAP_BN_HD
+				if (pdata->chip_enable)
+					pdata->chip_enable();
+#endif
 				continue;
 			} else {	/* on success don't retry */
 				break;
 			}
 		}
 	} while (retry--);
+
+#ifdef CONFIG_MACH_OMAP_BN_HD
+	if (err < 0) {
+		if (pdata->chip_disable)
+			pdata->chip_disable();
+	}
+#endif
+
 	return err;
 }
 
