@@ -806,6 +806,10 @@ struct omap_dss_driver {
 	void (*disable_orig)(struct omap_dss_device *display);
 	int (*enable_orig)(struct omap_dss_device *display);
 	int (*suspend_orig)(struct omap_dss_device *display);
+
+	int (*set_current_fps)(struct omap_dss_device *dssdev, const char *fps);
+	ssize_t (*get_current_fps)(struct omap_dss_device *dssdev, char *buf, size_t len);
+	ssize_t (*get_fps)(struct omap_dss_device *dssdev, char *buf, size_t len);
 };
 
 int omap_dss_register_driver(struct omap_dss_driver *);

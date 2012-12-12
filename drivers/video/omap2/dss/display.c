@@ -190,6 +190,41 @@ static ssize_t display_timings_store(struct device *dev,
 	return size;
 }
 
+static ssize_t display_fps_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct omap_dss_device *dssdev = to_dss_device(dev);
+
+	if (!dssdev->driver->get_fps)
+		return -ENOENT;
+
+	return dssdev->driver->get_fps(dssdev, buf, PAGE_SIZE);
+}
+
+static ssize_t display_current_fps_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct omap_dss_device *dssdev = to_dss_device(dev);
+
+	if (!dssdev->driver->get_current_fps)
+		return -ENOENT;
+
+	return dssdev->driver->get_current_fps(dssdev, buf, PAGE_SIZE);
+}
+
+static ssize_t display_current_fps_store(struct device *dev,
+	struct device_attribute *attr, const char *buf, size_t size)
+{
+	struct omap_dss_device *dssdev = to_dss_device(dev);
+	int r;
+	
+	if (!dssdev->driver->set_current_fps)
+		return -ENOENT;
+
+	r = dssdev->driver->set_current_fps(dssdev, buf);
+	return (r ? r : size);
+}
+
 static ssize_t display_rotate_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
@@ -306,6 +341,10 @@ static DEVICE_ATTR(mirror, S_IRUGO|S_IWUSR,
 		display_mirror_show, display_mirror_store);
 static DEVICE_ATTR(wss, S_IRUGO|S_IWUSR,
 		display_wss_show, display_wss_store);
+static DEVICE_ATTR(current_fps, S_IRUGO|S_IWUGO,
+		display_current_fps_show, display_current_fps_store);
+static DEVICE_ATTR(fps, S_IRUGO,
+		display_fps_show, NULL);
 
 static struct device_attribute *display_sysfs_attrs[] = {
 	&dev_attr_enabled,
@@ -315,6 +354,8 @@ static struct device_attribute *display_sysfs_attrs[] = {
 	&dev_attr_rotate,
 	&dev_attr_mirror,
 	&dev_attr_wss,
+	&dev_attr_current_fps,
+	&dev_attr_fps,
 	NULL
 };
 
@@ -344,7 +385,7 @@ void omapdss_display_get_dimensions(struct omap_dss_device *dssdev,
 {
 	if (dssdev->driver->get_dimensions) {
 		dssdev->driver->get_dimensions(dssdev,
-						width_in_um, width_in_um);
+						width_in_um, height_in_um);
 	} else {
 		*width_in_um = dssdev->panel.width_in_um;
 		*height_in_um = dssdev->panel.height_in_um;
