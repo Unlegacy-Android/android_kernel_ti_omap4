@@ -2739,7 +2739,7 @@ SYSCALL_DEFINE3(rt_sigqueueinfo, pid_t, pid, int, sig,
 	return kill_proc_info(sig, &info, pid);
 }
 
-long do_rt_tgsigqueueinfo(pid_t tgid, pid_t pid, int sig, siginfo_t *info)
+static int do_rt_tgsigqueueinfo(pid_t tgid, pid_t pid, int sig, siginfo_t *info)
 {
 	/* This is only valid for single tasks */
 	if (pid <= 0 || tgid <= 0)
@@ -2769,6 +2769,21 @@ SYSCALL_DEFINE4(rt_tgsigqueueinfo, pid_t, tgid, pid_t, pid, int, sig,
 
 	return do_rt_tgsigqueueinfo(tgid, pid, sig, &info);
 }
+
+#ifdef CONFIG_COMPAT
+COMPAT_SYSCALL_DEFINE4(rt_tgsigqueueinfo,
+			compat_pid_t, tgid,
+			compat_pid_t, pid,
+			int, sig,
+			struct compat_siginfo __user *, uinfo)
+{
+	siginfo_t info;
+
+	if (copy_siginfo_from_user32(&info, uinfo))
+		return -EFAULT;
+	return do_rt_tgsigqueueinfo(tgid, pid, sig, &info);
+}
+#endif
 
 int do_sigaction(int sig, struct k_sigaction *act, struct k_sigaction *oact)
 {
