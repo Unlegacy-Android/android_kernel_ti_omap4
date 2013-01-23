@@ -46,7 +46,7 @@
 #define DISPC_IRQ_VID3_FIFO_UNDERFLOW	(1 << 20)
 #define DISPC_IRQ_ACBIAS_COUNT_STAT2	(1 << 21)
 #define DISPC_IRQ_FRAMEDONE2		(1 << 22)
-#define DISPC_IRQ_FRAMEDONE_WB		(1 << 23)
+#define DISPC_IRQ_FRAMEDONEWB		(1 << 23)
 #define DISPC_IRQ_FRAMEDONETV		(1 << 24)
 #define DISPC_IRQ_WBINCOMPLETE		(1 << 26)
 
@@ -587,6 +587,17 @@ struct omap_writeback_info {
 	enum omap_dss_rotation_type		rotation_type;
 };
 
+/* HACK: omap_writeback_notifier used as temporary WA
+ * for WFD invalidation issue
+*/
+struct omap_writeback_notifier {
+	struct completion		completion;
+	u32				sync_id;
+	int				vsync_count;
+	bool				is_done;
+	bool				vsync_active;
+};
+
 struct omap_writeback {
 	struct kobject			kobj;
 	struct list_head		list;
@@ -597,6 +608,7 @@ struct omap_writeback {
 	struct mutex			lock;
 	struct omap_writeback_info	info;
 	struct completion		wb_completion;
+	struct omap_writeback_notifier	wb_done;
 
 	bool (*check_wb)(struct omap_writeback *wb);
 	int (*set_wb_info)(struct omap_writeback *wb,
