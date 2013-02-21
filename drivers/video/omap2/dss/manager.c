@@ -1355,9 +1355,11 @@ static int configure_dispc(void)
 				 * be freed and capture won't start because
 				 * source pipe is switched off. */
 				for (i = 0; i < num_ovls; ++i) {
-					oc = &dss_cache.overlay_cache[i];
-					if (oc->channel == wbc->source &&
-						!oc->enabled) {
+					struct omap_overlay *ovl =
+						omap_dss_get_overlay(i);
+					if ((int)ovl->manager->id ==
+						(int)wbc->source) {
+						dispc_enable_plane(i, 0);
 						dispc_setup_wb_source(
 							OMAP_DSS_GFX + i);
 						dispc_set_wb_channel_out(i);
