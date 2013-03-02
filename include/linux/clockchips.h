@@ -54,6 +54,11 @@ enum clock_event_nofitiers {
 #define CLOCK_EVT_FEAT_C3STOP		0x000004
 #define CLOCK_EVT_FEAT_DUMMY		0x000008
 
+/*
+ * Core shall set the interrupt affinity dynamically in broadcast mode
+ */
+#define CLOCK_EVT_FEAT_DYNIRQ		0x000020
+
 /**
  * struct clock_event_device - clock event device descriptor
  * @event_handler:	Assigned by the framework to be called by the low
