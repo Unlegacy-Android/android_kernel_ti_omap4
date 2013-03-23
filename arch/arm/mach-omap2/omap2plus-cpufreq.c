@@ -537,14 +537,6 @@ static ssize_t store_gpu_freq_idx(struct cpufreq_policy *policy, const char *buf
 }
 
 static struct freq_attr omap_cpufreq_attr_gpu_freq_idx = {
-	.attr = { .name = "gpu_max_freq_idx",
-		  .mode = 0644,
-		},
-	.show = show_gpu_freq_idx,
-	.store = store_gpu_freq_idx,
-};
-
-static struct freq_attr omap_cpufreq_attr_gpu_oc = {
 	.attr = { .name = "gpu_oc",
 		  .mode = 0644,
 		},
@@ -718,7 +710,6 @@ static struct freq_attr *omap_cpufreq_attr[] = {
 	&cpufreq_freq_attr_scaling_available_freqs,
 #ifdef CONFIG_OMAP4430_GPU_OVERCLOCK
 	&omap_cpufreq_attr_gpu_freq_idx,
-	&omap_cpufreq_attr_gpu_oc,
 #endif
 #ifdef CONFIG_OMAP4_VOLTAGE_CONTROL
 	&omap_uv_mv_table,
