@@ -96,8 +96,8 @@ struct omap4_ldo_abb_trim_data {
 #ifdef CONFIG_OMAP4430_CPU_OVERCLOCK
 #define OMAP4430_VDD_MPU_OPPNITRO2_UV		1375000
 #define OMAP4430_VDD_MPU_OPPNITROSB_UV		1385000
-#define OMAP4430_VDD_MPU_OPPNITROSB2_UV		1395000
-#define OMAP4430_VDD_MPU_OPPSUPERSB_UV		1405000
+#define OMAP4430_VDD_MPU_OPPNITROSB2_UV		1400000
+#define OMAP4430_VDD_MPU_OPPSUPERSB_UV		1410000
 #define OMAP4430_VDD_MPU_OPPSUPERSB2_UV		1415000
 #else
 #define OMAP4430_VDD_MPU_OPPNITROSB_UV		1398000
@@ -770,8 +770,8 @@ int __init omap4_opp_init(void)
 		omap4_opp_enable("mpu", 1200000000);
 		omap4_opp_enable("mpu", 1350000000);
 		omap4_opp_enable("mpu", 1420000000);
-		/* omap4_opp_enable("mpu", 1480000000);
-		omap4_opp_enable("mpu", 1520000000); */
+		omap4_opp_enable("mpu", 1480000000);
+		omap4_opp_enable("mpu", 1520000000);
 	}
 #endif
 
