@@ -384,6 +384,11 @@ config MACH_OMAP_OVATION
 	select HWMON
 	select OMAP_REBOOT_REASON
 
+config OVATION_ALWAYS_COLD_BOOT
+	bool "Always perform cold reboot on reset"
+	default n
+	depends on MACH_OMAP_OVATION
+
 config MACH_OMAP_HUMMINGBIRD
 	bool "OMAP 44xx Hummingbird Board"
 	default n
