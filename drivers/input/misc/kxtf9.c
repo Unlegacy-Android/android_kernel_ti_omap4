@@ -900,13 +900,13 @@ static ssize_t kxtf9_selftest_store(struct device *dev,
 	return count;
 }
 
-static DEVICE_ATTR(delay, S_IRUGO|S_IWUGO, kxtf9_delay_show, kxtf9_delay_store);
-static DEVICE_ATTR(enable, S_IRUGO|S_IWUGO, kxtf9_enable_show,
+static DEVICE_ATTR(delay, S_IRUGO|S_IWUSR|S_IWGRP, kxtf9_delay_show, kxtf9_delay_store);
+static DEVICE_ATTR(enable, S_IRUGO|S_IWUSR|S_IWGRP, kxtf9_enable_show,
 						kxtf9_enable_store);
 static DEVICE_ATTR(tilt, S_IRUGO|S_IWUSR, kxtf9_tilt_show, kxtf9_tilt_store);
 static DEVICE_ATTR(wake, S_IRUGO|S_IWUSR, kxtf9_wake_show, kxtf9_wake_store);
 static DEVICE_ATTR(tap, S_IRUGO|S_IWUSR, kxtf9_tap_show, kxtf9_tap_store);
-static DEVICE_ATTR(abort, S_IRUGO|S_IWUGO, NULL, kxtf9_abort_store);
+static DEVICE_ATTR(abort, S_IRUGO|S_IWUSR|S_IWGRP, NULL, kxtf9_abort_store);
 static DEVICE_ATTR(selftest, S_IWUSR, NULL, kxtf9_selftest_store);
 
 static struct attribute *kxtf9_attributes[] = {

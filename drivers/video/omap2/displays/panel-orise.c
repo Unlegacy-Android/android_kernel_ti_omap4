@@ -354,9 +354,9 @@ static ssize_t orise_cabc_mode_show(struct device *dev, struct device_attribute 
 	return snprintf(buf, PAGE_SIZE, "%s\n", d2d->cabc_mode);	
 }
 
-static DEVICE_ATTR(cabc, S_IWUGO, NULL, orise_cabc_store);
-static DEVICE_ATTR(reg, S_IWUGO, NULL, orise_reg_store);
-static DEVICE_ATTR(cabc_mode, S_IWUGO | S_IRUGO , orise_cabc_mode_show, orise_cabc_mode_store);
+static DEVICE_ATTR(cabc, S_IWGRP | S_IWUSR | S_IRUGO, NULL, orise_cabc_store);
+static DEVICE_ATTR(reg, S_IWGRP | S_IWUSR, NULL, orise_reg_store);
+static DEVICE_ATTR(cabc_mode, S_IWUSR | S_IWGRP | S_IRUGO , orise_cabc_mode_show, orise_cabc_mode_store);
 
 static struct device_attribute *orise_sysfs_attrs[] = {
 	&dev_attr_cabc,

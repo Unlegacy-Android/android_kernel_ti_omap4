@@ -378,8 +378,8 @@ static ssize_t novatek_cabc_mode_show(struct device *dev, struct device_attribut
 	return snprintf(buf, PAGE_SIZE, "%s\n", d2d->cabc_mode);	
 }
 
-static DEVICE_ATTR(reg, S_IWUGO, NULL, novatek_reg_store);
-static DEVICE_ATTR(cabc_mode, S_IWUGO | S_IRUGO, novatek_cabc_mode_show, novatek_cabc_mode_store);
+static DEVICE_ATTR(reg, S_IWGRP | S_IWUSR, NULL, novatek_reg_store);
+static DEVICE_ATTR(cabc_mode, S_IWUSR | S_IWGRP | S_IRUGO, novatek_cabc_mode_show, novatek_cabc_mode_store);
 
 static struct device_attribute *novatek_sysfs_attrs[] = {
 	&dev_attr_reg,
@@ -806,11 +806,11 @@ retry:
 	return size;
 }
 
-static DEVICE_ATTR(softstart, S_IWUGO | S_IRUGO, maxim9606_softstart_show, maxim9606_softstart_store);
+static DEVICE_ATTR(softstart, S_IWUSR | S_IWGRP | S_IRUGO, maxim9606_softstart_show, maxim9606_softstart_store);
 static DEVICE_ATTR(DELAY2, S_IRUGO, maxim9606_DELAY2_show, NULL);
 static DEVICE_ATTR(DELAY3, S_IRUGO, maxim9606_DELAY3_show, NULL);
 static DEVICE_ATTR(DELAY4, S_IRUGO, maxim9606_DELAY4_show, NULL);
-static DEVICE_ATTR(update_mvp, S_IWUGO, NULL, maxim9606_update_mvp);
+static DEVICE_ATTR(update_mvp, S_IWGRP | S_IWUSR, NULL, maxim9606_update_mvp);
 
 static struct device_attribute *maxim9606_sysfs_attrs[] = {
 	&dev_attr_softstart,

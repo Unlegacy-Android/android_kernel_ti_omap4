@@ -153,7 +153,7 @@ static DEVICE_ATTR(s3d_enable, S_IRUGO | S_IWUSR, hdmi_s3d_enable_show,
 static DEVICE_ATTR(s3d_type, S_IRUGO | S_IWUSR, hdmi_s3d_mode_show,
 							hdmi_s3d_mode_store);
 static DEVICE_ATTR(edid, S_IRUGO, hdmi_edid_show, NULL);
-static DEVICE_ATTR(deepcolor, S_IWUGO | S_IWUSR, hdmi_deepcolor_show,
+static DEVICE_ATTR(deepcolor, S_IWGRP | S_IWUSR, hdmi_deepcolor_show,
 							hdmi_deepcolor_store);
 static struct attribute *hdmi_panel_attrs[] = {
 	&dev_attr_s3d_enable.attr,

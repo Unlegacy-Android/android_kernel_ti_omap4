@@ -915,7 +915,7 @@ static ssize_t hdmi_timings_store(struct device *dev,
 	return size;
 }
 
-DEVICE_ATTR(hdmi_timings, S_IWUGO | S_IWUSR, hdmi_timings_show,
+DEVICE_ATTR(hdmi_timings, S_IWGRP | S_IWUSR, hdmi_timings_show,
 							hdmi_timings_store);
 
 int omapdss_hdmi_display_enable(struct omap_dss_device *dssdev)

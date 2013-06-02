@@ -405,10 +405,10 @@ static MANAGER_ATTR(trans_key_enabled, S_IRUGO|S_IWUSR,
 static MANAGER_ATTR(alpha_blending_enabled, S_IRUGO|S_IWUSR,
 		manager_alpha_blending_enabled_show,
 		manager_alpha_blending_enabled_store);
-static MANAGER_ATTR(cpr_enable, S_IRUGO|S_IWUSR,
+static MANAGER_ATTR(cpr_enable, S_IRUGO|S_IWUSR|S_IWGRP,
 		manager_cpr_enable_show,
 		manager_cpr_enable_store);
-static MANAGER_ATTR(cpr_coef, S_IRUGO|S_IWUSR,
+static MANAGER_ATTR(cpr_coef, S_IRUGO|S_IWUSR|S_IWGRP,
 		manager_cpr_coef_show,
 		manager_cpr_coef_store);
 

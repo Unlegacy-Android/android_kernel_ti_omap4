@@ -6971,7 +6971,7 @@ static ssize_t ft5x06_module_enable_store(struct kobject *kobj, struct kobj_attr
 }
 
 static struct kobj_attribute module_enable_attribute =
-      __ATTR(module_enable, 0666, NULL, ft5x06_module_enable_store);
+      __ATTR(module_enable, 0664, NULL, ft5x06_module_enable_store);
 
 static struct attribute * touchpanel_attributes[] = {
 	&module_enable_attribute.attr,

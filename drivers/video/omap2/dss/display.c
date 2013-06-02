@@ -341,7 +341,7 @@ static DEVICE_ATTR(mirror, S_IRUGO|S_IWUSR,
 		display_mirror_show, display_mirror_store);
 static DEVICE_ATTR(wss, S_IRUGO|S_IWUSR,
 		display_wss_show, display_wss_store);
-static DEVICE_ATTR(current_fps, S_IRUGO|S_IWUGO,
+static DEVICE_ATTR(current_fps, S_IRUGO|S_IWUSR | S_IWGRP,
 		display_current_fps_show, display_current_fps_store);
 static DEVICE_ATTR(fps, S_IRUGO,
 		display_fps_show, NULL);
