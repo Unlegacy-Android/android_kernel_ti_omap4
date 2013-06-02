@@ -997,12 +997,14 @@ free_card:
 /*
  * Host is being removed. Free up the current card.
  */
+ extern int mmc_sdreset_cnt;
 static void mmc_sd_remove(struct mmc_host *host)
 {
 	BUG_ON(!host);
 	BUG_ON(!host->card);
 
 	mmc_remove_card(host->card);
+	mmc_sdreset_cnt=0; /* sd card workaround counter reset on ejection*/
 	host->card = NULL;
 }
 

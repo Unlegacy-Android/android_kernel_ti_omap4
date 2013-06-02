@@ -91,6 +91,7 @@ void mmc_flush_scheduled_work(void)
  *	MMC drivers should call this function when they have completed
  *	their processing of a request.
  */
+extern int mmc_sdreset_cnt;
 void mmc_request_done(struct mmc_host *host, struct mmc_request *mrq)
 {
 	struct mmc_command *cmd = mrq->cmd;
@@ -115,6 +116,10 @@ void mmc_request_done(struct mmc_host *host, struct mmc_request *mrq)
 			mmc_hostname(host), cmd->opcode, err,
 			cmd->resp[0], cmd->resp[1],
 			cmd->resp[2], cmd->resp[3]);
+		/*  sd card work around for some 64GB and 32GB cards  */
+                if((host->index==1) && (cmd->opcode== 13 || cmd->opcode== 18)  && ( mmc_sdreset_cnt >= 2)) {
+		    mdelay(8);
+		}
 
 		if (mrq->data) {
 			pr_debug("%s:     %d bytes transferred: %d\n",
@@ -220,7 +225,25 @@ void mmc_wait_for_req(struct mmc_host *host, struct mmc_request *mrq)
 
 	mmc_start_request(host, mrq);
 
-	wait_for_completion(&complete);
+        /* only execute for wifi */
+	if (host->index == 2) {
+		while (!wait_for_completion_timeout(&complete, msecs_to_jiffies(1000))) {
+			if (host->ops->recover)
+				if (host->ops->recover(host)) {
+					wait_for_completion(&complete);
+				} else {
+					if (mrq->cmd->retries) {
+						mrq->cmd->retries--;
+						host->ops->request(host, mrq);
+					} else {
+						mrq->cmd->error = -ETIMEDOUT;
+						break;
+					}
+				}
+		}
+	} else {
+		wait_for_completion(&complete);
+	}
 }
 
 EXPORT_SYMBOL(mmc_wait_for_req);
@@ -1794,6 +1817,10 @@ int mmc_power_save_host(struct mmc_host *host)
 	mmc_bus_put(host);
 
 	mmc_power_off(host);
+
+	if (host->index == 1) {
+	   mdelay(10); /* sd specs states power should stay off for 1ms so 10 should be more than enough */
+	}
 
 	return ret;
 }

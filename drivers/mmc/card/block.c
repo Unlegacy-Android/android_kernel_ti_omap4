@@ -556,7 +556,7 @@ static int get_card_status(struct mmc_card *card, u32 *status, int retries)
 		*status = cmd.resp[0];
 	return err;
 }
-
+#define ERR_RESEND_SD 3
 #define ERR_RETRY	2
 #define ERR_ABORT	1
 #define ERR_CONTINUE	0
@@ -621,12 +621,14 @@ static int mmc_blk_cmd_error(struct request *req, const char *name, int error,
  *   illegal cmd, retry.
  * Otherwise we don't understand what happened, so abort.
  */
+int mmc_sdreset_cnt =0;
 static int mmc_blk_cmd_recovery(struct mmc_card *card, struct request *req,
 	struct mmc_blk_request *brq)
 {
 	bool prev_cmd_status_valid = true;
 	u32 status, stop_status = 0;
 	int err, retry;
+	int resenddata=0;
 
 	/*
 	 * Try to get card status which indicates both the card state
@@ -638,6 +640,21 @@ static int mmc_blk_cmd_recovery(struct mmc_card *card, struct request *req,
 		if (!err)
 			break;
 
+                if (mmc_card_recover_bn(card)) {
+		    /* if we reset 2 times we enables our delay after cmd 18 and cmd 13
+		       we need an 8ms delay at the end of the write sequence aka cmd 13 and for reading cmd 18
+                       on some sd cards
+		    */
+		    if( mmc_sdreset_cnt < 2) {
+		        mmc_sdreset_cnt++;
+		    }
+
+                    pr_err("%s: RESET SD card \n",__func__);
+                    mmc_power_save_host(card->host);
+                    mmc_power_restore_host(card->host);
+		    resenddata=1;
+		}
+
 		prev_cmd_status_valid = false;
 		pr_err("%s: error %d sending status command, %sing\n",
 		       req->rq_disk->disk_name, err, retry ? "retry" : "abort");
@@ -646,6 +663,10 @@ static int mmc_blk_cmd_recovery(struct mmc_card *card, struct request *req,
 	/* We couldn't get a response from the card.  Give up. */
 	if (err)
 		return ERR_ABORT;
+
+       if(resenddata==1 && (retry >= 0)) {
+               return ERR_RESEND_SD;
+       }
 
 	/*
 	 * Check the current card state.  If it is in some data transfer
@@ -836,6 +857,7 @@ static int mmc_blk_issue_rw_rq(struct mmc_queue *mq, struct request *req)
 	struct mmc_card *card = md->queue.card;
 	struct mmc_blk_request brq;
 	int ret = 1, disable_multi = 0, retry = 0;
+	int sd_card_retry = 2;
 
 	/*
 	 * Reliable writes are used to implement Forced Unit Access and
@@ -959,7 +981,7 @@ static int mmc_blk_issue_rw_rq(struct mmc_queue *mq, struct request *req)
 			}
 			brq.data.sg_len = i;
 		}
-
+start_resend_sd:
 		mmc_queue_bounce_pre(mq);
 
 		mmc_wait_for_req(card->host, &brq.mrq);
@@ -978,6 +1000,19 @@ static int mmc_blk_issue_rw_rq(struct mmc_queue *mq, struct request *req)
 		 */
 		if (brq.sbc.error || brq.cmd.error || brq.stop.error) {
 			switch (mmc_blk_cmd_recovery(card, req, &brq)) {
+			case ERR_RESEND_SD:
+				/* only get here if card was reset */
+				if (mmc_card_recover_bn(card)) {
+                                    if( sd_card_retry > 0) {
+                                        sd_card_retry--;
+                                        goto start_resend_sd; 
+                                    }
+                                    else {
+					 pr_err("%s: To many retrys to sd card cmd abort. \n",__func__);
+                                         goto cmd_abort;
+                                    }
+				}
+
 			case ERR_RETRY:
 				if (retry++ < 5)
 					continue;
@@ -1409,6 +1444,10 @@ static const struct mmc_fixup blk_fixups[] =
 		  MMC_QUIRK_BLK_NO_CMD23),
 	MMC_FIXUP("MMC32G", 0x11, CID_OEMID_ANY, add_quirk_mmc,
 		  MMC_QUIRK_BLK_NO_CMD23),
+	MMC_FIXUP("SU32G", 0x3, 0x5344, add_quirk_sd,
+		  MMC_QUIRK_RECOVER_BN),
+	MMC_FIXUP("SU64G", 0x3, 0x5344, add_quirk_sd,
+		  MMC_QUIRK_RECOVER_BN),
 	END_FIXUP
 };
 
