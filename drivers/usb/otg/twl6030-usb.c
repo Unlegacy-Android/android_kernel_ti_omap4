@@ -120,6 +120,8 @@ struct twl6030_usb {
 
 #define xceiv_to_twl(x)		container_of((x), struct twl6030_usb, otg)
 
+int twl6030_force_usb_id = 0;
+
 /*-------------------------------------------------------------------------*/
 
 static inline int twl6030_writeb(struct twl6030_usb *twl, u8 module,
@@ -270,9 +272,40 @@ static ssize_t twl6030_usb_vbus_show(struct device *dev,
 }
 static DEVICE_ATTR(vbus, 0444, twl6030_usb_vbus_show, NULL);
 
+static ssize_t twl6030_usb_id_show(struct device *dev,
+			struct device_attribute *attr, char *buf)
+{
+	int ret = -EINVAL;
+
+	ret = snprintf(buf, PAGE_SIZE, "%sable\n",
+		       twl6030_force_usb_id?"en":"dis");
+
+	return ret;
+}
+
+static ssize_t twl6030_usb_id_store(struct device *dev,
+			struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct twl6030_usb *twl = dev_get_drvdata(dev);
+
+	if (!strncmp(buf, "enable", 6)) {
+		twl6030_force_usb_id = 1;
+	} else if (!strncmp(buf, "disable", 7)) {
+		twl6030_force_usb_id = 0;
+	} else {
+		return -EINVAL;
+	}
+
+	schedule_work(&twl->otg_work);
+
+	return count;
+}
+
+static DEVICE_ATTR(usb_id, 0644, twl6030_usb_id_show, twl6030_usb_id_store);
+
 int twl6030_status = USB_EVENT_NONE;
 
-int twl6030_usbotg_get_status()
+int twl6030_usbotg_get_status(void)
 {
 	return twl6030_status;
 };
@@ -291,6 +324,9 @@ static void twl6030_usb_worker(struct work_struct *work)
 	mutex_lock(&twl->usb_lock);
 
 	hw_state = twl6030_readb(twl, TWL6030_MODULE_ID0, STS_HW_CONDITIONS);
+
+	if (twl6030_force_usb_id)
+		hw_state |= STS_USB_ID;
 
 	vbus_state = twl6030_readb(twl, TWL_MODULE_MAIN_CHARGE,
 						CONTROLLER_STAT1);
@@ -393,6 +429,10 @@ static void twl6030_otg_worker(struct work_struct *work)
 	mutex_lock(&twl->usb_lock);
 
 	hw_state = twl6030_readb(twl, TWL6030_MODULE_ID0, STS_HW_CONDITIONS);
+
+	if (twl6030_force_usb_id)
+		hw_state |= STS_USB_ID;
+
 	vbus_state = twl6030_readb(twl, TWL_MODULE_MAIN_CHARGE,
 				   CONTROLLER_STAT1);
 	vbus_state = vbus_state & VBUS_DET;
@@ -679,6 +719,9 @@ static int __devinit twl6030_usb_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, twl);
 	if (device_create_file(&pdev->dev, &dev_attr_vbus))
+		dev_warn(&pdev->dev, "could not create sysfs file\n");
+
+	if (device_create_file(&pdev->dev, &dev_attr_usb_id))
 		dev_warn(&pdev->dev, "could not create sysfs file\n");
 
 	ATOMIC_INIT_NOTIFIER_HEAD(&twl->otg.notifier);
