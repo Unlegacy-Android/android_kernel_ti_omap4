@@ -48,6 +48,8 @@ struct omap2_hsmmc_info {
 	void (*init_card)(struct mmc_card *card);
 };
 
+void omap4_hsmmc_init_card(struct mmc_card *card);
+
 #if defined(CONFIG_MMC_OMAP_HS) || defined(CONFIG_MMC_OMAP_HS_MODULE)
 
 void omap_hsmmc_init(struct omap2_hsmmc_info *);
