@@ -388,6 +388,11 @@ int omapfb_mode_to_dss_mode(struct fb_var_screeninfo *var,
 	for (i = 0; i < ARRAY_SIZE(omapfb_colormodes); ++i) {
 		struct omapfb_colormode *m = &omapfb_colormodes[i];
 		if (cmp_var_to_colormode(var, m)) {
+
+			// BGRA32 color format is only supported on OMAP5
+			if ((m->dssmode == OMAP_DSS_COLOR_BGRA32) && !cpu_is_omap54xx())
+				continue;
+
 			assign_colormode_to_var(var, m);
 			*mode = m->dssmode;
 			return 0;
