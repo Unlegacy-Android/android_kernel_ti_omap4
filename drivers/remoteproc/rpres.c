@@ -20,6 +20,7 @@
 #endif
 #include <plat/omap_device.h>
 #include <plat/rpres.h>
+#include <mach/omap4-common.h>
 
 static LIST_HEAD(rpres_list);
 static DEFINE_SPINLOCK(rpres_lock);
@@ -46,6 +47,7 @@ struct rpres *rpres_get(const char *name)
 	if (!r)
 		return ERR_PTR(-ENOENT);
 
+	omap4_dpll_cascading_blocker_hold(&r->pdev->dev);
 	mutex_lock(&r->lock);
 	if (r->state == RPRES_ACTIVE) {
 		pr_err("%s:resource already active\n", __func__);
@@ -75,6 +77,7 @@ void rpres_put(struct rpres *obj)
 		obj->state = RPRES_INACTIVE;
 	}
 	mutex_unlock(&obj->lock);
+	omap4_dpll_cascading_blocker_release(&obj->pdev->dev);
 }
 EXPORT_SYMBOL(rpres_put);
 
