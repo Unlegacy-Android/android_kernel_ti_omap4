@@ -496,6 +496,8 @@
 #define FT_LARGE_TOOL_WIDTH     255
 #define FT_MAXZ                 255
 
+#define FT5x06_DEFAULT_SENSITIVITY 0x16
+
 
 struct i2c_client;
 
