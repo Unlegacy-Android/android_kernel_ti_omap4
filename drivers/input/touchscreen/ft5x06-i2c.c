@@ -265,6 +265,7 @@ struct ft5x06 {
     u8 prev_gest;
     u8 gest_count;
     u8 report_rate;
+    u8 sensitivity;
     /* Ensures that only one function can specify the Device Mode at a time. */
     struct mutex device_mode_mutex;
     struct early_suspend early_suspend;
@@ -883,7 +884,46 @@ static int ftx_dbgfs_destroy(struct ft5x06 *ts)
 }
 #endif /* CONFIG_DEBUG_FS */
 
+static ssize_t ft5x06_sensitivity_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct i2c_client *client = container_of(dev, struct i2c_client, dev);
+	struct ft5x06 *ts = i2c_get_clientdata(client);
 
+	return sprintf(buf, "0x%x\n", ts->sensitivity);
+}
+static ssize_t ft5x06_sensitivity_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
+{
+	struct i2c_client *client = container_of(dev, struct i2c_client, dev);
+	struct ft5x06 *ts = i2c_get_clientdata(client);
+	int err = 0;
+	unsigned long value;
+	u8 reg_val;
+
+	if (size > 7)
+		return -EINVAL;
+
+	err = strict_strtoul(buf, 16, &value);
+	if (err != 0)
+		return err;
+
+	if (value > 255)
+		return -EINVAL;
+
+	ts->sensitivity = value;
+
+	// A bit racy, but should not be too important
+	if (ts->ftx_suspend_state == FTX_ACTIVE) {
+		reg_val = value;
+		err = i2c_smbus_write_i2c_block_data(ts->client, FT5x06_WMREG_TH_TOUCH, sizeof(u8), &reg_val);
+		if (0 != err) {
+			DBG_PRINT(dbg_level_error, "%s: " FTX_TAG ": %s(): ERROR: Could not write 0x%02x to the register at offset 0x%02x.\n", dev_name(&ts->client->dev), __func__, reg_val, FT5x06_WMREG_TH_TOUCH);
+			return err;
+		}
+	}
+
+	return size;
+}
+static DEVICE_ATTR(sensitivity, 0664, ft5x06_sensitivity_show, ft5x06_sensitivity_store);
 
 static ssize_t ft5x06_irq_enabled_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
@@ -6060,6 +6100,7 @@ static DEVICE_ATTR(ftsrxoffset,        S_IRUGO, ft5x06_rxoffset_show, NULL);
 
 static struct attribute *ft5x06_attributes[] = {
     &dev_attr_irq_enabled.attr,
+    &dev_attr_sensitivity.attr,
     &dev_attr_driver_version.attr,
     &dev_attr_rawbase.attr,
     &dev_attr_crosstalk.attr,
@@ -6180,6 +6221,13 @@ static int ftx_configure_volatile_settings(struct ft5x06 *ts)
 	if (0 != retval)
 	{
 		DBG_PRINT(dbg_level_error, "%s: " FTX_TAG ": %s(): ERROR: Could not write 0x%02x to the register at offset 0x%02x.\n", dev_name(&ts->client->dev), __func__, reg_val, FT5x06_WMREG_MAX_TOUCHES);
+	}
+
+	reg_val = ts->sensitivity & 0xFF;
+	retval = i2c_smbus_write_i2c_block_data(ts->client, FT5x06_WMREG_TH_TOUCH, sizeof(u8), &reg_val);
+	if (0 != retval)
+	{
+		DBG_PRINT(dbg_level_error, "%s: " FTX_TAG ": %s(): ERROR: Could not write 0x%02x to the register at offset 0x%02x.\n", dev_name(&ts->client->dev), __func__, reg_val, FT5x06_WMREG_TH_TOUCH);
 	}
 
 	return 0;
@@ -6310,6 +6358,7 @@ static int ft5x06_initialize(struct ft5x06 *ts)
 	ts->crosstalk_test_type   = FT5x06_CROSSTALK_TEST_TYPE_EVEN;
 	ts->factory_mode_register = FT5x06_FMREG_DEVICE_MODE;
 	ts->working_mode_register = FT5x06_WMREG_DEVICE_MODE;
+	ts->sensitivity = FT5x06_DEFAULT_SENSITIVITY;
 
 	ts->ft5x06_ts_wq = create_singlethread_workqueue("ft5x06_touch");
 	if (NULL == ts->ft5x06_ts_wq)
