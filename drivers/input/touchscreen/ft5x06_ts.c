@@ -706,7 +706,7 @@ static int ft5x06_ts_probe(struct i2c_client *client,
 	err = ft5x06_i2c_read(client, &reg_addr, 1, &reg_value, 1);
 	if (err < 0) {
 		dev_err(&client->dev, "version read failed");
-		return err;
+		goto free_reset_gpio;
 	}
 
 	if ((pdata->family_id != reg_value) && (!pdata->ignore_id_check)) {
