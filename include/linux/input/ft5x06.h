@@ -53,6 +53,7 @@
 #define FT5x06_WMREG_P2_YH              0x0B
 #define FT5x06_WMREG_P2_YL              0x0C
 #define FT5x06_WMREG_TH_TOUCH           0x80
+#define FT5x06_WMREG_TH_TOUCHFOCUS      0x82
 #define FT5x06_WMREG_RPT_RATE           0x88
 #define FT5x06_WMREG_MAX_TOUCHES        0x8A
 #define FT5x06_WMREG_MAX_X_HIGH         0x8B
