@@ -262,6 +262,7 @@
 
 #define USB_CURRENT_LIMIT_LOW		100000   /* microAmp */
 #define USB_CURRENT_LIMIT_HIGH		500000   /* microAmp */
+#define AC_CURRENT_LIMIT_LOW		1200000  /* microAmp */
 #define AC_CURRENT_LIMIT		2000000  /* microAmp */
 
 struct bq2419x_platform_data {
@@ -329,6 +330,7 @@ struct bq2419x_device_info {
 	char			reg08;
 	char			reg09;
 	bool			boostback_fix_required;
+	char			force_power;
 };
 
 /*

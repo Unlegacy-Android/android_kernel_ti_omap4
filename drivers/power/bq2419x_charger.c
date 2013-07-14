@@ -35,6 +35,10 @@
 #include <plat/dmtimer.h>
 #include <linux/clk.h>
 
+#define FORCEDPOWER_NONE	0
+#define FORCEDPOWER_1A		1
+#define FORCEDPOWER_2A		2
+
 #define BQ2419x_WDT_TIMEOUT		WatchDog_160s
 #define BQ2419x_BOOSTBACK_THRESHOLD_LO	3200
 #define BQ2419x_BOOSTBACK_THRESHOLD_HI	3500
@@ -86,7 +90,17 @@ static int bq2419x_usb_get_property(struct power_supply *psy,
 		ret = 0;
 		break;
 	case POWER_SUPPLY_PROP_CURRENT_AVG:
-		val->intval = USB_CURRENT_LIMIT_HIGH;
+		switch (di->force_power) {
+		case FORCEDPOWER_NONE:
+			val->intval = USB_CURRENT_LIMIT_HIGH;
+			break;
+		case FORCEDPOWER_1A:
+			val->intval = AC_CURRENT_LIMIT_LOW;
+			break;
+		case FORCEDPOWER_2A:
+			val->intval = AC_CURRENT_LIMIT_LOW;
+			break;
+		}
 		ret = 0;
 		break;
 	default:
@@ -1194,6 +1208,11 @@ static int bqEnDPDM(struct bq2419x_device_info *di, int enable)
 	unsigned int Reg07Val;
 	u8 data;
 
+	if (di->force_power) {
+		dev_dbg(di->dev, "Ignored bqEnDPDM in force-power mode\n");
+		return 1;
+	}
+
 	if ((enable != ENABLE) && (enable != DISABLE)) {
 		return -EINVAL;
 	} else {
@@ -1317,6 +1336,10 @@ static void adjust_fast_charging_current_limit(struct bq2419x_device_info *di)
 		target_ichr_limit = BQ2419x_LOW_BATTEMP_ICHR_LIMIT;
 	else if ((current_ichr < ICHG_DEFAULT) && (current_temp >= 180))
 		target_ichr_limit = ICHG_DEFAULT;
+
+	if (di->force_power == FORCEDPOWER_1A &&
+	    target_ichr_limit >= ICHG_DEFAULT /* 2A*/)
+		target_ichr_limit = BQ2419x_LOW_BATTEMP_ICHR_LIMIT; /* 1A */
 
 	if (target_ichr_limit != current_ichr)
 		bqSetFASTCHRG(di, target_ichr_limit);
@@ -1531,15 +1554,24 @@ static void bq2419x_event_work_func(struct work_struct *work)
 	switch (di->event) {
 	case USB_EVENT_VBUS:
 		dev_dbg(di->dev, "USB_EVENT_VBUS\n");
-		di->power_type = di->event;
+
+		if (di->force_power)
+			di->power_type = USB_EVENT_CHARGER;
+		else
+			di->power_type = di->event;
 
 		bq2419x_start_dmtimer(di, true);
 		adjust_fast_charging_current_limit(di);
 
-		gpio_direction_output(di->gpio_psel, 1);
+		gpio_direction_output(di->gpio_psel, !di->force_power);
 		gpio_direction_output(di->gpio_ce, 0);
 
-		if (di->bqchip_version == BQ24196_REV_1_3) {
+		if (di->force_power) {
+			if (di->force_power == FORCEDPOWER_1A)
+				bqSetIINDPM(di, IINLIM_900MA);
+			else
+				bqSetIINDPM(di, IINLIM_2000MA);
+		} else if (di->bqchip_version == BQ24196_REV_1_3) {
 			bqEnDPDM(di, ENABLE);
 		} else {
 			bqSetIINDPM(di, IINLIM_500MA);
@@ -1562,11 +1594,18 @@ static void bq2419x_event_work_func(struct work_struct *work)
 		gpio_direction_output(di->gpio_psel, 0);
 		gpio_direction_output(di->gpio_ce, 0);
 
-		if (di->bqchip_version == BQ24196_REV_1_3) {
+
+		if (di->force_power) {
+			if (di->force_power == FORCEDPOWER_1A)
+				bqSetIINDPM(di, IINLIM_900MA);
+			else
+				bqSetIINDPM(di, IINLIM_2000MA);
+		} else if (di->bqchip_version == BQ24196_REV_1_3) {
 			bqEnDPDM(di, ENABLE);
 		} else {
-			bqSetIINDPM(di, IINLIM_2000MA);
+			bqSetIINDPM(di, IINLIM_900MA);
 		}
+
 		bqSetFastChgTimer(di, di->stimer_dcp);
 		bqSetCHGCONFIG(di, CHARGE_BATTERY);
 
@@ -1609,7 +1648,10 @@ static void bq2419x_event_work_func(struct work_struct *work)
 	case USB_EVENT_ENUMERATED:
 		/* Nothing to do for this one */
 		dev_dbg(di->dev, "USB_EVENT_ENUMERATED\n");
-		if (di->bqchip_version == BQ24196_REV_1_3)
+
+		if (di->force_power == FORCEDPOWER_2A)
+			bqSetIINDPM(di, IINLIM_2000MA);
+		else if (di->bqchip_version == BQ24196_REV_1_3)
 			bqEnDPDM(di, ENABLE);
 		break;
 	case USB_EVENT_NO_CONTACT:
@@ -1913,16 +1955,53 @@ static ssize_t bq2419x_show_hiz_enable(struct device *dev, struct device_attribu
 	return sprintf(buf, "%x\n", read_reg);
 }
 
+static ssize_t bq2419x_show_force_power(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct bq2419x_device_info * const di = dev_get_drvdata(dev);
+	int retval = 0;
+	u8 read_reg = 0, read_reg2;
+
+	retval = bq2419x_read_byte(di, &read_reg, Reg00Address);
+	retval = bq2419x_read_byte(di, &read_reg2, Reg08Address);
+
+	return sprintf(buf, "force_power: %d\nReg00: 0x%x\nReg08: 0x%x\n", di->force_power,
+		       read_reg, read_reg2);
+}
+
+static ssize_t bq2419x_set_force_power(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct bq2419x_device_info * const di = dev_get_drvdata(dev);
+
+	if (count >= 1) {
+		if ('1' == buf[0]) {
+			di->force_power = FORCEDPOWER_1A;
+		} else if ('2' == buf[0]) {
+			di->force_power = FORCEDPOWER_2A;
+		} else {
+			di->force_power = FORCEDPOWER_NONE;
+		}
+	}
+
+	if (di->force_power) // Update power properties if connected
+		schedule_work(&di->ework);
+
+	return count;
+}
+
 static DEVICE_ATTR(charge_status, S_IWUSR | S_IRUSR,
 		   bq2419x_show_charge_status,
 		   bq2419x_set_charge_status);
 static DEVICE_ATTR(hiz_enable, S_IWUSR | S_IRUSR,
 		   bq2419x_show_hiz_enable,
 		   bq2419x_set_hiz_enable);
+static DEVICE_ATTR(force_power, 0664,
+		   bq2419x_show_force_power,
+		   bq2419x_set_force_power);
 
 static struct attribute *bq2419x_mfg_attributes[] = {
 	&dev_attr_charge_status.attr,
 	&dev_attr_hiz_enable.attr,
+	&dev_attr_force_power.attr,
 	NULL,
 };
 
