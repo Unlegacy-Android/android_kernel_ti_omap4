@@ -1444,6 +1444,8 @@ static const struct mmc_fixup blk_fixups[] =
 		  MMC_QUIRK_BLK_NO_CMD23),
 	MMC_FIXUP("MMC32G", 0x11, CID_OEMID_ANY, add_quirk_mmc,
 		  MMC_QUIRK_BLK_NO_CMD23),
+	MMC_FIXUP("SU16G", 0x3, 0x5344, add_quirk_sd,
+		  MMC_QUIRK_RECOVER_BN),
 	MMC_FIXUP("SU32G", 0x3, 0x5344, add_quirk_sd,
 		  MMC_QUIRK_RECOVER_BN),
 	MMC_FIXUP("SU64G", 0x3, 0x5344, add_quirk_sd,
