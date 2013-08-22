@@ -338,7 +338,6 @@ mext_out:
 
 	case FITRIM:
 	{
-#ifdef CONFIG_ENABLE_FSTRIM
 		struct super_block *sb = inode->i_sb;
 		struct request_queue *q = bdev_get_queue(sb->s_bdev);
 		struct fstrim_range range;
@@ -365,9 +364,6 @@ mext_out:
 			return -EFAULT;
 
 		return 0;
-#else
-		return -EOPNOTSUPP;
-#endif
 	}
 
 	default:
