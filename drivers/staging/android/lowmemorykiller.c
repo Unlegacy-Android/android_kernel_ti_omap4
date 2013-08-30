@@ -38,6 +38,7 @@
 #include <linux/oom.h>
 #include <linux/sched.h>
 #include <linux/swap.h>
+#include <linux/fs.h>
 #include <linux/rcupdate.h>
 #include <linux/notifier.h>
 #include <linux/compaction.h>
@@ -106,8 +107,13 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 	}
 
 	int other_free = global_page_state(NR_FREE_PAGES) - totalreserve_pages;
-	int other_file = global_page_state(NR_FILE_PAGES) -
-						global_page_state(NR_SHMEM);
+	int other_file = 0;
+
+	if (global_page_state(NR_SHMEM) + total_swapcache_pages <
+		global_page_state(NR_FILE_PAGES))
+		other_file = global_page_state(NR_FILE_PAGES) -
+						global_page_state(NR_SHMEM) -
+						total_swapcache_pages;
 
 	if (lowmem_adj_size < array_size)
 		array_size = lowmem_adj_size;
