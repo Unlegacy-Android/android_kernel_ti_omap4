@@ -33,6 +33,7 @@ Optional properties:
  - focaltech,no-force-update : to specify force update is allowed
  - focaltech,button-map : button map of key codes. The number
 				of key codes depend on panel
+ - focaltech,ignore-id-check : specify ignore family-id check
 
 Example:
 	i2c@f9924000 {
