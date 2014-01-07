@@ -123,11 +123,12 @@
 #define FACTORY_MODE3	3
 #define FT5606_TEST_MODE_RX	20
 
+#ifdef CONFIG_TOUCHSCREEN_FT5x06_FUZZ
 /*
 Add fuzz factor on touch x and y values
 */
-int fuzz_x = 3,
-    fuzz_y = 5;
+int fuzz_x = 3,	fuzz_y = 5;
+#endif
 
 enum ftx_factory_mode
 {
@@ -6333,8 +6334,13 @@ static int ftx_input_device_initialize(struct ft5x06 *ts)
 
 	/* Support ST events */
 #if defined(FTX_SUPPORT_ST)
+#ifdef CONFIG_TOUCHSCREEN_FT5x06_FUZZ
 	input_set_abs_params(input_device, ABS_X,          0, ts->platform_data->maxx, fuzz_x, 0);
 	input_set_abs_params(input_device, ABS_Y,          0, ts->platform_data->maxy, fuzz_y, 0);
+#else
+	input_set_abs_params(input_device, ABS_X,          0, ts->platform_data->maxx, 0, 0);
+	input_set_abs_params(input_device, ABS_Y,          0, ts->platform_data->maxy, 0, 0);
+#endif
 	input_set_abs_params(input_device, ABS_TOOL_WIDTH, 0, FT_LARGE_TOOL_WIDTH,     0, 0);
 	input_set_abs_params(input_device, ABS_PRESSURE,    0, FT_MAXZ,                 0, 0);
 #endif /* defined(FTX_SUPPORT_ST) */
@@ -6368,8 +6374,13 @@ static int ftx_input_device_initialize(struct ft5x06 *ts)
 		}
 
 		/* Set the parameters for multi touch only if we can support MT */
+#ifdef CONFIG_TOUCHSCREEN_FT5x06_FUZZ
 		input_set_abs_params(input_device, ABS_MT_POSITION_X,  0, ts->platform_data->maxx - 1, fuzz_x, 0);
 		input_set_abs_params(input_device, ABS_MT_POSITION_Y,  0, ts->platform_data->maxy - 1, fuzz_y, 0);
+#else
+		input_set_abs_params(input_device, ABS_MT_POSITION_X,  0, ts->platform_data->maxx - 1, 0, 0);
+		input_set_abs_params(input_device, ABS_MT_POSITION_Y,  0, ts->platform_data->maxy - 1, 0, 0);
+#endif
 		//input_set_abs_params(input_device, ABS_MT_WIDTH_MAJOR, 0, FT_LARGE_TOOL_WIDTH,     0, 0);
 		input_set_abs_params(input_device, ABS_MT_PRESSURE,    0, FT_MAXZ,                 0, 0);
 		input_set_abs_params(input_device, ABS_MT_TOUCH_MAJOR, 0, FT_MAXZ,                 0, 0);
