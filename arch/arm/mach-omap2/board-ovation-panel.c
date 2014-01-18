@@ -227,9 +227,9 @@ struct omap_tablet_panel_data {
 	struct sgx_omaplfb_platform_data *omaplfb_data;
 };
 
-/* I love magic numbers too. Note, this one is unused, though */
+/* I love magic numbers too. */
 static struct dsscomp_platform_data dsscomp_config_ovation_wuxga = {
-	.tiler1d_slotsz = ((18 * SZ_1M) + (9 * SZ_1M) + (9 * SZ_1M) + (2 * SZ_1M)),
+	.tiler1d_slotsz = ((15 * SZ_1M) + (9 * SZ_1M) + (9 * SZ_1M) + (1 * SZ_1M)),
 };
 
 #ifdef CONFIG_FB_OMAP2_NUM_FBS
@@ -693,7 +693,7 @@ void ovation_android_display_setup(struct omap_ion_platform_data *ion)
 	}
 
 	omap_android_display_setup(panel_data_ovation_wuxga.board_info,
-				NULL,
+				panel_data_ovation_wuxga.dsscomp_data,
 				panel_data_ovation_wuxga.omaplfb_data,
 				&ovation_fb_pdata, ion);
 }
