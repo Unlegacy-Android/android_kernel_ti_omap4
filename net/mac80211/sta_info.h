@@ -199,6 +199,7 @@ struct sta_ampdu_mlme {
  * @drv_unblock_wk: used for driver PS unblocking
  * @listen_interval: listen interval of this station, when we're acting as AP
  * @flags: STA flags, see &enum ieee80211_sta_info_flags
+ * @ps_lock: used for powersave (when mac80211 is the AP) related locking
  * @ps_tx_buf: buffer of frames to transmit to this station
  *	when it leaves power saving state
  * @tx_filtered: buffer of frames we already tried to transmit
@@ -267,10 +268,8 @@ struct sta_info {
 	 */
 	u32 flags;
 
-	/*
-	 * STA powersave frame queues, no more than the internal
-	 * locking required.
-	 */
+	/* STA powersave lock and frame queues */
+	spinlock_t ps_lock;
 	struct sk_buff_head ps_tx_buf;
 	struct sk_buff_head tx_filtered;
 
