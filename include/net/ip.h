@@ -241,6 +241,9 @@ extern void ipfrag_init(void);
 
 extern void ip_static_sysctl_init(void);
 
+#define IP4_REPLY_MARK(net, mark) \
+	((net)->ipv4.sysctl_fwmark_reflect ? (mark) : 0)
+
 #ifdef CONFIG_INET
 #include <net/dst.h>
 
