@@ -196,6 +196,7 @@ struct mmc_card {
 #define MMC_QUIRK_SAMSUNG_WL_PATCH	(1<<8)	/* Patch Samsung FW to fix wear leveling bug */
 #define MMC_QUIRK_SAMSUNG_SMART	(1<<9)		/* Samsung SMART is available */
 #define MMC_QUIRK_RECOVER_BN	(1<<10)		/* Some 64GB sd cards have issues */
+#define MMC_QUIRK_SEC_ERASE_TRIM_BROKEN (1<<11)	/* Skip secure for erase/trim */
 
 	unsigned int		erase_size;	/* erase size in sectors */
  	unsigned int		erase_shift;	/* if erase unit is power 2 */
