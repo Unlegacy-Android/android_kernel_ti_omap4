@@ -495,7 +495,7 @@ static int tcp_v6_send_synack(struct sock *sk, struct request_sock *req,
 	ipv6_addr_copy(&fl6.saddr, &treq->loc_addr);
 	fl6.flowlabel = 0;
 	fl6.flowi6_oif = treq->iif;
-	fl6.flowi6_mark = sk->sk_mark;
+	fl6.flowi6_mark = inet_rsk(req)->ir_mark;
 	fl6.fl6_dport = inet_rsk(req)->rmt_port;
 	fl6.fl6_sport = inet_rsk(req)->loc_port;
 	fl6.flowi6_uid = sock_i_uid(sk);
@@ -1256,6 +1256,8 @@ static int tcp_v6_conn_request(struct sock *sk, struct sk_buff *skb)
 	ipv6_addr_copy(&treq->loc_addr, &ipv6_hdr(skb)->daddr);
 	if (!want_cookie || tmp_opt.tstamp_ok)
 		TCP_ECN_create_request(req, tcp_hdr(skb));
+
+	inet_rsk(req)->ir_mark = inet_request_mark(sk, skb);
 
 	if (!isn) {
 		struct inet_peer *peer = NULL;
