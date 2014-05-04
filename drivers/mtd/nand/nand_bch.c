@@ -37,10 +37,12 @@
  * @eccmask:   XOR ecc mask, allows erased pages to be decoded as valid
  */
 struct nand_bch_control {
-	struct bch_control   *bch;
-	struct nand_ecclayout ecclayout;
-	unsigned int         *errloc;
-	unsigned char        *eccmask;
+	struct bch_control	*bch;
+	struct nand_ecclayout	ecclayout;
+	unsigned int		*errloc;
+	unsigned char		*eccmask;
+	unsigned int		eccsize;
+	unsigned int		eccbytes;
 };
 
 /**
@@ -56,11 +58,11 @@ int nand_bch_calculate_ecc(struct mtd_info *mtd, const unsigned char *buf,
 	struct nand_bch_control *nbc = chip->ecc.priv;
 	unsigned int i;
 
-	memset(code, 0, chip->ecc.bytes);
-	encode_bch(nbc->bch, buf, chip->ecc.size, code);
+	memset(code, 0, nbc->eccbytes);
+	encode_bch(nbc->bch, buf, nbc->eccsize, code);
 
 	/* apply mask so that an erased page is a valid codeword */
-	for (i = 0; i < chip->ecc.bytes; i++)
+	for (i = 0; i < nbc->eccbytes; i++)
 		code[i] ^= nbc->eccmask[i];
 
 	return 0;
@@ -84,11 +86,11 @@ int nand_bch_correct_data(struct mtd_info *mtd, unsigned char *buf,
 	unsigned int *errloc = nbc->errloc;
 	int i, count;
 
-	count = decode_bch(nbc->bch, NULL, chip->ecc.size, read_ecc, calc_ecc,
+	count = decode_bch(nbc->bch, NULL, nbc->eccsize, read_ecc, calc_ecc,
 			   NULL, errloc);
 	if (count > 0) {
 		for (i = 0; i < count; i++) {
-			if (errloc[i] < (chip->ecc.size*8))
+			if (errloc[i] < (nbc->eccsize*8))
 				/* error is located in data, correct it */
 				buf[errloc[i] >> 3] ^= (1 << (errloc[i] & 7));
 			/* else error in ecc, no action needed */
@@ -197,6 +199,9 @@ nand_bch_init(struct mtd_info *mtd, unsigned int eccsize, unsigned int eccbytes,
 		goto fail;
 	}
 
+
+	nbc->eccsize = eccsize;
+	nbc->eccbytes = eccbytes;
 	nbc->eccmask = kmalloc(eccbytes, GFP_KERNEL);
 	nbc->errloc = kmalloc(t*sizeof(*nbc->errloc), GFP_KERNEL);
 	if (!nbc->eccmask || !nbc->errloc)

@@ -290,13 +290,15 @@ static void omap_write_buf_pref(struct mtd_info *mtd,
 						struct omap_nand_info, mtd);
 	uint32_t w_count = 0;
 	int i = 0, ret = 0;
-	u16 *p = (u16 *)buf;
+	u_char *buf1 = (u_char *)buf;
+	u32 *p32 = (u32 *)buf;
 	unsigned long tim, limit;
 
 	/* take care of subpage writes */
-	if (len % 2 != 0) {
+	while (len % 4 != 0) {
 		writeb(*buf, info->nand.IO_ADDR_W);
-		p = (u16 *)(buf + 1);
+		buf1++;
+		p32 = (u32 *)buf1;
 		len--;
 	}
 
@@ -306,15 +308,15 @@ static void omap_write_buf_pref(struct mtd_info *mtd,
 	if (ret) {
 		/* PFPW engine is busy, use cpu copy method */
 		if (info->nand.options & NAND_BUSWIDTH_16)
-			omap_write_buf16(mtd, (u_char *)p, len);
+			omap_write_buf16(mtd, (u_char *)p32, len);
 		else
-			omap_write_buf8(mtd, (u_char *)p, len);
+			omap_write_buf8(mtd, (u_char *)p32, len);
 	} else {
 		while (len) {
 			w_count = gpmc_read_status(GPMC_PREFETCH_FIFO_CNT);
-			w_count = w_count >> 1;
-			for (i = 0; (i < w_count) && len; i++, len -= 2)
-				iowrite16(*p++, info->nand.IO_ADDR_W);
+			w_count = w_count >> 2;
+			for (i = 0; (i < w_count) && len; i++, len -= 4)
+				*(u32 *)(info->nand.IO_ADDR_W) = *p32++;
 		}
 		/* wait for data to flushed-out before reset the prefetch */
 		tim = 0;
@@ -383,7 +385,8 @@ static inline int omap_nand_dma_transfer(struct mtd_info *mtd, void *addr,
 	}
 
 	if (is_write) {
-	    omap_set_dma_dest_params(info->dma_ch, 0, OMAP_DMA_AMODE_CONSTANT,
+	    /* See comment for read below */
+	    omap_set_dma_dest_params(info->dma_ch, 0, OMAP_DMA_AMODE_POST_INC,
 						info->phys_base, 0, 0);
 	    omap_set_dma_src_params(info->dma_ch, 0, OMAP_DMA_AMODE_POST_INC,
 							dma_addr, 0, 0);
@@ -391,7 +394,14 @@ static inline int omap_nand_dma_transfer(struct mtd_info *mtd, void *addr,
 					0x10, buf_len, OMAP_DMA_SYNC_FRAME,
 					OMAP24XX_DMA_GPMC, OMAP_DMA_DST_SYNC);
 	} else {
-	    omap_set_dma_src_params(info->dma_ch, 0, OMAP_DMA_AMODE_CONSTANT,
+	    /*
+	     * I don't know why, but using the intuitive
+	     * OMAP_DMA_AMODE_CONSTANT here causes an L3 interconnect fault.
+	     * Since any address in the area allocated to NAND will result
+	     * in GPMC activating the chip's CS, we are free to increment
+	     * the address though.
+	     */
+	    omap_set_dma_src_params(info->dma_ch, 0, OMAP_DMA_AMODE_POST_INC,
 						info->phys_base, 0, 0);
 	    omap_set_dma_dest_params(info->dma_ch, 0, OMAP_DMA_AMODE_POST_INC,
 							dma_addr, 0, 0);
@@ -899,32 +909,39 @@ static int omap_wait(struct mtd_info *mtd, struct nand_chip *chip)
 	return status;
 }
 
+#define WAIT0STATUS	0x100
 /**
  * omap_dev_ready - calls the platform specific dev_ready function
  * @mtd: MTD device structure
  */
 static int omap_dev_ready(struct mtd_info *mtd)
 {
-	unsigned int val = 0;
-	struct omap_nand_info *info = container_of(mtd, struct omap_nand_info,
-							mtd);
-
-	val = gpmc_read_status(GPMC_GET_IRQ_STATUS);
-	if ((val & 0x100) == 0x100) {
-		/* Clear IRQ Interrupt */
-		val |= 0x100;
-		val &= ~(0x0);
-		gpmc_cs_configure(info->gpmc_cs, GPMC_SET_IRQ_STATUS, val);
-	} else {
-		unsigned int cnt = 0;
-		while (cnt++ < 0x1FF) {
-			if  ((val & 0x100) == 0x100)
-				return 0;
-			val = gpmc_read_status(GPMC_GET_IRQ_STATUS);
+	unsigned int val, cnt = 0;
+	while (cnt++ < 0x1FF) {
+		val = gpmc_read_status(GPMC_GET_STATUS);
+		if ((val & WAIT0STATUS) == WAIT0STATUS)
+		{
+			/*
+			 * It is rare, but the read operation can receive
+			 * bogus data from the chip.  It gets a number of
+			 * bytes of invalid data followed by what should
+			 * have been the start of the data stream.  So it
+			 * seems that the chip wasn't really ready, despite
+			 * the indication of the ready line in the
+			 * GPMC_STATUS register.  Either the chip changed
+			 * its mind after tWB (not supposed to happen according
+			 * to the datasheet) or the status register didn't
+			 * properly reflect the ready line.  Either way,
+			 * rereading the bit to verify readiness resolves the
+			 * problem.
+			 */
+			val = gpmc_read_status(GPMC_GET_STATUS);
+			if ((val & WAIT0STATUS) == WAIT0STATUS)
+				return 1;
 		}
 	}
 
-	return 1;
+	return 0;
 }
 
 static int __devinit omap_nand_probe(struct platform_device *pdev)

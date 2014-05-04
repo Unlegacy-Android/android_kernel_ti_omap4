@@ -42,6 +42,7 @@
 #define GPMC_NAND_DATA		0x0000000c
 
 #define GPMC_ENABLE_IRQ		0x0000000d
+#define GPMC_GET_STATUS		0x0000000e
 
 /* ECC commands */
 #define GPMC_ECC_READ		0 /* Reset Hardware ECC for read */

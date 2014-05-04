@@ -460,6 +460,10 @@ int gpmc_read_status(int cmd)
 	u32	regval = 0;
 
 	switch (cmd) {
+	case GPMC_GET_STATUS:
+		status = gpmc_read_reg(GPMC_STATUS);
+		break;
+
 	case GPMC_GET_IRQ_STATUS:
 		status = gpmc_read_reg(GPMC_IRQSTATUS);
 		break;
@@ -518,12 +522,12 @@ int gpmc_cs_configure(int cs, int cmd, int wval)
 		break;
 
 	case GPMC_CONFIG_RDY_BSY:
-		regval  = gpmc_cs_read_reg(cs, GPMC_CS_CONFIG1);
+		regval  = gpmc_read_reg(GPMC_CONFIG);
 		if (wval)
 			regval |= WR_RD_PIN_MONITORING;
 		else
 			regval &= ~WR_RD_PIN_MONITORING;
-		gpmc_cs_write_reg(cs, GPMC_CS_CONFIG1, regval);
+		gpmc_write_reg(GPMC_CONFIG, regval);
 		break;
 
 	case GPMC_CONFIG_DEV_SIZE:
