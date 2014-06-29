@@ -67,6 +67,13 @@ void hsi_hsr_suspend(struct hsi_dev *hsi_ctrl)
 		hsi_outl_and(HSI_HSR_MODE_MODE_VAL_SLEEP, hsi_ctrl->base,
 			     HSI_HSR_MODE_REG(port));
 	}
+
+#ifdef CONFIG_MACH_TUNA
+	/* Save context */
+	hsi_save_ctx(hsi_ctrl);
+
+	hsi_ctrl->clock_enabled = false;
+#endif
 }
 
 void hsi_hsr_resume(struct hsi_dev *hsi_ctrl)
@@ -1181,19 +1188,9 @@ int hsi_runtime_suspend(struct device *dev)
 	if (!hsi_ctrl->clock_enabled)
 		dev_warn(dev, "Warning: clock status mismatch vs runtime PM\n");
 
-	/* Save context */
-	hsi_save_ctx(hsi_ctrl);
-
-	hsi_ctrl->clock_enabled = false;
-
 #ifdef CONFIG_MACH_TUNA
 	/* Forbid data reception */
 	hsi_hsr_suspend(hsi_ctrl);
-
-	/* Save context */
-	hsi_save_ctx(hsi_ctrl);
-
-	hsi_ctrl->clock_enabled = false;
 
 	/* HSI is going to IDLE, it needs IO wakeup mechanism enabled */
 	if (device_may_wakeup(dev))
@@ -1203,6 +1200,11 @@ int hsi_runtime_suspend(struct device *dev)
 		for (i = 0; i < hsi_ctrl->max_p; i++)
 			pdata->wakeup_disable(
 				hsi_ctrl->hsi_port[i].port_number);
+#else
+	/* Save context */
+	hsi_save_ctx(hsi_ctrl);
+
+	hsi_ctrl->clock_enabled = false;
 #endif
 
 	/* HSI is now ready to be put in low power state */
