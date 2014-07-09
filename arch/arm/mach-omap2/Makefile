@@ -278,6 +278,38 @@ obj-$(CONFIG_MACH_OMAP_BLAZE)		+= board-44xx-tablet.o \
 
 obj-$(CONFIG_MACH_OMAP4_PANDA)		+= board-omap4panda.o
 
+obj-$(CONFIG_MACH_OMAP_ACCLAIM)		+= board-acclaim.o \
+					   board-44xx-identity.o \
+					   board-acclaim-touch.o \
+					   board-acclaim-panel.o \
+					   board-acclaim-buttons.o \
+					   omap4_apps_brd_id.o \
+					   omap_phy_internal.o \
+					   hsmmc.o
+
+obj-$(CONFIG_MACH_OMAP_OVATION)		+= board-ovation.o \
+					   board-ovation-touch.o \
+					   board-ovation-panel.o \
+					   board-ovation-buttons.o \
+					   board-bn-power.o \
+					   board-bn-wifi.o \
+					   board-44xx-identity.o \
+					   hsmmc.o \
+					   omap_phy_internal.o \
+					   omap4_apps_brd_id.o
+
+obj-$(CONFIG_MACH_OMAP_HUMMINGBIRD)     += board-hummingbird.o \
+					   board-hummingbird-touch.o \
+					   board-hummingbird-sensors.o \
+					   board-hummingbird-panel.o \
+					   board-hummingbird-buttons.o \
+					   board-bn-power.o \
+					   board-bn-wifi.o \
+					   board-44xx-identity.o \
+					   hsmmc.o \
+					   omap_phy_internal.o \
+					   omap4_apps_brd_id.o
+
 obj-$(CONFIG_MACH_PCM049)		+= board-omap4pcm049.o
 
 obj-$(CONFIG_MACH_OMAP3517EVM)		+= board-am3517evm.o
