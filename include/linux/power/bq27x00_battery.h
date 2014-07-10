@@ -11,9 +11,18 @@
  *	register to be read. The return value should either be the content of
  *	the passed register or an error value.
  */
+#ifdef CONFIG_MACH_OMAP_BN
+struct bq27x00_platform_data {
+#else
 struct bq27000_platform_data {
+#endif
 	const char *name;
 	int (*read)(struct device *dev, unsigned int);
+#ifdef CONFIG_MACH_OMAP_BN
+	int gpio_ce;
+	int gpio_soc_int;
+	int gpio_bat_low;
+#endif
 };
 
 #endif
