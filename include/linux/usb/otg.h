@@ -37,6 +37,9 @@ enum usb_otg_state {
 
 enum usb_xceiv_events {
 	USB_EVENT_NONE,         /* no events or cable disconnected */
+#ifdef CONFIG_MACH_OMAP_BN
+	USB_EVENT_NO_CONTACT,   /* usb no contact event */
+#endif
 	USB_EVENT_VBUS,         /* vbus valid event */
 	USB_EVENT_ID,           /* id was grounded */
 	USB_EVENT_CHARGER,      /* usb dedicated charger */
