@@ -22,6 +22,11 @@ struct bq27x00_cooling_actions {
 };
 
 struct bq27x00_platform_data {
+#ifdef CONFIG_MACH_OMAP_BN
+	int	gpio_ce;
+	int	gpio_soc_int;
+	int	gpio_bat_low;
+#endif
 	int	number_actions;
 	struct	bq27x00_cooling_actions cooling_actions[];
 };

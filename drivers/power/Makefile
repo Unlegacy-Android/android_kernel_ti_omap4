@@ -24,7 +24,11 @@ obj-$(CONFIG_BATTERY_TOSA)	+= tosa_battery.o
 obj-$(CONFIG_BATTERY_COLLIE)	+= collie_battery.o
 obj-$(CONFIG_BATTERY_WM97XX)	+= wm97xx_battery.o
 obj-$(CONFIG_BATTERY_SBS)	+= sbs-battery.o
+ifdef CONFIG_MACH_OMAP_BN
+obj-$(CONFIG_BATTERY_BQ27x00)	+= bq27x00_battery-bn.o
+else
 obj-$(CONFIG_BATTERY_BQ27x00)	+= bq27x00_battery.o
+endif
 obj-$(CONFIG_BATTERY_DA9030)	+= da9030_battery.o
 obj-$(CONFIG_BATTERY_DA9052)	+= da9052-battery.o
 obj-$(CONFIG_BATTERY_MAX17040)	+= max17040_battery.o
