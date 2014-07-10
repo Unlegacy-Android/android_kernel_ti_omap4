@@ -291,14 +291,14 @@ struct bq2419x_device_info {
 	struct work_struct	iwork;
 	struct work_struct	ework;
 	struct delayed_work	bq2419x_charger_work;
-	struct otg_transceiver 	*otg;
+	struct usb_phy	 	*otg;
 	struct notifier_block	nb;
 	struct power_supply		usb;
 	struct power_supply		wall;
 	struct mutex			lock;
 	struct wake_lock		timer_wakelock;
 
-	enum usb_xceiv_events		power_type;
+	enum usb_phy_events		power_type;
 
 	unsigned long		event;
 	unsigned short		status_reg;
