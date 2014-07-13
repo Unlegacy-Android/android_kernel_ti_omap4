@@ -30,6 +30,8 @@
 #include <linux/memblock.h>
 #include <linux/i2c/twl.h>
 
+#include <asm/system_info.h>
+
 #include <plat/vram.h>
 #include <plat/omap_apps_brd_id.h>
 #include <plat/android-display.h>
@@ -218,9 +220,10 @@ static struct i2c_board_info __initdata bl_i2c_boardinfo[] = {
 	},
 };
 
-static struct gpio ovation_hdmi_gpios[] = {
-	{HDMI_GPIO_CT_CP_HPD,  GPIOF_OUT_INIT_HIGH,    "hdmi_gpio_hpd"   },
-	{HDMI_GPIO_LS_OE,      GPIOF_OUT_INIT_HIGH,    "hdmi_gpio_ls_oe" },
+static struct omap_dss_hdmi_data ovation_hdmi_data = {
+	.hpd_gpio = HDMI_GPIO_HPD,
+	.ct_cp_hpd_gpio = HDMI_GPIO_CT_CP_HPD,
+	.ls_oe_gpio = HDMI_GPIO_LS_OE,
 };
 
 struct omap_tablet_panel_data {
@@ -250,7 +253,6 @@ static struct sgx_omaplfb_config omaplfb_config_ovation_wuxga[OMAPLFB_NUM_DEV] =
 static void ovation_hdmi_mux_init(void)
 {
 	u32 r;
-	int status;
 	/* PAD0_HDMI_HPD_PAD1_HDMI_CEC */
 	omap_mux_init_signal("hdmi_hpd.hdmi_hpd",
 				OMAP_PIN_INPUT_PULLDOWN);
@@ -289,14 +291,9 @@ static void ovation_hdmi_mux_init(void)
 		(HDMI_DDC_DISABLE_PULLUP << HDMI_DDC_SDA_PULLUPRESX));
 	omap4_ctrl_pad_writel(r, OMAP4_CTRL_MODULE_PAD_CORE_CONTROL_I2C_1);
 
-	gpio_request(HDMI_GPIO_HPD, NULL);
-	omap_mux_init_gpio(HDMI_GPIO_HPD, OMAP_PIN_INPUT | OMAP_PULL_ENA);
-	gpio_direction_input(HDMI_GPIO_HPD);
-
-	status = gpio_request_array(ovation_hdmi_gpios,
-			ARRAY_SIZE(ovation_hdmi_gpios));
-	if (status)
-		pr_err("%s: Cannot request HDMI GPIOs %x \n", __func__, status);
+	omap_mux_init_gpio(HDMI_GPIO_LS_OE, OMAP_PIN_OUTPUT);
+	omap_mux_init_gpio(HDMI_GPIO_CT_CP_HPD, OMAP_PIN_OUTPUT);
+	omap_mux_init_gpio(HDMI_GPIO_HPD, OMAP_PIN_INPUT_PULLDOWN);
 }
 
 static void __init ovation_panel_init_dpi(void)
@@ -333,6 +330,7 @@ static int ovation_request_lcd_resources(void)
 	return ret;
 }
 
+#if 0
 static int ovation_release_lcd_resources(struct omap_dss_device *dssdev)
 {
 	int ret;
@@ -345,6 +343,7 @@ static int ovation_release_lcd_resources(struct omap_dss_device *dssdev)
 	}
 	return ret;
 }
+#endif
 
 static int ovation_enable_lcd(struct omap_dss_device *dssdev)
 {
@@ -412,24 +411,6 @@ static void ovation_disable_hdmi(struct omap_dss_device *dssdev)
 		gpio_direction_output(GPIO_UART_DDC_SWITCH, 1);
 }
 
-static struct panel_dsi_data dsi_data = {
-	.x_res		= 1920,
-	.y_res		= 1280,
-
-	.pixel_clock 	= 93600,
-
-	.hfp		= 32,
-	.hsw		= 4,
-	.hbp		= 32,
-
-	.vfp		= 3,
-	.vsw		= 1,
-	.vbp		= 5,
-
-	.width_in_um    = 190080,
-	.height_in_um   = 126720,
-};
-
 static int pwm_level;
 
 static int ovation_set_pwm_bl(struct omap_dss_device *dssdev, int level)
@@ -471,38 +452,6 @@ static struct panel_dsi_fps_data *dsi_fps_data[] = {
 	NULL,
 };
 
-static struct omap_dsi_timings dsi_timings_samsung = {
-	.hbp		= 0,
-	.hfp		= 24,
-	.hsa		= 0,
-	.vbp		= 9,
-	.vfp		= 10,
-	.vsa		= 1,
-	.vact		= 1280,
-	.tl		= 1107,
-	.hsa_hs_int	= 0,
-	.hfp_hs_int	= 0,
-	.hbp_hs_int	= 0,
-	.hsa_lp_int	= 130,
-	.hfp_lp_int	= 223,
-	.hbp_lp_int	= 59,
-	.bl_lp_int	= 1038,
-	.bl_hs_int	= 1038,
-	.exit_lat	= 21,
-	.enter_lat	= 23,
-};
-
-static struct omap_video_timings dispc_timings_samsung = {
-	.x_res		= 1920,
-	.y_res		= 1280,
-	.hfp		= 4,
-	.hsw		= 5,
-	.hbp		= 39,
-	.vfp		= 9,
-	.vsw		= 1,
-	.vbp		= 10,
- };
-
 static struct omap_dss_device ovation_evt1b_lcd_device = {
 	.name                   = "lcd",
 	.driver_name            = "novatek-panel",
@@ -520,8 +469,7 @@ static struct omap_dss_device ovation_evt1b_lcd_device = {
 		.data4_lane     = 5,
 		.data4_pol      = 0,
 
-		.type 		= OMAP_DSS_DSI_TYPE_VIDEO_MODE,
-		.line_bufs	= 0,
+		.module		= 0,
 	},
 
 	.clocks = {
@@ -542,18 +490,6 @@ static struct omap_dss_device ovation_evt1b_lcd_device = {
 			.lp_clk_div     = 16,
 			.offset_ddr_clk = 0,
 			.dsi_fclk_src   = OMAP_DSS_CLK_SRC_DSI_PLL_HSDIV_DSI,
-			.tlpx	= 17,
-			.tclk = {
-				.zero	 = 89,
-				.prepare = 22,
-				.trail	 = 23,
-			},
-			.ths = {
-				.zero	 = 35,
-				.prepare = 26,
-				.exit	 = 49,
-				.trail	 = 26,
-			},
 		},
 	},
 
@@ -569,6 +505,41 @@ static struct omap_dss_device ovation_evt1b_lcd_device = {
 			.vsw		= 1,
 			.vbp		= 10,
 		},
+		.dsi_mode = OMAP_DSS_DSI_VIDEO_MODE,
+		.dsi_vm_data = {
+			.hsa		= 0,
+			.hfp		= 24,
+			.hbp		= 0,
+			.vsa		= 1,
+			.vbp		= 9,
+			.vfp		= 10,
+
+			/* DSI blanking modes */
+			.blanking_mode		= 0,
+			.hsa_blanking_mode	= 1,
+			.hbp_blanking_mode	= 1,
+			.hfp_blanking_mode	= 1,
+
+			.vp_de_pol		= 1,
+			.vp_vsync_pol		= 1,
+			.vp_hsync_pol		= 0,
+			.vp_hsync_end		= 0,
+			.vp_vsync_end		= 0,
+
+			.ddr_clk_always_on	= 0,
+			.window_sync		= 4,
+		},
+		.dsi_cio_data = {
+			.ths_prepare		= 26,
+			.ths_prepare_ths_zero	= 61,
+			.ths_trail		= 26,
+			.ths_exit		= 49,
+			.tlpx_half		= 8,
+			.tclk_trail		= 23,
+			.tclk_zero		= 89,
+			.tclk_prepare		= 22,
+			.reg_ttaget		= 4,
+		},
 		.width_in_um    = 190080,
 		.height_in_um   = 126720,
 
@@ -582,16 +553,17 @@ static struct omap_dss_device ovation_evt1b_lcd_device = {
 	},
 
 	.channel = OMAP_DSS_CHANNEL_LCD,
+#ifdef CONFIG_FB_OMAP_BOOTLOADER_INIT
 	.skip_init = true,
+#else
+	.skip_init = false,
+#endif
 
 	.platform_enable = ovation_enable_lcd,
 	.platform_disable = ovation_disable_lcd,
 
 	.set_backlight = ovation_set_pwm_bl,
 	.get_backlight = ovation_get_pwm_bl,
-
-	.dispc_timings = &dispc_timings_samsung,
-	.dsi_timings = &dsi_timings_samsung,
 };
 
 static struct omap_dss_device ovation_lcd_device = {
@@ -629,7 +601,7 @@ static struct omap_dss_device ovation_hdmi_device = {
 			.max_pixclk_khz = 148500,
 		},
 	},
-	.hpd_gpio = HDMI_GPIO_HPD,
+	.data = &ovation_hdmi_data,
 	.channel = OMAP_DSS_CHANNEL_DIGIT,
 	.platform_enable	= ovation_enable_hdmi,
 	.platform_disable	= ovation_disable_hdmi,
@@ -658,12 +630,6 @@ static struct omap_tablet_panel_data panel_data_ovation_wuxga = {
 	.omaplfb_data = &omaplfb_plat_data_ovation_wuxga,
 };
 
-static struct omap_tablet_panel_data panel_data_ovation = {
-	.board_info = &ovation_dss_data,
-	.dsscomp_data = NULL,
-	.omaplfb_data = NULL,
-};
-
 static struct omapfb_platform_data ovation_fb_pdata = {
 	.mem_desc = {
 		.region_cnt = 1,
@@ -674,7 +640,7 @@ static struct omapfb_platform_data ovation_fb_pdata = {
 #endif
 };
 
-void ovation_android_display_setup(struct omap_ion_platform_data *ion)
+void ovation_android_display_setup(void)
 {
 #if 0
 	u32 boot_fb_addr = simple_strtol(boot_fb, NULL, 16);
@@ -700,7 +666,7 @@ void ovation_android_display_setup(struct omap_ion_platform_data *ion)
 	omap_android_display_setup(panel_data_ovation_wuxga.board_info,
 				panel_data_ovation_wuxga.dsscomp_data,
 				panel_data_ovation_wuxga.omaplfb_data,
-				&ovation_fb_pdata, ion);
+				&ovation_fb_pdata);
 }
 
 int __init ovation_panel_init(void)
