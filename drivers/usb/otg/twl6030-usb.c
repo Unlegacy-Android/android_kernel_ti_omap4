@@ -249,6 +249,13 @@ static ssize_t twl6030_usb_vbus_show(struct device *dev,
 }
 static DEVICE_ATTR(vbus, 0444, twl6030_usb_vbus_show, NULL);
 
+int twl6030_status = USB_EVENT_NONE;
+
+int twl6030_usbotg_get_status()
+{
+	return twl6030_status;
+};
+
 static irqreturn_t twl6030_usb_irq(int irq, void *_twl)
 {
 	struct twl6030_usb *twl = _twl;
@@ -270,10 +277,15 @@ static irqreturn_t twl6030_usb_irq(int irq, void *_twl)
 			regulator_enable(twl->usb3v3);
 			charger_type = omap_usb2_charger_detect(
 					&twl->comparator);
-			if (charger_type == POWER_SUPPLY_TYPE_USB_DCP)
+			/* HASH: possible USB_EVENT_NO_CONTACT path for NookHD's */
+			if (charger_type == POWER_SUPPLY_TYPE_USB_DCP) {
 				event = USB_EVENT_CHARGER;
-			else
+				twl6030_status = USB_EVENT_CHARGER;
+			}
+			else {
 				event = USB_EVENT_VBUS;
+				twl6030_status = USB_EVENT_VBUS;
+			}
 			twl->asleep = 1;
 			status = OMAP_MUSB_VBUS_VALID;
 			omap_musb_mailbox(status);
@@ -286,6 +298,7 @@ static irqreturn_t twl6030_usb_irq(int irq, void *_twl)
 					return IRQ_HANDLED;
 				status = OMAP_MUSB_VBUS_OFF;
 				event = USB_EVENT_NONE;
+				twl6030_status = USB_EVENT_NONE;
 				omap_musb_mailbox(status);
 				blocking_notifier_call_chain(&notifier_list,
 							     event,
