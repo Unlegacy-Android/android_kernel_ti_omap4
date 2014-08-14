@@ -167,7 +167,11 @@ static int rprm_rproc_release(void *handle)
 {
 	struct rprm_rproc_depot *rprocd = handle;
 
+#ifdef CONFIG_USE_AMAZON_DUCATI
+	rproc_put(rprocd->rp);
+#else
 	rproc_shutdown(rprocd->rp);
+#endif
 	kfree(rprocd);
 
 	return 0;
