@@ -1098,7 +1098,17 @@ void dispc_ovl_set_global_mflag(enum omap_plane plane, bool mflag)
 
 	 REG_FLD_MOD(DISPC_OVL_ATTRIBUTES(plane), mflag, bit, bit);
 
-	 dispc_ovl_set_mflag_attribute(DISPC_MFLAG_CTRL_ENABLE);
+	/*
+	 * HACK: NV12 color format and MFLAG seem to have problems working
+	 * together: using two displays, and having an NV12 overlay on one of
+	 * the displays will cause underflows/synclosts when MFLAG_CTRL=2.
+	 * Changing MFLAG thresholds and PRELOAD to certain values seem to
+	 * remove the errors, but there doesn't seem to be a clear logic on
+	 * which values work and which not.
+	 *
+	 * As a work-around, set force MFLAG to always on.
+	 */
+	 dispc_ovl_set_mflag_attribute(DISPC_MFLAG_CTRL_FORCE);
 	 /* Allows the mflag signal to start at the beginning of each
 	  * frame even if the DMA buffer is empty */
 	 dispc_ovl_set_mflag_start(DISPC_MFLAG_START_ENABLE);
