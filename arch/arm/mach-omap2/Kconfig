@@ -371,6 +371,9 @@ config MACH_OMAP_ACCLAIM
 	select HWMON
 	select OMAP_REBOOT_REASON
 	select WIRELESS_EXT
+	select WEXT_CORE
+	select WEXT_PROC
+	select WEXT_PRIV
 
 config MACH_OMAP_OVATION
 	bool "OMAP 44xx Ovation Board"
@@ -383,6 +386,10 @@ config MACH_OMAP_OVATION
 	select KEYBOARD_GPIO
 	select HWMON
 	select OMAP_REBOOT_REASON
+	select WIRELESS_EXT
+	select WEXT_CORE
+	select WEXT_PROC
+	select WEXT_PRIV
 
 config OVATION_ALWAYS_COLD_BOOT
 	bool "Always perform cold reboot on reset"
@@ -400,6 +407,10 @@ config MACH_OMAP_HUMMINGBIRD
 	select KEYBOARD_GPIO
 	select HWMON
 	select OMAP_REBOOT_REASON
+	select WIRELESS_EXT
+	select WEXT_CORE
+	select WEXT_PROC
+	select WEXT_PRIV
 
 config MACH_OMAP4_PANDA
 	bool "OMAP4 Panda Board"
