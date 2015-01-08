@@ -379,13 +379,16 @@ config MACH_OMAP_BN
 	select KEYBOARD_GPIO
 	select HWMON
 	select OMAP_REBOOT_REASON
+	select WIRELESS_EXT
+	select WEXT_CORE
+	select WEXT_PROC
+	select WEXT_PRIV
 
 config MACH_OMAP_ACCLAIM
 	bool "OMAP 4430 Acclaim Board"
 	default n
 	select MACH_OMAP_BN
 	select REGULATOR_FIXED_VOLTAGE
-	select WIRELESS_EXT
 
 config MACH_OMAP_BN_HD
 	bool "OMAP4 B&N HD boards"
