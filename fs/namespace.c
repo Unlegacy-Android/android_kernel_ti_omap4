@@ -1210,7 +1210,7 @@ void release_mounts(struct list_head *head)
 	while (!list_empty(head)) {
 		mnt = list_first_entry(head, struct vfsmount, mnt_hash);
 		list_del_init(&mnt->mnt_hash);
-		if (mnt->mnt_parent != mnt) {
+		if (mnt_has_parent(mnt)) {
 			struct dentry *dentry;
 			struct vfsmount *m;
 
@@ -1249,7 +1249,7 @@ void umount_tree(struct vfsmount *mnt, int propagate, struct list_head *kill)
 		__touch_mnt_namespace(p->mnt_ns);
 		p->mnt_ns = NULL;
 		list_del_init(&p->mnt_child);
-		if (p->mnt_parent != p) {
+		if (mnt_has_parent(p)) {
 			p->mnt_parent->mnt_ghosts++;
 			dentry_reset_mounted(p->mnt_parent, p->mnt_mountpoint);
 		}
@@ -1928,7 +1928,7 @@ static int do_move_mount(struct path *path, const char *old_name)
 	if (old_path.dentry != old_path.mnt->mnt_root)
 		goto out1;
 
-	if (old_path.mnt == old_path.mnt->mnt_parent)
+	if (!mnt_has_parent(old_path.mnt))
 		goto out1;
 
 	if (S_ISDIR(path->dentry->d_inode->i_mode) !=
@@ -1948,7 +1948,7 @@ static int do_move_mount(struct path *path, const char *old_name)
 	    tree_contains_unbindable(old_path.mnt))
 		goto out1;
 	err = -ELOOP;
-	for (p = path->mnt; p->mnt_parent != p; p = p->mnt_parent)
+	for (p = path->mnt; mnt_has_parent(p); p = p->mnt_parent)
 		if (p == old_path.mnt)
 			goto out1;
 
@@ -2652,17 +2652,17 @@ SYSCALL_DEFINE2(pivot_root, const char __user *, new_root,
 	error = -EINVAL;
 	if (root.mnt->mnt_root != root.dentry)
 		goto out4; /* not a mountpoint */
-	if (root.mnt->mnt_parent == root.mnt)
+	if (!mnt_has_parent(root.mnt))
 		goto out4; /* not attached */
 	if (new.mnt->mnt_root != new.dentry)
 		goto out4; /* not a mountpoint */
-	if (new.mnt->mnt_parent == new.mnt)
+	if (!mnt_has_parent(new.mnt))
 		goto out4; /* not attached */
 	/* make sure we can reach put_old from new_root */
 	tmp = old.mnt;
 	if (tmp != new.mnt) {
 		for (;;) {
-			if (tmp->mnt_parent == tmp)
+			if (!mnt_has_parent(tmp))
 				goto out4; /* already mounted on put_old */
 			if (tmp->mnt_parent == new.mnt)
 				break;
