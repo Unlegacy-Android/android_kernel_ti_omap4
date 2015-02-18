@@ -578,9 +578,7 @@ static long tf_device_ioctl(struct file *file, unsigned int ioctl_num,
 		/* Initialize ION connection */
 		if (connection->ion_client == NULL) {
 			connection->ion_client = ion_client_create(
-						zebra_ion_device,
-						(1 << ION_HEAP_TYPE_CARVEOUT),
-						"tf");
+						zebra_ion_device, "tf");
 		}
 
 		if (connection->ion_client == NULL) {

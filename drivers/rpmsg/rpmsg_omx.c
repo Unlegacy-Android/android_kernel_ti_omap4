@@ -693,15 +693,7 @@ static int rpmsg_omx_open(struct inode *inode, struct file *filp)
 		return -ENOMEM;
 	}
 #ifdef CONFIG_ION_OMAP
-	omx->ion_client = ion_client_create(omap_ion_device,
-					    (1 << ION_HEAP_TYPE_CARVEOUT) |
-#ifdef CONFIG_MACH_TUNA
-					    (1 << OMAP_ION_HEAP_TYPE_TILER),
-#else
-					    (1 << OMAP_ION_HEAP_TYPE_TILER) |
-					    (1 << ION_HEAP_TYPE_SYSTEM),
-#endif
-					    "rpmsg-omx");
+	omx->ion_client = ion_client_create(omap_ion_device, "rpmsg-omx");
 #endif
 
 	init_completion(&omx->reply_arrived);
