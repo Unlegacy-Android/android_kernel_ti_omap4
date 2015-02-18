@@ -54,6 +54,7 @@ config ARCH_OMAP4
 	select PM_OPP if PM
 	select USB_ARCH_HAS_EHCI
 	select ARCH_HAS_BARRIERS
+	select ARM_HAS_SG_CHAIN
 
 comment "OMAP Core Type"
 	depends on ARCH_OMAP2
