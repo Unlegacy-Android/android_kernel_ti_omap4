@@ -68,22 +68,22 @@ static struct ion_platform_heap omap4_ion_heaps[] = {
 		.id = OMAP_ION_HEAP_SECURE_INPUT,
 		.name = "secure_input",
 	},
-	{	.type = OMAP_ION_HEAP_TYPE_TILER,
+	{	.type = OMAP_ION_HEAP_TILER,
 		.id = OMAP_ION_HEAP_TILER,
 		.name = "tiler",
 	},
 	{
-		.type = OMAP_ION_HEAP_TYPE_TILER,
+		.type = OMAP_ION_HEAP_TILER,
 		.id = OMAP_ION_HEAP_NONSECURE_TILER,
 		.name = "nonsecure_tiler",
 	},
 	{
 		.type = ION_HEAP_TYPE_SYSTEM,
-		.id = OMAP_ION_HEAP_SYSTEM,
+		.id = ION_HEAP_TYPE_SYSTEM,
 		.name = "system",
 	},
 	{
-		.type = OMAP_ION_HEAP_TYPE_TILER_RESERVATION,
+		.type = OMAP_ION_HEAP_TILER_RESERVATION,
 		.id = OMAP_ION_HEAP_TILER_RESERVATION,
 		.name = "tiler_reservation",
 	},
@@ -251,13 +251,13 @@ void __init omap_ion_init(void)
 
 	for (i = 0; i < omap4_ion_data.nr; i++)
 		if (omap4_ion_data.heaps[i].type == ION_HEAP_TYPE_CARVEOUT ||
-		    omap4_ion_data.heaps[i].type == OMAP_ION_HEAP_TYPE_TILER) {
+		    omap4_ion_data.heaps[i].type == OMAP_ION_HEAP_TILER) {
+			if (!omap4_ion_data.heaps[i].size)
+				continue;
 #ifndef CONFIG_CMA
 			ret = memblock_remove(omap4_ion_data.heaps[i].base,
 					      omap4_ion_data.heaps[i].size);
 #endif
-			if (!omap4_ion_data.heaps[i].size)
-				continue;
 			if (ret)
 				pr_err("memblock remove of %x@%lx failed\n",
 				       omap4_ion_data.heaps[i].size,
