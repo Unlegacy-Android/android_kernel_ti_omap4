@@ -243,7 +243,7 @@ static int __devinit wl1271_probe(struct sdio_func *func,
 	memset(res, 0x00, sizeof(res));
 
 	res[0].start = wlan_data->irq;
-	res[0].flags = IORESOURCE_IRQ;
+	res[0].flags = IORESOURCE_IRQ | wlan_data->irq_trigger;
 	res[0].name = "irq";
 
 	ret = platform_device_add_resources(glue->core, res, ARRAY_SIZE(res));
