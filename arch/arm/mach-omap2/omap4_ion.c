@@ -184,7 +184,7 @@ void __init omap_ion_init(void)
 				omap4_ion_heap_tiler_mem_size,
 				omap4_ion_heap_nonsec_tiler_mem_size);
 
-	pr_info(" omap4_smc_addr = 0x%x\n"  \
+	pr_info("omap4_smc_addr = 0x%x\n"  \
 				"omap4_ion_heap_secure_input_addr = 0x%x\n"  \
 				"omap4_ducati_heap_addr = 0x%x\n"  \
 				"omap4_ion_heap_tiler_mem_addr = 0x%x\n"  \
