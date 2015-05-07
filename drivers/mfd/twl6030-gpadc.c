@@ -866,8 +866,14 @@ int twl6030_get_gpadc_conversion(int channel_no)
 	ret = twl6030_gpadc_conversion(&req);
 	if (ret < 0)
 		return ret;
+
+#ifdef CONFIG_MACH_TUNA
+	if (req.rbuf[channel_no] > 0)
+		temp = req.buf[channel_no].raw_code;
+#else
 	if (req.rbuf[channel_no] > 0)
 		temp = req.rbuf[channel_no];
+#endif
 
 	return temp;
 }
