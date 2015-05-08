@@ -480,7 +480,9 @@ static int omap_dss_driver_enable(struct omap_dss_device *dssdev)
 static int omap_dss_driver_suspend(struct omap_dss_device *dssdev)
 {
 	int r = dssdev->driver->suspend_orig(dssdev);
+	/* Use here seems to trigger frequent reboots
 	omap_dss_reset_high_bandwidth(&dssdev->dev);
+	*/
 	return r;
 }
 
