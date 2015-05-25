@@ -32,6 +32,10 @@
 #include <linux/i2c/maxim9606.h>
 #include <linux/earlysuspend.h>
 
+#ifdef CONFIG_COLOR_CONTROL
+#include <linux/color_control.h>
+#endif
+
 #include <video/omapdss.h>
 #include <video/omap-panel-dsi.h>
 
