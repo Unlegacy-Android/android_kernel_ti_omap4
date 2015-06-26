@@ -102,6 +102,10 @@ static int uid_stat_show(struct seq_file *m, void *v)
 						__func__, task_uid(task));
 			return -ENOMEM;
 		}
+		/* if this task is exiting, we have already accounted for the
+		 * time and power. */
+		if (task->cpu_power == ULLONG_MAX)
+			continue;
 		task_times(task, &utime, &stime);
 		uid_entry->active_utime += utime;
 		uid_entry->active_stime += stime;
@@ -208,6 +212,7 @@ static void uid_task_exit(struct task_struct *task)
 	uid_entry->utime += utime;
 	uid_entry->stime += stime;
 	uid_entry->power += task->cpu_power;
+	task->cpu_power = ULLONG_MAX;
 
 exit:
 	spin_unlock(&uid_lock);
