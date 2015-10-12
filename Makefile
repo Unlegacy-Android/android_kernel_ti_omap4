@@ -110,6 +110,10 @@ endif
 PHONY := _all
 _all:
 
+# A simple target for testing variables
+PHONY += print-%
+print-%: ; @echo $* = $($*)
+
 # Cancel implicit rules on top Makefile
 $(CURDIR)/Makefile Makefile: ;
 
@@ -245,8 +249,9 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 
 HOSTCC       = gcc
 HOSTCXX      = g++
-HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O3 -fomit-frame-pointer -pipe -DNDEBUG -fgcse-las -floop-nest-optimize -fgraphite -fgraphite-identity -floop-flatten -floop-parallelize-all -ftree-loop-linear -floop-interchange -floop-strip-mine -floop-block
-HOSTCXXFLAGS = -pipe -DNDEBUG -O3 -fgcse-las -floop-nest-optimize -fgraphite -fgraphite-identity -floop-flatten -floop-parallelize-all -ftree-loop-linear -floop-interchange -floop-strip-mine -floop-block
+HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes $(COMMONFLAGS) \
+	-fomit-frame-pointer -floop-parallelize-all -ftree-parallelize-loops=4
+HOSTCXXFLAGS = $(COMMONFLAGS) -floop-parallelize-all -ftree-parallelize-loops=4
 
 # Decide whether to build built-in, modular, or both.
 # Normally, just do built-in.
@@ -347,14 +352,15 @@ CHECK		= sparse
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
-KERNELFLAGS	= -pipe -DNDEBUG -O3 -ffast-math -mtune=cortex-a9 -mcpu=cortex-a9 -marm -mfpu=neon -ftree-vectorize -mvectorize-with-neon-quad -munaligned-access -fgcse-lm -fgcse-sm -fsingle-precision-constant -fforce-addr -fsched-spec-load -funroll-loops -fpredictive-commoning -floop-nest-optimize -fgraphite -fgraphite-identity -ftree-loop-linear -floop-interchange -floop-strip-mine -floop-block -floop-flatten
+KERNELFLAGS	= $(COMMONFLAGS) -mtune=cortex-a9 -mcpu=cortex-a9 -marm -mfpu=neon \
+				-mvectorize-with-neon-quad -munaligned-access
 # Bad options: -floop-parallelize-all -ftree-parallelize-loops=4
 MODFLAGS	= -DMODULE $(KERNELFLAGS)
-CFLAGS_MODULE   = $(MODFLAGS)
-AFLAGS_MODULE   = $(MODFLAGS)
-LDFLAGS_MODULE  = -T $(srctree)/scripts/module-common.lds
-CFLAGS_KERNEL	= $(KERNELFLAGS)
-AFLAGS_KERNEL	= $(KERNELFLAGS)
+CFLAGS_MODULE   =
+AFLAGS_MODULE   =
+LDFLAGS_MODULE  =
+CFLAGS_KERNEL	=
+AFLAGS_KERNEL	=
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
 
 
@@ -371,13 +377,12 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-strict-aliasing -fno-common \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
-		   -fno-delete-null-pointer-checks \
-		   $(KERNELFLAGS)
-KBUILD_AFLAGS_KERNEL := $(KERNELFLAGS)
-KBUILD_CFLAGS_KERNEL := $(KERNELFLAGS)
+		   -fno-delete-null-pointer-checks
+KBUILD_AFLAGS_KERNEL :=
+KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__
-KBUILD_AFLAGS_MODULE  := $(MODFLAGS)
-KBUILD_CFLAGS_MODULE  := $(MODFLAGS) -fno-pic
+KBUILD_AFLAGS_MODULE  := -DMODULE
+KBUILD_CFLAGS_MODULE  := -DMODULE -fno-pic
 KBUILD_LDFLAGS_MODULE := -T $(srctree)/scripts/module-common.lds
 
 # Read KERNELRELEASE from include/config/kernel.release (if it exists)
@@ -562,11 +567,23 @@ endif # $(dot-config)
 # Defaults to vmlinux, but the arch makefile usually adds further targets
 all: vmlinux
 
+# Define common optimization flags
+COMMONFLAGS	+= -pipe -DNDEBUG -fdiagnostics-color
+
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
-KBUILD_CFLAGS	+= -Os $(call cc-disable-warning,maybe-uninitialized,)
+COMMONFLAGS	+= -Os -finline-functions -funswitch-loops -fpredictive-commoning \
+	-fgcse-after-reload -ftree-loop-vectorize -ftree-loop-distribute-patterns \
+	-ftree-slp-vectorize -fvect-cost-model -ftree-partial-pre -fipa-cp-clone
 else
-KBUILD_CFLAGS	+= -O3 $(call cc-disable-warning,maybe-uninitialized,)
+COMMONFLAGS	+= -O3 -falign-functions=1 -falign-jumps=1 -falign-loops=1 -falign-labels=1
 endif
+
+COMMONFLAGS	+= -ffast-math -fsingle-precision-constant -ftree-vectorize \
+	-fgcse-lm -fgcse-sm -fgcse-las -fsched-spec-load -floop-nest-optimize \
+	-fgraphite -fgraphite-identity -ftree-loop-linear -floop-interchange \
+	-floop-strip-mine -floop-block -floop-flatten
+
+KBUILD_CFLAGS  += $(call cc-disable-warning,maybe-uninitialized,) $(KERNELFLAGS)
 
 # Tell gcc to never replace conditional load with a non-conditional one
 KBUILD_CFLAGS	+= $(call cc-option,--param=allow-store-data-races=0)
