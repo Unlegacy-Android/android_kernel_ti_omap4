@@ -821,8 +821,8 @@ static void wlan_set_power(bool enable) {
 
 static struct wl12xx_platform_data omap4_tablet_wlan_data __initdata = {
 	.irq = OMAP_GPIO_IRQ(GPIO_WIFI_IRQ),
-	.board_ref_clock = WL12XX_REFCLOCK_38,
-	.board_tcxo_clock = WL12XX_TCXOCLOCK_38_4,
+	.tcxo_ref_ref = 38400000,
+	.tcxo_clock_ref = 38400000,
 	.set_power = wlan_set_power,
 };
 

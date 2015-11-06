@@ -565,8 +565,8 @@ static void omap4_tablet_wifi_mux_init(void)
 
 static struct wl12xx_platform_data omap4_tablet_wlan_data __initdata = {
 	.irq = OMAP_GPIO_IRQ(GPIO_WIFI_IRQ),
-	.board_ref_clock = WL12XX_REFCLOCK_26,
-	.board_tcxo_clock = WL12XX_TCXOCLOCK_26,
+	.tcxo_ref_ref = 26000000,
+	.tcxo_clock_ref = 26000000,
 };
 
 static void omap4_tablet_wifi_init(void)

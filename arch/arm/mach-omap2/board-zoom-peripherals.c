@@ -196,7 +196,7 @@ static struct platform_device omap_vwlan_device = {
 static struct wl12xx_platform_data omap_zoom_wlan_data __initdata = {
 	.irq = OMAP_GPIO_IRQ(OMAP_ZOOM_WLAN_IRQ_GPIO),
 	/* ZOOM ref clock is 26 MHz */
-	.board_ref_clock = 1,
+	.ref_clock_freq = 26000000,
 };
 
 static struct omap2_hsmmc_info mmc[] = {
