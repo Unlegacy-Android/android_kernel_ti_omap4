@@ -23,7 +23,7 @@
 #include "../ion_priv.h"
 #include "omap_ion_priv.h"
 #ifdef CONFIG_PVR_SGX
-#include "../../pvr/ion.h"
+#include "../gpu/pvr/ion.h"
 #endif
 
 struct ion_device *omap_ion_device;
