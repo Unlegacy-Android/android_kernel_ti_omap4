@@ -759,8 +759,7 @@ static void __init omap_tablet_reserve(void)
 	memblock_remove(PHYS_ADDR_DUCATI_MEM, PHYS_ADDR_DUCATI_SIZE);
 	/* ipu needs to recognize secure input buffer area as well */
 	omap_ipu_set_static_mempool(PHYS_ADDR_DUCATI_MEM, PHYS_ADDR_DUCATI_SIZE +
-					OMAP4_ION_HEAP_SECURE_INPUT_SIZE +
-					OMAP4_ION_HEAP_SECURE_OUTPUT_WFDHDCP_SIZE);
+					OMAP4_ION_HEAP_SECURE_INPUT_SIZE);
 	omap_reserve();
 }
 
