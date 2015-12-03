@@ -739,8 +739,8 @@ void hummingbird_android_display_setup(struct omap_ion_platform_data *ion)
 	}
 
 	ion->tiler1d_size = (SZ_1M * 48);
-	ion->secure_output_wfdhdcp_size = (SZ_1M * 16);
-	ion->ducati_heap_size = (SZ_1M * 48);
+	//ion->secure_output_wfdhdcp_size = (SZ_1M * 16);
+	ion->ducati_heap_size = (SZ_1M * 64);
 
 	omap_android_display_setup(panel_data_hummingbird.board_info,
 				panel_data_hummingbird.dsscomp_data,
