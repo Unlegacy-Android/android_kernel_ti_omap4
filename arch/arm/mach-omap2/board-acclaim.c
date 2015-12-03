@@ -963,8 +963,8 @@ static void __init omap_tablet_reserve(void)
 	acclaim_android_display_setup(ion);
 
 	ion->tiler1d_size = (SZ_1M * 90);
-	ion->secure_output_wfdhdcp_size = (SZ_1M * 16);
-	ion->ducati_heap_size = (SZ_1M * 105);
+	//ion->secure_output_wfdhdcp_size = (SZ_1M * 16);
+	ion->ducati_heap_size = (SZ_1M * 121);
 
 	omap_ion_init();
 #else
