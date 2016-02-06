@@ -739,8 +739,8 @@ void hummingbird_android_display_setup(struct omap_ion_platform_data *ion)
 	}
 
 	omap_android_display_setup(panel_data_hummingbird.board_info,
-				NULL,
-				NULL,
+				panel_data_hummingbird.dsscomp_data,
+				panel_data_hummingbird.omaplfb_data,
 				&hummingbird_fb_pdata, ion);
 }
 
