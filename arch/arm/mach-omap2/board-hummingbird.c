@@ -583,6 +583,8 @@ static void __init omap_hummingbird_init(void)
 		package = OMAP_PACKAGE_CBL;
 	omap4_mux_init(board_mux, NULL, package);
 
+	omap_pm_set_osc_lp_time(4000, 1);
+
 	// For EVT1 Bring-up
 	gpio_request(CHG_LEVEL,"CHG-LEVEL");
 	gpio_direction_output(CHG_LEVEL, 0);
