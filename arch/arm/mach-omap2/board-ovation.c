@@ -900,6 +900,8 @@ void __init omap_ovation_init(void)
 		package = OMAP_PACKAGE_CBL;
 	omap4_mux_init(board_mux, NULL, package);
 
+	omap_pm_set_osc_lp_time(4000, 1);
+
 	/* Turn off the external FET for twl6032 charger */
 	gpio_request ( EXT_FET_EN , "EXT-FET-EN" );
 	gpio_direction_output ( EXT_FET_EN , 0 );
