@@ -624,7 +624,7 @@ union tf_answer {
 
 /* Structure of the Communication Buffer */
 struct tf_l1_shared_buffer {
-	#ifdef CONFIG_TF_ZEBRA
+	#if defined(CONFIG_TF_ZEBRA) && !defined(CONFIG_MACH_TUNA)
 	u32 exit_code;
 	u32 l1_shared_buffer_descr;
 	u32 backing_store_addr;
