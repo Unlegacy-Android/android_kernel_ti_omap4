@@ -183,6 +183,20 @@ struct tf_shmem_desc {
 
 /*----------------------------------------------------------------------------*/
 
+#ifdef CONFIG_MACH_TUNA
+struct tf_init_buffer {
+	u32 exit_code;
+	u32 protocol_version;
+	u32 l1_shared_buffer_descr;
+	u32 backing_store_addr;
+	u32 backext_storage_addr;
+	u32 workspace_addr;
+	u32 workspace_size;
+	u32 properties_length;
+	u8 properties_buffer[1];
+};
+#endif
+
 /*
  * This structure describes the communication with the Secure World
  *
@@ -245,6 +259,11 @@ struct tf_comm {
 	 * The SE SDP can only be initialized once...
 	 */
 	int se_initialized;
+
+#ifdef CONFIG_MACH_TUNA
+        /* Virtual address of the L0 communication buffer */
+	struct tf_init_buffer *init_shared_buffer;
+#endif
 
 	/*
 	 * Lock to be held by a client when executing an RPC
