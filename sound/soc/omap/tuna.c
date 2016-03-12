@@ -89,17 +89,18 @@ static int sdp4430_modem_mcbsp_configure(struct snd_pcm_substream *substream,
 			modem_substream[substream->stream]->private_data;
 
 		if (!mcbsp_cfg) {
-			if (omap4_tuna_get_type() == TUNA_TYPE_TORO) {
-				/* Set cpu DAI configuration */
-				ret = snd_soc_dai_set_fmt(modem_rtd->cpu_dai,
-						SND_SOC_DAIFMT_I2S |
-						SND_SOC_DAIFMT_NB_NF |
-						SND_SOC_DAIFMT_CBS_CFS);
-				if (unlikely(ret < 0)) {
-					printk(KERN_ERR "can't set Modem cpu DAI format\n");
-					goto exit;
-				}
+			/* Set cpu DAI configuration */
+			ret = snd_soc_dai_set_fmt(modem_rtd->cpu_dai,
+					SND_SOC_DAIFMT_I2S |
+					SND_SOC_DAIFMT_NB_NF |
+					SND_SOC_DAIFMT_CBM_CFM);
 
+			if (unlikely(ret < 0)) {
+				printk(KERN_ERR "can't set Modem cpu DAI configuration\n");
+				goto exit;
+			}
+
+			if (omap4_tuna_get_type() == TUNA_TYPE_TORO) {
 				/* McBSP2 fclk reparented to ABE_24M_FCLK */
 				ret = snd_soc_dai_set_sysclk(modem_rtd->cpu_dai,
 						OMAP_MCBSP_SYSCLK_CLKS_FCLK,
@@ -114,17 +115,6 @@ static int sdp4430_modem_mcbsp_configure(struct snd_pcm_substream *substream,
 				ret = snd_soc_dai_set_clkdiv(modem_rtd->cpu_dai, 0, 96);
 				if (unlikely(ret < 0)) {
 					printk(KERN_ERR "can't set Modem cpu DAI clkdiv\n");
-					goto exit;
-				}
-			} else {
-				/* Set cpu DAI configuration */
-				ret = snd_soc_dai_set_fmt(modem_rtd->cpu_dai,
-						SND_SOC_DAIFMT_I2S |
-						SND_SOC_DAIFMT_NB_NF |
-						SND_SOC_DAIFMT_CBM_CFM);
-
-				if (unlikely(ret < 0)) {
-					printk(KERN_ERR "can't set Modem cpu DAI configuration\n");
 					goto exit;
 				}
 			}
@@ -237,22 +227,12 @@ static int sdp4430_mcbsp_hw_params(struct snd_pcm_substream *substream,
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
 	int ret = 0, channels = 0;
-	unsigned int be_id, fmt;
 
-
-	be_id = rtd->dai_link->be_id;
-
-	if (be_id == OMAP_ABE_DAI_BT_VX) {
-		fmt = SND_SOC_DAIFMT_I2S |
+	ret = snd_soc_dai_set_fmt(cpu_dai,
+			SND_SOC_DAIFMT_I2S |
 			SND_SOC_DAIFMT_NB_NF |
-			SND_SOC_DAIFMT_CBM_CFM;
-	} else {
-		fmt = SND_SOC_DAIFMT_I2S |
-			SND_SOC_DAIFMT_NB_NF |
-			SND_SOC_DAIFMT_CBM_CFM;
-	}
+			SND_SOC_DAIFMT_CBM_CFM);
 
-	ret = snd_soc_dai_set_fmt(cpu_dai, fmt);
 	if (ret < 0) {
 		printk(KERN_ERR "can't set cpu DAI configuration\n");
 		return ret;
@@ -297,10 +277,9 @@ static int mcbsp_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 						SNDRV_PCM_HW_PARAM_CHANNELS);
 	unsigned int be_id = rtd->dai_link->be_id;
 
-	if (be_id == OMAP_ABE_DAI_MM_FM)
+	if (be_id == OMAP_ABE_DAI_MM_FM || be_id == OMAP_ABE_DAI_BT_VX)
 		channels->min = 2;
-	else if (be_id == OMAP_ABE_DAI_BT_VX)
-		channels->min = 2;
+
 	snd_mask_set(&params->masks[SNDRV_PCM_HW_PARAM_FORMAT -
 					SNDRV_PCM_HW_PARAM_FIRST_MASK],
 					SNDRV_PCM_FORMAT_S16_LE);
