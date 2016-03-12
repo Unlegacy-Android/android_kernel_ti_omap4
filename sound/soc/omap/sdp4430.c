@@ -92,10 +92,10 @@ static int sdp4430_modem_mcbsp_configure(struct snd_pcm_substream *substream,
 			/* this need to be done for playback and/or record */
 			channels = params_channels(params);
 			if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-				omap_mcbsp_set_rx_threshold(
+				omap_mcbsp_set_tx_threshold(
 					modem_rtd->cpu_dai->id, channels);
 			else
-				omap_mcbsp_set_tx_threshold(
+				omap_mcbsp_set_rx_threshold(
 					modem_rtd->cpu_dai->id, channels);
 		}
 	} else {
