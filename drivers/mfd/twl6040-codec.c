@@ -1007,7 +1007,7 @@ static int __devinit twl6040_probe(struct platform_device *pdev)
 
 	/* dual-access registers controlled by I2C only */
 	accctl = twl6040_reg_read(twl6040, TWL6040_REG_ACCCTL);
-	twl6040_reg_write(twl6040, TWL6040_REG_ACCCTL, accctl | TWL6040_I2CSEL);
+	twl6040_reg_write(twl6040, TWL6040_REG_ACCCTL, accctl | TWL6040_I2CSEL | TWL6040_I2CMODE_FAST);
 
 	if (pdata->get_ext_clk32k) {
 		ret = pdata->get_ext_clk32k();
