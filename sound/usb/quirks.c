@@ -140,6 +140,7 @@ static int create_fixed_stream_quirk(struct snd_usb_audio *chip,
 		kfree(fp);
 		return -EINVAL;
 	}
+	INIT_LIST_HEAD(&fp->list);
 	if (fp->nr_rates > 0) {
 		rate_table = kmalloc(sizeof(int) * fp->nr_rates, GFP_KERNEL);
 		if (!rate_table) {
