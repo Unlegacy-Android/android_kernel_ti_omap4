@@ -4,7 +4,7 @@ CONFIG_OMAP_TEMP_SENSOR=y
 CONFIG_MACH_OMAP_HUMMINGBIRD=y
 #CONFIG_OMAP4_DPLL_CASCADING=y
 #CONFIG_OMAP4_ONLY_OMAP4430_DPLL_CASCADING=y
-CONFIG_CMDLINE="console=ttyO0,115200n8 androidboot.console=ttyO0 androidboot.selinux=permissive"
+CONFIG_CMDLINE="console=ttyO0,115200n8 androidboot.console=ttyO0 androidboot.hardware=hummingbird androidboot.selinux=permissive"
 CONFIG_BT_HCIUART=m
 CONFIG_BT_WILINK=y
 CONFIG_RFKILL_INPUT=y
