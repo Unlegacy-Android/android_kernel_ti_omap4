@@ -57,4 +57,5 @@ obj-$(CONFIG_GCCORE)		+= gcx/gccore/
 obj-$(CONFIG_GCBV)		+= gcx/gcbv/
 obj-$(CONFIG_GCIOCTL)		+= gcx/gcioctl/
 obj-$(CONFIG_CACHE2DMANAGER)	+= cache-2dmanager/
+obj-$(CONFIG_SEC_30PIN_CON)	+= 30pin_con.o
 obj-$(CONFIG_SEC_MODEM_V2)	+= modem_if_v2/
