@@ -55,6 +55,7 @@ obj-$(CONFIG_SENSORS_AK8975)	+= akm8975.o
 obj-y				+= inv_mpu/
 obj-$(CONFIG_SEC_MODEM)		+= modem_if/
 obj-$(CONFIG_SEC_MODEM_V2)	+= modem_if_v2/
+obj-$(CONFIG_SEC_30PIN_CON)	+= 30pin_con.o
 obj-$(CONFIG_USB_SWITCH_FSA9480)	+= fsa9480.o
 obj-$(CONFIG_OMAP_DIE_TEMP_SENSOR)	+= omap_temp_sensor.o
 obj-$(CONFIG_LEDS_AN30259A)	+= leds-an30259a.o
