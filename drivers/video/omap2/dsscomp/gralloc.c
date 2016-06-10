@@ -562,6 +562,10 @@ static void dsscomp_early_suspend(struct early_suspend *h)
 		   including disabled ones. WB works with an inactive manager
 		   and requires freeing of the prev composition too */
 		if (dssdev) {
+			// If dssdev is hdmi and it isn't activated then no need to try to access it here
+			if ((dssdev->state == OMAP_DSS_DISPLAY_DISABLED ) &&
+				(!strcmp(dssdev->name, "hdmi")))
+				continue;
 			d.mgrs[d.num_mgrs].ix = d.num_mgrs;
 			d.mgrs[d.num_mgrs].alpha_blending = true;
 			d.num_mgrs++;
