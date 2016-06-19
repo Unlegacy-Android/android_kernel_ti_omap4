@@ -226,11 +226,32 @@ static struct omap_board_config_kernel tablet_config[] __initdata = {
 
 static void __init omap_tablet_init_early(void)
 {
+	struct omap_hwmod *oh;
+
 	omap2_init_common_infrastructure();
 	omap2_init_common_devices(NULL, NULL);
 #ifdef CONFIG_OMAP_32K_TIMER
 	omap2_gp_clockevent_set_gptimer(1);
 #endif
+
+	oh = omap_hwmod_lookup("gpio2");
+	if (oh) {
+		if (omap_hwmod_no_setup_reset(oh))
+			printk("Failed to disable reset for gpio2\n");
+	} else
+		printk("gpio2 hwmod not found\n");
+
+	oh = omap_hwmod_lookup("uart3");
+	if (oh) {
+		oh->flags &= ~(HWMOD_INIT_NO_IDLE | HWMOD_INIT_NO_RESET);
+	} else
+		printk("uart3 hwmod not found\n");
+
+	oh = omap_hwmod_lookup("uart4");
+	if (oh) {
+		oh->flags |= HWMOD_SWSUP_SIDLE;
+	} else
+		printk("uart4 hwmod not found\n");
 }
 
 static struct omap_musb_board_data musb_board_data = {
