@@ -95,19 +95,32 @@ static void __init omap_hummingbird_init_early(void)
 	char const * const hwmods[] = {
 		[0] = "gpio1",
 		[1] = "gpio3",
-		[2] = "gpio5"
+		[2] = "gpio5",
+		[3] = "gpio2"
 	};
 
 	omap4430_init_early();
 
 	for (i = 0; i < sizeof(hwmods)/sizeof(char*); i++) {
 		oh = omap_hwmod_lookup(hwmods[i]);
-		if (oh) {
+		if (likely(oh)) {
 			if (omap_hwmod_no_setup_reset(oh))
 				printk("Failed to disable reset for %s\n", hwmods[i]);
 		} else
 			printk("%s hwmod not found\n", hwmods[i]);
 	}
+
+	oh = omap_hwmod_lookup("uart3");
+	if (likely(oh)) {
+		oh->flags = 0;
+	} else
+		printk("uart3 hwmod not found\n");
+
+	oh = omap_hwmod_lookup("uart4");
+	if (likely(oh)) {
+		oh->flags = HWMOD_SWSUP_SIDLE;
+	} else
+		printk("uart4 hwmod not found\n");
 }
 
 static struct omap_musb_board_data musb_board_data = {
