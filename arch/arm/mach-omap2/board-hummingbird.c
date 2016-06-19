@@ -93,6 +93,7 @@ static void __init omap_hummingbird_init_early(void)
 	int i;
 	char const * const hwmods[] = {
 		[0] = "gpio1",
+		[3] = "gpio2",
 		[1] = "gpio3",
 		[2] = "gpio5"
 	};
@@ -110,6 +111,18 @@ static void __init omap_hummingbird_init_early(void)
 		} else
 			printk("%s hwmod not found\n", hwmods[i]);
 	}
+
+	oh = omap_hwmod_lookup("uart3");
+	if (oh) {
+		oh->flags &= ~(HWMOD_INIT_NO_IDLE | HWMOD_INIT_NO_RESET);
+	} else
+		printk("uart3 hwmod not found\n");
+
+	oh = omap_hwmod_lookup("uart4");
+	if (oh) {
+		oh->flags |= HWMOD_SWSUP_SIDLE;
+	} else
+		printk("uart4 hwmod not found\n");
 }
 
 static struct omap_musb_board_data musb_board_data = {
