@@ -52,7 +52,13 @@ int omap4_usb_phy_power(struct device *dev, bool on)
 		if (!ret && (val & PHY_PD)) {
 			ret = omap_control_writel(dev, ~PHY_PD,
 						  CONTROL_DEV_CONF);
-			mdelay(200);
+			// This delay seem to be not needed, and as it make every
+			// suspend/resume 200ms longer (as musb otg controller is
+			// woken up in both paths) we remove it, as 2x200ms easily
+			// can account for like 25-30% of total resumed time, which
+			// is a very significant overhead to be saves
+			//
+			// mdelay(200);
 		}
 	} else {
 		ret = omap_control_writel(dev, PHY_PD, CONTROL_DEV_CONF);
