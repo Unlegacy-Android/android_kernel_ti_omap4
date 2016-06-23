@@ -469,6 +469,8 @@ static u32 get_ddr_phy_ctrl_1(u32 freq, u8 RL)
 		val = EMIF_DLL_SLAVE_DLY_CTRL_100_MHZ_AND_LESS;
 	else if (freq <= 200000000)
 		val = EMIF_DLL_SLAVE_DLY_CTRL_200_MHZ;
+	else if (freq <= 233333333)
+		val = EMIF_DLL_SLAVE_DLY_CTRL_233_MHZ;
 	else if (freq <= 400000000)
 		if (cpu_is_omap447x())
 			val = EMIF_DLL_SLAVE_DLY_CTRL_466_MHZ;
