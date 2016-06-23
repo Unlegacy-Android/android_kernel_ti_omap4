@@ -344,7 +344,7 @@ void omapdss_display_get_dimensions(struct omap_dss_device *dssdev,
 {
 	if (dssdev->driver->get_dimensions) {
 		dssdev->driver->get_dimensions(dssdev,
-						width_in_um, width_in_um);
+						width_in_um, height_in_um);
 	} else {
 		*width_in_um = dssdev->panel.width_in_um;
 		*height_in_um = dssdev->panel.height_in_um;
