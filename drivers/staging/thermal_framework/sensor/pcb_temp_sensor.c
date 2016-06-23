@@ -376,7 +376,7 @@ static struct platform_driver pcb_temp_sensor_driver = {
 
 int __init pcb_temp_sensor_init(void)
 {
-	if (!cpu_is_omap446x())
+	if (!cpu_is_omap446x() && !cpu_is_omap447x())
 		return 0;
 
 	return platform_driver_register(&pcb_temp_sensor_driver);
