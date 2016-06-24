@@ -278,6 +278,10 @@ void dsi_video_mode_disable(struct omap_dss_device *dssdev);
 
 int dsi_vc_gen_read_2(struct omap_dss_device *dssdev, int channel, u16 cmd,
 		u8 *buf, int buflen);
+#ifdef CONFIG_MACH_OMAP_BN_HD
+int dsi_vc_gen_read_1(struct omap_dss_device *dssdev, int channel, u16 cmd,
+		u8 *buf, int buflen);
+#endif
 void dsi_videomode_panel_preinit(struct omap_dss_device *dssdev);
 
 

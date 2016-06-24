@@ -206,10 +206,17 @@ struct dsi_reg { u16 idx; };
 #define DSI_DT_SET_MAX_RET_PKG_SIZE	0x37
 #define DSI_DT_NULL_PACKET		0x09
 #define DSI_DT_DCS_LONG_WRITE		0x39
+#ifdef CONFIG_MACH_OMAP_BN_HD
+#define DSI_DT_GENERIC_READ_1		0x14
+#endif
 #define DSI_DT_GENERIC_READ_2		0x24
 #define DSI_DT_GENERIC_LONG_WRITE	0x29
 
 #define DSI_DT_RX_ACK_WITH_ERR		0x02
+#ifdef CONFIG_MACH_OMAP_BN
+#define DSI_DT_RX_GEN_SHORT_READ_1	0x11
+#define DSI_DT_RX_GEN_SHORT_READ_2	0x12
+#endif
 #define DSI_DT_RX_LONG_READ		0x1a
 #define DSI_DT_RX_DCS_LONG_READ		0x1c
 #define DSI_DT_RX_SHORT_READ_1		0x21
@@ -3455,8 +3462,8 @@ err:
 }
 EXPORT_SYMBOL(dsi_vc_gen_write);
 
-int dsi_vc_gen_read_2(struct omap_dss_device *dssdev, int channel, u16 cmd,
-		u8 *buf, int buflen)
+static int dsi_vc_gen_read(struct omap_dss_device *dssdev, int channel,
+		u16 read_cmd, u16 cmd, u8 *buf, int buflen)
 {
 	struct platform_device *dsidev = dsi_get_dsidev_from_dssdev(dssdev);
 	struct dsi_data *dsi = dsi_get_dsidrv_data(dsidev);
@@ -3467,7 +3474,7 @@ int dsi_vc_gen_read_2(struct omap_dss_device *dssdev, int channel, u16 cmd,
 	if (dsi->debug_read)
 		DSSDBG("%s(ch%d, cmd %x)\n", __func__, channel, cmd);
 
-	r = dsi_vc_send_short(dsidev, channel, DSI_DT_GENERIC_READ_2, cmd, 0);
+	r = dsi_vc_send_short(dsidev, channel, read_cmd, cmd, 0);
 	if (r)
 		goto err;
 
@@ -3492,7 +3499,11 @@ int dsi_vc_gen_read_2(struct omap_dss_device *dssdev, int channel, u16 cmd,
 		r = -EIO;
 		goto err;
 
+#ifdef CONFIG_MACH_OMAP_BN
+	} else if (dt == DSI_DT_RX_GEN_SHORT_READ_1) {
+#else
 	} else if (dt == DSI_DT_RX_SHORT_READ_1) {
+#endif
 		u8 data = FLD_GET(val, 15, 8);
 		if (dsi->debug_read)
 			DSSDBG("\tDCS short response, 1 byte: %02x\n", data);
@@ -3505,7 +3516,11 @@ int dsi_vc_gen_read_2(struct omap_dss_device *dssdev, int channel, u16 cmd,
 		buf[0] = data;
 
 		return 1;
+#ifdef CONFIG_MACH_OMAP_BN
+	} else if (dt == DSI_DT_RX_GEN_SHORT_READ_2) {
+#else
 	} else if (dt == DSI_DT_RX_SHORT_READ_2) {
+#endif
 		u16 data = FLD_GET(val, 23, 8);
 		if (dsi->debug_read)
 			DSSDBG("\tDCS short response, 2 byte: %04x\n", data);
@@ -3564,8 +3579,22 @@ err:
 	return r;
 
 }
+
+int dsi_vc_gen_read_2(struct omap_dss_device *dssdev, int channel, u16 cmd,
+		u8 *buf, int buflen)
+{
+	return dsi_vc_gen_read(dssdev, channel, DSI_DT_GENERIC_READ_2, cmd, buf, buflen);
+}
 EXPORT_SYMBOL(dsi_vc_gen_read_2);
 
+#ifdef CONFIG_MACH_OMAP_BN_HD
+int dsi_vc_gen_read_1(struct omap_dss_device *dssdev, int channel, u16 cmd,
+		u8 *buf, int buflen)
+{
+	return dsi_vc_gen_read(dssdev, channel, DSI_DT_GENERIC_READ_1, cmd, buf, buflen);
+}
+EXPORT_SYMBOL(dsi_vc_gen_read_1);
+#endif
 
 int dsi_vc_set_max_rx_packet_size(struct omap_dss_device *dssdev, int channel,
 		u16 len)
