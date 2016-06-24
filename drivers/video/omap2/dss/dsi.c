@@ -4522,6 +4522,9 @@ static int dsi_display_init_dispc(struct omap_dss_device *dssdev)
 			OMAP_DSS_LCD_DISPLAY_TFT);
 		dispc_mgr_set_tft_data_lines(dssdev->manager->id,
 			dsi_get_pixel_size(dssdev->panel.dsi_pix_fmt));
+
+	dispc_set_dither(dssdev->manager->id, dssdev->ctrl.dither);
+
 	return 0;
 }
 

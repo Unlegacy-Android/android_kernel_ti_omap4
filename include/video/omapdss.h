@@ -753,6 +753,7 @@ struct omap_dss_device {
 	struct {
 		u8 pixel_size;
 		struct rfbi_timings rfbi_timings;
+		u8 dither;
 	} ctrl;
 
 	int reset_gpio;
