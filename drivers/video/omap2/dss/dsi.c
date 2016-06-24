@@ -4521,6 +4521,7 @@ static int dsi_display_init_dispc(struct omap_dss_device *dssdev)
 
 
 	dispc_set_tft_data_lines(dssdev->manager->id, dssdev->ctrl.pixel_size);
+	dispc_set_dither(dssdev->manager->id, dssdev->ctrl.dither);
 
 	if(dssdev->phy.dsi.type == OMAP_DSS_DSI_TYPE_CMD_MODE) {
 		struct omap_video_timings timings = {

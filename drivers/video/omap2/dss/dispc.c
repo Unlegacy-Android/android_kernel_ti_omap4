@@ -3208,6 +3208,15 @@ void dispc_set_tft_data_lines(enum omap_channel channel, u8 data_lines)
 		REG_FLD_MOD(DISPC_CONTROL, code, 9, 8);
 }
 
+void dispc_set_dither(enum omap_channel channel, bool enable)
+{
+	if (channel == OMAP_DSS_CHANNEL_LCD2) {
+		REG_FLD_MOD(DISPC_CONTROL2, enable ? 1 : 0, 7, 7);
+	} else {
+		REG_FLD_MOD(DISPC_CONTROL, enable ? 1 : 0, 7, 7);
+	}
+}
+
 void dispc_set_parallel_interface_mode(enum omap_channel channel,
 		enum omap_parallel_interface_mode mode)
 {

@@ -505,6 +505,7 @@ void dispc_set_tft_data_lines(enum omap_channel channel, u8 data_lines);
 void dispc_set_lcd_display_type(enum omap_channel channel,
 		enum omap_lcd_display_type type);
 void dispc_set_loadmode(enum omap_dss_load_mode mode);
+void dispc_set_dither(enum omap_channel channel, bool enable);
 
 void dispc_set_default_color(enum omap_channel channel, u32 color);
 u32 dispc_get_default_color(enum omap_channel channel);
