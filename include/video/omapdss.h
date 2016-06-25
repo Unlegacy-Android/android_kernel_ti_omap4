@@ -274,7 +274,7 @@ int dsi_vc_send_null(struct omap_dss_device *dssdev, int channel);
 int dsi_vc_send_bta_sync(struct omap_dss_device *dssdev, int channel);
 
 int dsi_video_mode_enable(struct omap_dss_device *dssdev, u8 data_type);
-void dsi_video_mode_disable(struct omap_dss_device *dssdev);
+void dsi_video_mode_disable(struct omap_dss_device *dssdev, bool cmd_mode);
 
 int dsi_vc_gen_read_2(struct omap_dss_device *dssdev, int channel, u16 cmd,
 		u8 *buf, int buflen);

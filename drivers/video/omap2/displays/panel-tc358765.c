@@ -819,7 +819,7 @@ err_disp_enable:
 
 static void tc358765_power_off(struct omap_dss_device *dssdev)
 {
-	dsi_video_mode_disable(dssdev);
+	dsi_video_mode_disable(dssdev, false);
 
 	omapdss_dsi_display_disable(dssdev, false, false);
 

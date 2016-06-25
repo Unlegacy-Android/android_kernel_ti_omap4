@@ -239,7 +239,7 @@ err_disp_enable:
 static void ld089wu1_power_off(struct omap_dss_device *dssdev)
 {
 	int r;
-	dsi_video_mode_disable(dssdev);
+	dsi_video_mode_disable(dssdev, false);
 
 	omapdss_dsi_display_disable(dssdev, false, false);
 
