@@ -4043,6 +4043,12 @@ int dsi_video_mode_enable(struct omap_dss_device *dssdev, u8 data_type)
 	u32 r;
 	u32 header;
 
+#ifdef CONFIG_MACH_OMAP_BN
+	if (dssdev->skip_init) {
+		dssdev->manager->enable(dssdev->manager);
+		goto done;
+	}
+#endif
 	dsi_if_enable(dsidev, false);
 	dsi_vc_enable(dsidev, 1, false);
 	dsi_vc_enable(dsidev, 0, false);
@@ -4088,6 +4094,7 @@ int dsi_video_mode_enable(struct omap_dss_device *dssdev, u8 data_type)
 
 	msleep(2);
 
+done:
 	return 0;
 }
 EXPORT_SYMBOL(dsi_video_mode_enable);
@@ -4622,6 +4629,47 @@ static void dsi_display_uninit_dispc(struct omap_dss_device *dssdev)
 					  irq);
 }
 
+#ifdef CONFIG_MACH_OMAP_BN
+static int dsi_configure_dsi_cinfo(struct omap_dss_device *dssdev)
+{
+	struct platform_device *dsidev = dsi_get_dsidev_from_dssdev(dssdev);
+	struct dsi_clock_info cinfo;
+	struct dsi_data *dsi = dsi_get_dsidrv_data(dsidev);
+	int r;
+
+	/* we always use DSS_CLK_SYSCK as input clock */
+	cinfo.use_sys_clk = true;
+	cinfo.regn  = dssdev->clocks.dsi.regn;
+	cinfo.regm  = dssdev->clocks.dsi.regm;
+	cinfo.regm_dispc = dssdev->clocks.dsi.regm_dispc;
+	cinfo.regm_dsi = dssdev->clocks.dsi.regm_dsi;
+	r = dsi_calc_clock_rates(dssdev, &cinfo);
+	if (r) {
+		DSSERR("Failed to calc dsi clocks\n");
+		return r;
+	}
+
+	dsi->current_cinfo.use_sys_clk = cinfo.use_sys_clk;
+	dsi->current_cinfo.highfreq = cinfo.highfreq;
+
+	dsi->current_cinfo.fint = cinfo.fint;
+	dsi->current_cinfo.clkin4ddr = cinfo.clkin4ddr;
+	dsi->current_cinfo.dsi_pll_hsdiv_dispc_clk =
+			cinfo.dsi_pll_hsdiv_dispc_clk;
+	dsi->current_cinfo.dsi_pll_hsdiv_dsi_clk =
+			cinfo.dsi_pll_hsdiv_dsi_clk;
+
+	dsi->current_cinfo.regn = cinfo.regn;
+	dsi->current_cinfo.regm = cinfo.regm;
+	dsi->current_cinfo.regm_dispc = cinfo.regm_dispc;
+	dsi->current_cinfo.regm_dsi = cinfo.regm_dsi;
+
+	dsi->pll_locked = 1;
+
+	return 0;
+}
+#endif
+
 static int dsi_configure_dsi_clocks(struct omap_dss_device *dssdev)
 {
 	struct platform_device *dsidev = dsi_get_dsidev_from_dssdev(dssdev);
@@ -4696,21 +4744,28 @@ static int dsi_display_init_dsi(struct omap_dss_device *dssdev)
 		if (r)
 			goto err1;
 	}
+#ifdef CONFIG_MACH_OMAP_BN
+	else {
+		r = dsi_configure_dsi_cinfo(dssdev);
+		if (r)
+			goto err1;
+		goto pllok;
+	}
+#endif
 
 	dss_select_dispc_clk_source(dssdev->clocks.dispc.dispc_fclk_src);
 	dss_select_dsi_clk_source(dsi_module, dssdev->clocks.dsi.dsi_fclk_src);
 	dss_select_lcd_clk_source(dssdev->manager->id,
 			dssdev->clocks.dispc.channel.lcd_clk_src);
 
+pllok:
 	DSSDBG("PLL OK\n");
 
 	if(!dssdev->skip_init){
 		r = dsi_configure_dispc_clocks(dssdev);
 		if (r)
 			goto err2;
-	}
 
-	if(!dssdev->skip_init){
 		r = dsi_cio_init(dssdev);
 		if (r)
 			goto err2;
@@ -4720,12 +4775,23 @@ static int dsi_display_init_dsi(struct omap_dss_device *dssdev)
 
 	_dsi_print_reset_status(dsidev);
 
+#ifdef CONFIG_MACH_OMAP_BN
+	if(dssdev->skip_init){
+		goto status;
+	}
+#endif
 	dsi_proto_timings(dssdev);
 	dsi_set_lp_clk_divisor(dssdev);
 
+status:
 	if (1)
 		_dsi_print_reset_status(dsidev);
 
+#ifdef CONFIG_MACH_OMAP_BN
+	if(dssdev->skip_init){
+		goto done;
+	}
+#endif
 	if(dssdev->phy.dsi.type == OMAP_DSS_DSI_TYPE_CMD_MODE)
 		r = dsi_cmd_proto_config(dssdev);
 	else
@@ -4744,6 +4810,7 @@ static int dsi_display_init_dsi(struct omap_dss_device *dssdev)
 		dsi_force_tx_stop_mode_io(dsidev);
 	}
 
+done:
 	return 0;
 err3:
 	dsi_cio_uninit(dsidev);
@@ -4824,6 +4891,10 @@ int omapdss_dsi_display_enable(struct omap_dss_device *dssdev)
 
 	if(!dssdev->skip_init)
 		dsi_enable_pll_clock(dsidev, 1);
+#ifdef CONFIG_MACH_OMAP_BN
+	else
+		goto initirq;
+#endif
 
 #ifndef CONFIG_MACH_TUNA
 	REG_FLD_MOD(dsidev, DSI_SYSCONFIG, 1, 1, 1);
@@ -4833,6 +4904,7 @@ int omapdss_dsi_display_enable(struct omap_dss_device *dssdev)
 	REG_FLD_MOD(dsidev, DSI_SYSCONFIG, 1, 2, 2);
 #endif
 
+initirq:
 	_dsi_initialize_irq(dsidev);
 
 	if(!dssdev->skip_init){
