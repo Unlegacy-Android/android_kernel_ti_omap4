@@ -397,6 +397,10 @@ config MACH_OMAP_BN
 	bool "OMAP4 B&N boards"
 	depends on ARCH_OMAP4
 
+config MACH_OMAP_BN_HD
+	bool "OMAP4 B&N HD boards"
+	select MACH_OMAP_BN
+
 config MACH_OMAP_ACCLAIM
 	bool "OMAP 4430 Acclaim Board"
 	default n
@@ -412,7 +416,7 @@ config MACH_OMAP_ACCLAIM
 config MACH_OMAP_OVATION
 	bool "OMAP 44xx Ovation Board"
 	default n
-	depends on MACH_OMAP_BN
+	select MACH_OMAP_BN_HD
 	select OMAP_PACKAGE_CBL
 	select OMAP_PACKAGE_CBS
 	select LEDS_OMAP4430_SDP_DISPLAY
@@ -424,7 +428,7 @@ config MACH_OMAP_OVATION
 config MACH_OMAP_HUMMINGBIRD
 	bool "OMAP 44xx Hummingbird Board"
 	default n
-	depends on MACH_OMAP_BN
+	select MACH_OMAP_BN_HD
 	select OMAP_PACKAGE_CBL
 	select OMAP_PACKAGE_CBS
 	select LEDS_OMAP4430_SDP_DISPLAY

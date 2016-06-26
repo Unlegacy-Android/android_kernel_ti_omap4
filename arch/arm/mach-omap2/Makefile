@@ -286,15 +286,14 @@ obj-$(CONFIG_MACH_OMAP_ACCLAIM)		+= board-acclaim.o \
 obj-$(CONFIG_MACH_OMAP_OVATION)		+= board-ovation.o \
 					   board-ovation-touch.o \
 					   board-ovation-panel.o \
-					   board-ovation-buttons.o \
-					   board-bn-power.o \
-					   board-bn-wifi.o
+					   board-ovation-buttons.o
 
 obj-$(CONFIG_MACH_OMAP_HUMMINGBIRD)	+= board-hummingbird.o \
 					   board-hummingbird-touch.o \
 					   board-hummingbird-panel.o \
-					   board-hummingbird-buttons.o \
-					   board-bn-power.o \
+					   board-hummingbird-buttons.o
+
+obj-$(CONFIG_MACH_OMAP_BN_HD)		+= board-bn-power.o \
 					   board-bn-wifi.o
 
 obj-$(CONFIG_MACH_PCM049)		+= board-omap4pcm049.o
