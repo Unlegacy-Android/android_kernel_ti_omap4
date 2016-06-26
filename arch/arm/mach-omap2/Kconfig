@@ -387,19 +387,21 @@ config MACH_OMAP_ACCLAIM
 	select REGULATOR_FIXED_VOLTAGE
 	select WIRELESS_EXT
 
-config MACH_OMAP_OVATION
-	bool "OMAP 44xx Ovation Board"
-	default n
+config MACH_OMAP_BN_HD
+	bool "OMAP4 B&N HD boards"
 	select MACH_OMAP_BN
 	select LEDS_OMAP4430_SDP_DISPLAY
 	select LEDS_OMAP4430_SDP_KEYPAD
 
+config MACH_OMAP_OVATION
+	bool "OMAP 44xx Ovation Board"
+	default n
+	select MACH_OMAP_BN_HD
+
 config MACH_OMAP_HUMMINGBIRD
 	bool "OMAP 44xx Hummingbird Board"
 	default n
-	select MACH_OMAP_BN
-	select LEDS_OMAP4430_SDP_DISPLAY
-	select LEDS_OMAP4430_SDP_KEYPAD
+	select MACH_OMAP_BN_HD
 
 config MACH_OMAP4_PANDA
 	bool "OMAP4 Panda Board"
