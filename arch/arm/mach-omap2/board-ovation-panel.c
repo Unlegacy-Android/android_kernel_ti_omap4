@@ -68,6 +68,7 @@ int Vdd_LCD_CT_PEN_disable(struct device *dev, const char *supply_name);
 int Vdd_LCD_CT_PEN_release_supply(struct device *dev, const char *supply_name);
 static int ovation_request_lcd_resources(void);
 
+#if 0
 static char boot_fb[51];
 static __init int get_boot_fb(char *str)
 {
@@ -76,6 +77,7 @@ static __init int get_boot_fb(char *str)
 	return 0;
 }
 early_param("boot.fb", get_boot_fb);
+#endif
 
 static struct regulator *ovation_bl_i2c_pullup_power;
 static int lcd_supply_requested;
@@ -667,12 +669,15 @@ static struct omapfb_platform_data ovation_fb_pdata = {
 	.mem_desc = {
 		.region_cnt = 1,
 	},
+#if 0
 	.boot_fb_addr = 0,
 	.boot_fb_size = 0,
+#endif
 };
 
 void ovation_android_display_setup(struct omap_ion_platform_data *ion)
 {
+#if 0
 	u32 boot_fb_addr = simple_strtol(boot_fb, NULL, 16);
 	if (boot_fb_addr) {
 		if (memblock_remove(boot_fb_addr, 1920*1280*4) < 0) {
@@ -682,6 +687,7 @@ void ovation_android_display_setup(struct omap_ion_platform_data *ion)
 			ovation_fb_pdata.boot_fb_size = 1920*1280*4;
 		}
 	}
+#endif
 
 	ovation_evt1b_lcd_device.panel.timings.x_res  = 1920;
 	ovation_evt1b_lcd_device.panel.timings.y_res  = 1280;

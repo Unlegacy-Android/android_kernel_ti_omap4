@@ -62,6 +62,7 @@
 #define LED_PWM1ON             	0x00
 #define LED_PWM1OFF            	0x01
 
+#if 0
 static char boot_fb[51];
 static __init int get_boot_fb(char *str)
 {
@@ -70,6 +71,7 @@ static __init int get_boot_fb(char *str)
 	return 0;
 }
 early_param("boot.fb", get_boot_fb);
+#endif
 
 static char display[51];
 static __init int get_display_vendor(char *str)
@@ -706,12 +708,15 @@ static struct omapfb_platform_data hummingbird_fb_pdata = {
 	.mem_desc = {
 		.region_cnt = 1,
 	},
+#if 0
 	.boot_fb_addr = 0,
 	.boot_fb_size = 0,
+#endif
 };
 
 void hummingbird_android_display_setup(struct omap_ion_platform_data *ion)
 {
+#if 0
 	u32 boot_fb_addr = simple_strtol(boot_fb, NULL, 16);
 	if (boot_fb_addr) {
 		if (memblock_remove(boot_fb_addr, 900*1440*4) < 0) {
@@ -721,6 +726,7 @@ void hummingbird_android_display_setup(struct omap_ion_platform_data *ion)
 			hummingbird_fb_pdata.boot_fb_size = 900*1440*4;
 		}
 	}
+#endif
 
 	if (system_rev >= HUMMINGBIRD_EVT0B) {
 		if (strncmp(display, "LG", 2) == 0) {
