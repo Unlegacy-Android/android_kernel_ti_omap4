@@ -308,7 +308,7 @@ static ssize_t manager_cpr_enable_show(struct omap_overlay_manager *mgr,
 
 	mgr->get_manager_info(mgr, &info);
 
-	return snprintf(buf, PAGE_SIZE, "%d\n", info.cpr_enable);
+	return snprintf(buf, PAGE_SIZE, "%d\n", info.cpr_enable_sys);
 }
 
 static ssize_t manager_cpr_enable_store(struct omap_overlay_manager *mgr,
@@ -327,9 +327,11 @@ static ssize_t manager_cpr_enable_store(struct omap_overlay_manager *mgr,
 
 	mgr->get_manager_info(mgr, &info);
 
-	if (info.cpr_enable == enable)
+	if (info.cpr_enable_sys == enable)
 		return size;
 
+	info.cpr_enable_sys = enable;
+	// sysfs calls clobbers any dsscomp merged values
 	info.cpr_enable = enable;
 
 	r = mgr->set_manager_info(mgr, &info);
@@ -352,15 +354,15 @@ static ssize_t manager_cpr_coef_show(struct omap_overlay_manager *mgr,
 
 	return snprintf(buf, PAGE_SIZE,
 			"%d %d %d %d %d %d %d %d %d\n",
-			info.cpr_coefs.rr,
-			info.cpr_coefs.rg,
-			info.cpr_coefs.rb,
-			info.cpr_coefs.gr,
-			info.cpr_coefs.gg,
-			info.cpr_coefs.gb,
-			info.cpr_coefs.br,
-			info.cpr_coefs.bg,
-			info.cpr_coefs.bb);
+			info.cpr_coefs_sys.rr,
+			info.cpr_coefs_sys.rg,
+			info.cpr_coefs_sys.rb,
+			info.cpr_coefs_sys.gr,
+			info.cpr_coefs_sys.gg,
+			info.cpr_coefs_sys.gb,
+			info.cpr_coefs_sys.br,
+			info.cpr_coefs_sys.bg,
+			info.cpr_coefs_sys.bb);
 }
 
 static ssize_t manager_cpr_coef_store(struct omap_overlay_manager *mgr,
@@ -391,6 +393,8 @@ static ssize_t manager_cpr_coef_store(struct omap_overlay_manager *mgr,
 
 	mgr->get_manager_info(mgr, &info);
 
+	info.cpr_coefs_sys = coefs;
+	// sysfs calls clobbers any dsscomp merged values
 	info.cpr_coefs = coefs;
 
 	r = mgr->set_manager_info(mgr, &info);

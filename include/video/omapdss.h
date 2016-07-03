@@ -597,8 +597,15 @@ struct omap_overlay_manager_info {
 	/* if true, manager is used in MEM2MEM mode */
 	bool wb_only;
 
+	/* merged cpr settings, this is the union of
+	   cpr settings provided by dsscomp and sysfs entry
+	 */
 	bool cpr_enable;
 	struct omap_dss_cpr_coefs cpr_coefs;
+
+	/* cpr settings provided via the sysfs entry */
+	bool cpr_enable_sys;
+	struct omap_dss_cpr_coefs cpr_coefs_sys;
 
 	struct omapdss_ovl_cb cb;
 };

@@ -461,6 +461,29 @@ struct omap_overlay_manager *find_dss_mgr(int display_ix)
 	return NULL;
 }
 
+static struct omap_dss_cpr_coefs cpr_merge(struct omap_dss_cpr_coefs sysc, struct omap_dss_cpr_coefs mic, u8 swap_rb)
+{
+	struct omap_dss_cpr_coefs c;
+
+	if  (swap_rb) {
+		swap(sysc.rr, sysc.br);
+		swap(sysc.rg, sysc.bg);
+		swap(sysc.rb, sysc.bb);
+	}
+
+	c.rr = sysc.rr + mic.rr;
+	c.rg = sysc.rg + mic.rg;
+	c.rb = sysc.rb + mic.rb;
+	c.gr = sysc.gr + mic.gr;
+	c.gg = sysc.gg + mic.gg;
+	c.gb = sysc.gb + mic.gb;
+	c.br = sysc.br + mic.br;
+	c.bg = sysc.bg + mic.bg;
+	c.bb = sysc.bb + mic.bb;
+
+	return c;
+}
+
 int set_dss_mgr_info(struct dss2_mgr_info *mi, struct omapdss_ovl_cb *cb,
 								bool m2m_mode)
 {
@@ -491,8 +514,17 @@ int set_dss_mgr_info(struct dss2_mgr_info *mi, struct omapdss_ovl_cb *cb,
 	info.trans_key = mi->trans_key;
 	info.trans_key_type = mi->trans_key_type;
 
-	info.cpr_coefs = mi->cpr_coefs;
-	info.cpr_enable = mi->cpr_enabled;
+	if (info.cpr_enable_sys && mi->cpr_enabled) {
+		// merge the 2 cpr_coefs
+		info.cpr_coefs = cpr_merge(info.cpr_coefs_sys, mi->cpr_coefs, mi->swap_rb);
+	} else if (mi->cpr_enabled) {
+		info.cpr_coefs = mi->cpr_coefs;
+	} else if (info.cpr_enable_sys) {
+		info.cpr_coefs = info.cpr_coefs_sys;
+	}
+
+	info.cpr_enable = mi->cpr_enabled || info.cpr_enable_sys;
+
 	info.cb = *cb;
 	info.wb_only = m2m_mode;
 
