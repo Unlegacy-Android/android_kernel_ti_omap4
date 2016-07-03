@@ -530,6 +530,7 @@ static int sdp4430_twl6040_init(struct snd_soc_pcm_runtime *rtd)
 				hs_jack_pins);
 
 	if (machine_is_omap_4430sdp() || machine_is_omap_tabletblaze()
+		|| machine_is_omap_hummingbird() || machine_is_omap_ovation()
 		|| machine_is_omap4_panda())
 		twl6040_hs_jack_detect(codec, &hs_jack, SND_JACK_HEADSET);
 	else
@@ -937,8 +938,13 @@ static struct snd_soc_dai_link sdp4430_dai[] = {
 		.name = OMAP_ABE_BE_BT_VX_UL,
 		.stream_name = "BT Capture",
 
+#ifdef CONFIG_MACH_OMAP_BN_HD
+		/* ABE components - MCBSP3 - BT-VX */
+		.cpu_dai_name = "omap-mcbsp-dai.2",
+#else
 		/* ABE components - MCBSP1 - BT-VX */
 		.cpu_dai_name = "omap-mcbsp-dai.0",
+#endif
 		.platform_name = "aess",
 
 		/* Bluetooth */
@@ -955,8 +961,13 @@ static struct snd_soc_dai_link sdp4430_dai[] = {
 		.name = OMAP_ABE_BE_BT_VX_DL,
 		.stream_name = "BT Playback",
 
+#ifdef CONFIG_MACH_OMAP_BN_HD
+		/* ABE components - MCBSP3 - BT-VX */
+		.cpu_dai_name = "omap-mcbsp-dai.2",
+#else
 		/* ABE components - MCBSP1 - BT-VX */
 		.cpu_dai_name = "omap-mcbsp-dai.0",
+#endif
 		.platform_name = "aess",
 
 		/* Bluetooth */
@@ -1090,8 +1101,9 @@ static int __init sdp4430_soc_init(void)
 	int ret;
 
 	if (!machine_is_omap_4430sdp() && !machine_is_omap4_panda() &&
+		!machine_is_omap_hummingbird() && !machine_is_omap_ovation() &&
 		!machine_is_omap_tabletblaze()) {
-		pr_debug("Not SDP4430, BlazeTablet or PandaBoard!\n");
+		pr_err("Not SDP4430, BlazeTablet, Nook HD/HD+, or PandaBoard!\n");
 		return -ENODEV;
 	}
 	printk(KERN_INFO "SDP4430 SoC init\n");
@@ -1101,6 +1113,10 @@ static int __init sdp4430_soc_init(void)
 		snd_soc_sdp4430.name = "Panda";
 	else if (machine_is_omap_tabletblaze())
 		snd_soc_sdp4430.name = "Tablet44xx";
+	else if (machine_is_omap_hummingbird())
+		snd_soc_sdp4430.name = "Nook HD";
+	else if (machine_is_omap_ovation())
+		snd_soc_sdp4430.name = "Nook HD+";
 
 	sdp4430_snd_device = platform_device_alloc("soc-audio", -1);
 	if (!sdp4430_snd_device) {
