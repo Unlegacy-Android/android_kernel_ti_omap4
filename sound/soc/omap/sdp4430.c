@@ -52,6 +52,32 @@ static int twl6040_power_mode;
 static int mcbsp_cfg;
 static struct snd_soc_codec *twl6040_codec;
 
+#ifdef CONFIG_MACH_OMAP_BN_HD
+static struct clk *mclk;
+static bool mclk_enabled;
+
+static int sdp4430_mclk_enable(void)
+{
+	int ret = 0;
+
+	if (!mclk_enabled) {
+		ret = clk_enable(mclk);
+		if (!ret)
+			mclk_enabled = true;
+	}
+
+	return ret;
+}
+
+static void sdp4430_mclk_disable(void)
+{
+	if (mclk_enabled) {
+		clk_disable(mclk);
+		mclk_enabled = false;
+	}
+}
+#endif
+
 static int sdp4430_modem_mcbsp_configure(struct snd_pcm_substream *substream,
 				struct snd_pcm_hw_params *params, int flag)
 {
@@ -158,7 +184,11 @@ static int sdp4430_mcpdm_startup(struct snd_pcm_substream *substream)
 		 * high-performance mode is in use. Glitch-free mux
 		 * cannot tolerate MCLK gating
 		 */
+#ifdef CONFIG_MACH_OMAP_BN_HD
+		ret = sdp4430_mclk_enable();
+#else
 		ret = cdc_tcxo_set_req_int(CDC_TCXO_CLK2, 1);
+#endif
 		if (ret) {
 			printk(KERN_ERR "failed to enable twl6040 MCLK\n");
 			goto err;
@@ -178,14 +208,21 @@ static int sdp4430_mcpdm_startup(struct snd_pcm_substream *substream)
 
 	/* low-power mode uses 32k clock, MCLK is not required */
 	if (!twl6040_power_mode) {
+#ifdef CONFIG_MACH_OMAP_BN_HD
+		sdp4430_mclk_disable();
+#else
 		ret = cdc_tcxo_set_req_int(CDC_TCXO_CLK2, 0);
 		if (ret)
 			printk(KERN_ERR "failed to disable twl6040 MCLK\n");
+#endif
 	}
 
 	return 0;
 
 err:
+#ifdef CONFIG_MACH_OMAP_BN_HD
+	sdp4430_mclk_disable();
+#endif
 	twl6040_disable(twl6040);
 	return ret;
 }
@@ -198,6 +235,9 @@ static void sdp4430_mcpdm_shutdown(struct snd_pcm_substream *substream)
 
 	/* TWL6040 supplies McPDM PAD_CLKS */
 	twl6040_disable(twl6040);
+#ifdef CONFIG_MACH_OMAP_BN_HD
+	sdp4430_mclk_disable();
+#endif
 }
 
 static struct snd_soc_ops sdp4430_mcpdm_ops = {
@@ -357,6 +397,9 @@ static int sdp4430_av_switch_event(struct snd_soc_dapm_widget *w,
 				   struct snd_kcontrol *kcontrol, int event)
 {
 	int ret;
+
+	if (!av_switch_reg)
+		return 0;
 
 	if (SND_SOC_DAPM_EVENT_ON(event))
 		ret = regulator_enable(av_switch_reg);
@@ -1141,6 +1184,18 @@ static int __init sdp4430_soc_init(void)
 		goto err_dev;
 	}
 
+#ifdef CONFIG_MACH_OMAP_BN_HD
+	mclk = clk_get(&sdp4430_snd_device->dev, "auxclk1_ck");
+	if (IS_ERR(mclk)) {
+		ret = PTR_ERR(mclk);
+		printk(KERN_ERR "sdp4430: could not get auxclk1 as MCLK\n");
+		goto err_dev;
+	}
+
+	/* default mode is low power without MCLK */
+	twl6040_power_mode = 0;
+	mclk_enabled = false;
+#else
 	av_switch_reg = regulator_get(&sdp4430_snd_device->dev, "av-switch");
 	if (IS_ERR(av_switch_reg)) {
 		ret = PTR_ERR(av_switch_reg);
@@ -1148,6 +1203,7 @@ static int __init sdp4430_soc_init(void)
 			ret);
 		goto err_dev;
 	}
+#endif
 
 	/* Default mode is low-power, MCLK not required */
 	twl6040_power_mode = 0;
@@ -1171,6 +1227,10 @@ module_init(sdp4430_soc_init);
 
 static void __exit sdp4430_soc_exit(void)
 {
+#ifdef CONFIG_MACH_OMAP_BN_HD
+	sdp4430_mclk_disable();
+	clk_put(mclk);
+#endif
 	regulator_put(av_switch_reg);
 	cdc_tcxo_set_req_int(CDC_TCXO_CLK2, 0);
 	cdc_tcxo_set_req_prio(CDC_TCXO_CLK2, CDC_TCXO_PRIO_REQINT);
