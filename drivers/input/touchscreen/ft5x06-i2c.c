@@ -5941,7 +5941,7 @@ static int ftx_input_device_initialize(struct ft5x06 *ts)
 	if(use_mt_protocol != 0)
 	{
 		/* Initialize the slot handling. If it is  already initialized, this function just returns 0 */
-		if(input_mt_init_slots(input_device, atomic_read(&ts->n_fingers_supported)) != 0)
+		if(input_mt_init_slots(input_device, atomic_read(&ts->n_fingers_supported), 0) != 0)
 		{
 			/*
 			 * Slots were not initialized. It is difficult to support Type B protocol without the slots.
