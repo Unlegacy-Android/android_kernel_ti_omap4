@@ -6545,12 +6545,16 @@ static void ft5x06_late_resume(struct early_suspend *handler)
 #else  /* CONFIG_HAS_EARLYSUSPEND */
 static void ft5x06_early_suspend(struct early_suspend *handler)
 {
+	struct ft5x06 *ts;
+	ts = container_of(handler, struct ft5x06, early_suspend);
 	/* Do Nothing */
 	DBG_PRINT(dbg_level_debug, "%s: " FTX_TAG ": %s(): DEBUG: early suspend not defined.\n", dev_name(&(ts->client->dev)), __func__);
 }
 
 static void ft5x06_late_resume(struct early_suspend *handler)
 {
+	struct ft5x06 *ts;
+	ts = container_of(handler, struct ft5x06, early_suspend);
 	/* Dio Nothing */
 	DBG_PRINT(dbg_level_debug, "%s: " FTX_TAG ": %s(): DEBUG: late resume not defined.\n", dev_name(&(ts->client->dev)), __func__);
 }
