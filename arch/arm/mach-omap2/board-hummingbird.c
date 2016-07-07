@@ -35,7 +35,6 @@
 
 #include <mach/hardware.h>
 #include <mach/omap-secure.h>
-#include <mach/omap4_ion.h>
 
 #include <plat/board.h>
 #include <plat/common.h>
@@ -53,6 +52,7 @@
 #include "control.h"
 #include "common-board-devices.h"
 #include "pm.h"
+#include "omap4_ion.h"
 #include "prm-regbits-44xx.h"
 #include "prm44xx.h"
 #include "board-hummingbird.h"
