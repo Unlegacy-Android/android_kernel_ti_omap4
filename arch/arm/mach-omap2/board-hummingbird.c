@@ -125,11 +125,7 @@ static void __init omap_hummingbird_init_early(void)
 
 static struct omap_musb_board_data musb_board_data = {
 	.interface_type		= MUSB_INTERFACE_UTMI,
-#ifdef CONFIG_USB_MUSB_OTG
 	.mode			= MUSB_OTG,
-#else
-	.mode			= MUSB_PERIPHERAL,
-#endif
 	.power			= 200,
 };
 
