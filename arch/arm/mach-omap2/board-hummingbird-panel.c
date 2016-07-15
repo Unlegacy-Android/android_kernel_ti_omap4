@@ -510,13 +510,13 @@ static struct omap_dss_device hummingbird_lcd_device_novatek = {
 		},
 		.dsi_mode = OMAP_DSS_DSI_VIDEO_MODE,
 		.dsi_vm_data = {
-			/* HASH: FIXME DUMMY VALUES */
 			.hsa		= 0,
-			.hfp		= 24,
-			.hbp		= 0,
-			.vsa		= 1,
-			.vbp		= 9,
-			.vfp		= 10,
+			.hfp		= 17,
+			.hbp		= 41,
+			/* Unit: line clocks */
+			.vsa		= 18,
+			.vbp		= 3,
+			.vfp		= 14,
 
 			/* DSI blanking modes */
 			.blanking_mode		= 1,
