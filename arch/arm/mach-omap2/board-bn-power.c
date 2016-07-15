@@ -23,6 +23,7 @@
 #include <plat/usb.h>
 #include <plat/omap-serial.h>
 #include <linux/mfd/twl6040.h>
+#include <linux/platform_data/omap-abe-twl6040.h>
 
 #ifdef CONFIG_INPUT_TWL6040_HSKEYS
 #include <linux/input/twl6040-hskeys.h>
@@ -153,6 +154,59 @@ static struct regulator_init_data regen1 = {
 	},
 };
 
+static struct platform_device bn_dmic_codec = {
+	.name	= "dmic-codec",
+	.id	= -1,
+};
+
+static struct platform_device bn_spdif_dit = {
+	.name	= "spdif-dit",
+	.id	= -1,
+};
+
+static struct platform_device bn_hdmi_audio = {
+	.name	= "hdmi-audio-codec",
+	.id	= -1,
+};
+
+static struct omap_abe_twl6040_data bn_abe_audio_data = {
+	.card_name = "B&N Audio",
+	/* Audio out */
+	.has_hs		= ABE_TWL6040_LEFT | ABE_TWL6040_RIGHT,
+	/* HandsFree through expasion connector */
+	.has_hf		= ABE_TWL6040_LEFT | ABE_TWL6040_RIGHT,
+	.has_ep		= 1,
+	/* FM TX audio out, if possible */
+	.has_aux	= ABE_TWL6040_LEFT | ABE_TWL6040_RIGHT,
+
+	.has_abe	= 1,
+	.has_dmic	= 1,
+	.has_hsmic	= 1,
+	.has_mainmic	= 1,
+	.has_submic	= 1,
+	/* FM RX audio in, if possible */
+	.has_afm	= ABE_TWL6040_LEFT | ABE_TWL6040_RIGHT,
+
+	.jack_detection = 1,
+	/* MCLK input is 38.4MHz */
+	.mclk_freq	= 38400000,
+};
+
+static struct platform_device bn_abe_audio = {
+	.name		= "omap-abe-twl6040",
+	.id 		= -1,
+	.dev = {
+		.platform_data = &bn_abe_audio_data,
+	},
+};
+
+static struct platform_device *bn_audio_devices[] __initdata = {
+	&bn_dmic_codec,
+	&bn_spdif_dit,
+	&bn_hdmi_audio,
+	&bn_abe_audio,
+};
+
 #ifdef CONFIG_INPUT_TWL6040_HSKEYS
 static struct hskeys_key_data bn_hskey_data[] = {
 	{
@@ -188,6 +242,7 @@ static struct twl6040_codec_data twl6040_codec = {
 	.hs_right_step	= 0x01,
 	.hf_left_step	= 0x1d,
 	.hf_right_step	= 0x1d,
+	.vddhf_uV   	= 0,
 	.vddhf_gpo	= TWL6040_GPO1,
 #if 0
 	.lineout_gpio 	= OMAP_LINEOUT_DTC_GPIO,
@@ -197,6 +252,7 @@ static struct twl6040_codec_data twl6040_codec = {
 #endif
 };
 
+#if 0
 static int twl6040_platform_init(struct twl6040 *twl6040)
 {
 	u8 rev = 0;
@@ -220,6 +276,7 @@ static int twl6040_platform_init(struct twl6040 *twl6040)
 
 	return 0;
 }
+#endif
 
 static struct twl6040_platform_data twl6040_data = {
 	.codec		= &twl6040_codec,
@@ -228,7 +285,6 @@ static struct twl6040_platform_data twl6040_data = {
 #endif
 	.audpwron_gpio	= TWL6041_AUDPWRON_GPIO,
 	.irq_base	= TWL6040_CODEC_IRQ_BASE,
-	.platform_init	= twl6040_platform_init,
 };
 
 static struct twl4030_platform_data twldata = {
@@ -273,4 +329,6 @@ void __init bn_power_init(void)
 			TWL_COMMON_REGULATOR_CLK32KAUDIO);
 
 	omap4_pmic_init("twl6032", &twldata, &twl6040_data, OMAP44XX_IRQ_SYS_2N);
+
+	platform_add_devices(bn_audio_devices, ARRAY_SIZE(bn_audio_devices));
 }
