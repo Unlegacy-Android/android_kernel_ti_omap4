@@ -123,6 +123,9 @@ struct mgr_priv_data {
 
 	/* callback data for the last 3 states */
 	struct callback_states cb;
+
+	bool skip_init;
+
 };
 
 static struct {
@@ -823,7 +826,11 @@ static void dss_set_go_bits(void)
 		if (!dss_data.irq_enabled && need_isr())
 			dss_register_vsync_isr();
 
-		dispc_mgr_go(mgr->id);
+		DSSDBG("%s %d\n",__FUNCTION__,mp->skip_init);
+		if(mp->skip_init)
+			mp->skip_init = false;
+		else
+			dispc_mgr_go(mgr->id);
 	}
 
 }
@@ -1349,6 +1356,8 @@ static void omap_dss_mgr_apply_mgr(struct omap_overlay_manager *mgr)
 	mp->user_info_dirty = false;
 	mp->info_dirty = true;
 	mp->info = mp->user_info;
+	mp->skip_init = mgr->device->skip_init;
+	DSSDBG("%s %d\n",__FUNCTION__,mp->skip_init);
 }
 
 int omap_dss_mgr_apply(struct omap_overlay_manager *mgr)
