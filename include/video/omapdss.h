@@ -354,6 +354,7 @@ int dsi_vc_send_null(struct omap_dss_device *dssdev, int channel);
 int dsi_vc_send_bta_sync(struct omap_dss_device *dssdev, int channel);
 int dsi_enable_video_output(struct omap_dss_device *dssdev, int channel);
 void dsi_disable_video_output(struct omap_dss_device *dssdev, int channel);
+void dsi_videomode_panel_preinit(struct omap_dss_device *dssdev);
 
 /* Board specific data */
 struct omap_dss_board_info {

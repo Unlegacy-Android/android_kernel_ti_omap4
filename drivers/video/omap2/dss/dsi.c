@@ -5160,3 +5160,14 @@ void dsi_uninit_platform_driver(void)
 {
 	return platform_driver_unregister(&omap_dsihw_driver);
 }
+
+/* set extra videomode settings */
+void dsi_videomode_panel_preinit(struct omap_dss_device *dssdev)
+{
+	struct platform_device *dsidev = dsi_get_dsidev_from_dssdev(dssdev);
+
+	/* Send null packet to start DDR clock  */
+	dsi_write_reg(dsidev, DSI_VC_SHORT_PACKET_HEADER(0), 0);
+	msleep(1);
+}
+EXPORT_SYMBOL(dsi_videomode_panel_preinit);
