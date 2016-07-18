@@ -3541,6 +3541,15 @@ int dsi_vc_set_max_rx_packet_size(struct omap_dss_device *dssdev, int channel,
 }
 EXPORT_SYMBOL(dsi_vc_set_max_rx_packet_size);
 
+int dsi_vc_turn_on_peripheral(struct omap_dss_device *dssdev, int channel)
+{
+	struct platform_device *dsidev = dsi_get_dsidev_from_dssdev(dssdev);
+
+	return dsi_vc_send_short(dsidev, channel, MIPI_DSI_TURN_ON_PERIPHERAL,
+			(MIPI_DSI_TURN_ON_PERIPHERAL << 8) | MIPI_DSI_TURN_ON_PERIPHERAL, 0);
+}
+EXPORT_SYMBOL(dsi_vc_turn_on_peripheral);
+
 static int dsi_enter_ulps(struct platform_device *dsidev)
 {
 	struct dsi_data *dsi = dsi_get_dsidrv_data(dsidev);
