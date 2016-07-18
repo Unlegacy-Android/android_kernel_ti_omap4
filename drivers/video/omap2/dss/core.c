@@ -33,6 +33,7 @@
 #include <linux/device.h>
 #include <linux/regulator/consumer.h>
 #include <linux/earlysuspend.h>
+#include <linux/cpufreq.h>
 
 #include <video/omapdss.h>
 
@@ -296,12 +297,20 @@ static void omap_dss_shutdown(struct platform_device *pdev)
 static void dss_early_suspend(struct early_suspend *h)
 {
 	DSSDBG("%s\n", __func__);
+	/*
+	 * Hint cpufreq governor that panel is about to be turned off
+	 */
+	send_panel_hint(0);
 	dss_suspend_all_devices();
 }
 
 static void dss_late_resume(struct early_suspend *h)
 {
 	DSSDBG("%s\n", __func__);
+	/*
+	 * Hint cpufreq governor that panel is about to be turned on
+	 */
+	send_panel_hint(1);
 	dss_resume_all_devices();
 }
 
