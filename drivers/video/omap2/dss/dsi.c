@@ -2047,6 +2047,10 @@ static int dsi_cio_power(struct platform_device *dsidev,
 	/* PWR_CMD */
 	REG_FLD_MOD(dsidev, DSI_COMPLEXIO_CFG1, state, 28, 27);
 
+	if (cpu_is_omap44xx())
+		/*bit 30 has to be set to 1 to GO in omap4*/
+		REG_FLD_MOD(dsidev, DSI_COMPLEXIO_CFG1, 1, 30, 30);
+
 	/* PWR_STATUS */
 	while (FLD_GET(dsi_read_reg(dsidev, DSI_COMPLEXIO_CFG1),
 			26, 25) != state) {
@@ -2418,6 +2422,9 @@ static int dsi_cio_init(struct omap_dss_device *dssdev)
 	if (r)
 		return r;
 
+	/* HS_AUTO_STOP_ENABLE */
+	REG_FLD_MOD(dsidev, DSI_CLK_CTRL, 1, 18, 18);
+
 	dsi_enable_scp_clk(dsidev);
 
 	/* A dummy read using the SCP interface to any DSIPHY register is
@@ -2778,6 +2785,15 @@ static void dsi_vc_initial_config(struct platform_device *dsidev, int channel)
 	if (dss_has_feature(FEAT_DSI_VC_OCP_WIDTH))
 		r = FLD_MOD(r, 3, 11, 10);	/* OCP_WIDTH = 32 bit */
 
+	/* TO DO: This is a HACK as performing this command on blaze
+	 * causes DSI errors and does not allow blaze to display anything
+	 * for now cause it to skip on blaze but allow this on tablet video
+	 * displays */
+	if (1) {
+		if (channel == 0)
+			r = FLD_MOD(r, 1, 11, 10); /* OCP_WIDTH = 32 bit */
+	}
+
 	r = FLD_MOD(r, 4, 29, 27); /* DMA_RX_REQ_NB = no dma */
 	r = FLD_MOD(r, 4, 23, 21); /* DMA_TX_REQ_NB = no dma */
 
@@ -3084,6 +3100,20 @@ static int dsi_vc_send_long(struct platform_device *dsidev, int channel,
 		dsi_vc_write_long_payload(dsidev, channel, b1, b2, b3, 0);
 	}
 
+	/* wait for IRQ for long packet transmission confirmation */
+	for (i = 0; i < 1000; i++) {
+		u32 val;
+		val = dsi_read_reg(dsidev, DSI_VC_IRQSTATUS(channel));
+		if (val & 0x4) {
+			DSSDBG("long packet success\n");
+			REG_FLD_MOD(dsidev, DSI_VC_IRQSTATUS(channel), 1, 2, 2);
+			return 0;
+		}
+		udelay(1);
+	}
+
+	DSSERR("long packet send failed\n");
+
 	return r;
 }
 
@@ -3130,7 +3160,7 @@ static int dsi_vc_write_nosync_common(struct omap_dss_device *dssdev,
 		int channel, u8 *data, int len, enum dss_dsi_content_type type)
 {
 	struct platform_device *dsidev = dsi_get_dsidev_from_dssdev(dssdev);
-	int r;
+	int r = 0;
 
 	if (len == 0) {
 		BUG_ON(type == DSS_DSI_CONTENT_DCS);
@@ -4619,6 +4649,10 @@ static int dsi_display_init_dsi(struct omap_dss_device *dssdev)
 		goto err0;
 	}
 
+	/* The SCPClk is required for PLL and complexio registers on OMAP4 */
+	if (cpu_is_omap44xx())
+		REG_FLD_MOD(dsidev, DSI_CLK_CTRL, 1, 14, 14);
+
 	r = dsi_pll_init(dsidev, true, true);
 	if (r)
 		goto err0;
@@ -4747,6 +4781,21 @@ static void dsi_display_uninit_dsi(struct omap_dss_device *dssdev,
 	dsi_pll_uninit(dsidev, disconnect_lanes);
 }
 
+static int _dsi_wait_reset(struct platform_device *dsidev)
+{
+	int t = 0;
+
+	while (REG_GET(dsidev, DSI_SYSSTATUS, 0, 0) == 0) {
+		if (++t > 5) {
+			DSSERR("soft reset failed\n");
+			return -ENODEV;
+		}
+		udelay(1);
+	}
+
+	return 0;
+}
+
 int omapdss_dsi_display_enable(struct omap_dss_device *dssdev)
 {
 	struct platform_device *dsidev = dsi_get_dsidev_from_dssdev(dssdev);
@@ -4777,6 +4826,12 @@ int omapdss_dsi_display_enable(struct omap_dss_device *dssdev)
 
 	if(!dssdev->skip_init) {
 		dsi_enable_pll_clock(dsidev, 1);
+
+		REG_FLD_MOD(dsidev, DSI_SYSCONFIG, 1, 1, 1);
+		_dsi_wait_reset(dsidev);
+
+		/* ENWAKEUP */
+		REG_FLD_MOD(dsidev, DSI_SYSCONFIG, 1, 2, 2);
 	}
 
 	_dsi_initialize_irq(dsidev);
