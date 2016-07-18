@@ -533,6 +533,7 @@ static struct omap_dss_device hummingbird_lcd_device_novatek = {
 			.ddr_clk_always_on	= 0,
 			.window_sync		= 4,
 		},
+#if 0
 		.dsi_cio_data = {
 			.ths_prepare		= 16,
 			.ths_prepare_ths_zero	= 21,
@@ -544,6 +545,7 @@ static struct omap_dss_device hummingbird_lcd_device_novatek = {
 			.tclk_prepare		= 13,
 			.reg_ttaget		= 4,
 		},
+#endif
 		.acbi 		= 40,
 		.acb		= 0,
 		.width_in_um	= 94230,
@@ -655,6 +657,7 @@ static struct omap_dss_device hummingbird_lcd_device_orise = {
 			.ddr_clk_always_on	= 0,
 			.window_sync		= 4,
 		},
+#if 0
 		.dsi_cio_data = {
 			.ths_prepare		= 17,
 			.ths_prepare_ths_zero	= 22,
@@ -666,6 +669,7 @@ static struct omap_dss_device hummingbird_lcd_device_orise = {
 			.tclk_prepare		= 14,
 			.reg_ttaget		= 4,
 		},
+#endif
 		.acbi 		= 40,
 		.acb		= 0,
 		.width_in_um	= 94230,

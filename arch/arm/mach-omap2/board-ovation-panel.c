@@ -530,6 +530,7 @@ static struct omap_dss_device ovation_evt1b_lcd_device = {
 			.ddr_clk_always_on	= 0,
 			.window_sync		= 4,
 		},
+#if 0
 		.dsi_cio_data = {
 			.ths_prepare		= 26,
 			.ths_prepare_ths_zero	= 61,
@@ -541,6 +542,7 @@ static struct omap_dss_device ovation_evt1b_lcd_device = {
 			.tclk_prepare		= 22,
 			.reg_ttaget		= 4,
 		},
+#endif
 		.width_in_um    = 190080,
 		.height_in_um   = 126720,
 
