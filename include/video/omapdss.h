@@ -962,4 +962,21 @@ static inline void dss_ovl_cb(struct omapdss_ovl_cb *cb, int id, int status)
 		cb->fn = NULL;
 }
 
+static inline u8 bpp_to_datatype(int bpp)
+{
+	switch(bpp) {
+	case 16: /* MIPI_DSI_PACKED_PIXEL_STREAM_16 */
+		return OMAP_DSS_DSI_FMT_RGB565;
+	case 18: /* MIPI_DSI_PACKED_PIXEL_STREAM_18 */
+		return OMAP_DSS_DSI_FMT_RGB666_PACKED;
+	case 24: /* MIPI_DSI_PACKED_PIXEL_STREAM_24 */
+		return OMAP_DSS_DSI_FMT_RGB888;
+	default:
+		pr_err("unsupported pixel size: %d", bpp);
+		BUG();
+	}
+
+	return 0;
+} 
+
 #endif
