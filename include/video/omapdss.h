@@ -955,6 +955,9 @@ int dispc_scaling_decision(enum omap_plane plane, struct omap_overlay_info *oi,
 
 int omap_dss_manager_unregister_callback(struct omap_overlay_manager *mgr,
 					 struct omapdss_ovl_cb *cb);
+bool omap_dss_overlay_ensure_bw(void);
+void dss_tput_request(u32 tput);
+
 
 /* generic callback handling */
 static inline void dss_ovl_cb(struct omapdss_ovl_cb *cb, int id, int status)

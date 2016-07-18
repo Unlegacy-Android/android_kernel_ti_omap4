@@ -30,10 +30,12 @@
 #include <plat/dsscomp.h>
 
 #include <linux/debugfs.h>
+#include <linux/pm_qos.h>
 
 #include "dsscomp.h"
 /* queue state */
 
+struct pm_qos_request req;
 static DEFINE_MUTEX(mtx);
 
 /* free overlay structs */
@@ -782,9 +784,15 @@ skip_ovl_set:
 		if (dssdev_manually_updated(dssdev) && drv->sync)
 			drv->update(dssdev, d->win.x, d->win.y, d->win.w,
 					d->win.h);
-		else
+		else {
 			/* wait for sync to do smooth animations */
 			mgr->wait_for_vsync(mgr);
+			/* Release OPP constraint on CORE when it posible */
+			if (!omap_dss_overlay_ensure_bw())
+				dss_tput_request(PM_QOS_MEMORY_THROUGHPUT_DEFAULT_VALUE);
+			else
+				dss_tput_request(PM_QOS_MEMORY_THROUGHPUT_HIGH_VALUE);
+		}
 	}
 
 	return r;
