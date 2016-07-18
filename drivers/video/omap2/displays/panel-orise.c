@@ -31,6 +31,8 @@
 #include <video/omapdss.h>
 #include <video/omap-panel-dsi.h>
 
+#include "../dss/dss.h"
+
 /* device private data structure */
 struct orise_data {
 	struct mutex lock;
@@ -39,37 +41,18 @@ struct orise_data {
 
 	int channel0;
 	int channel_cmd;
+#if 0
 	const struct panel_dsi_fps_data *current_fps;
+#endif
 	char cabc_mode[6];
 };
 
-static inline u8 bpp_to_datatype(int bpp)
-{
-	/* 0x0e - 16bit
-	 * 0x1e - packed 18bit
-	 * 0x2e - unpacked 18bit
-	 * 0x3e - 24bit
-	 */
-
-	switch(bpp) {
-	case 16:
-		return 0x0e;
-	case 18:
-		return 0x1e;
-	case 24:
-		return 0x3e;
-	default:
-		pr_err("unsupported pixel size: %d", bpp);
-		BUG();
-	}
-
-	return 0;
-} 
-
+#if 0
 static inline struct panel_dsi_fps_data ** get_dsi_data(struct omap_dss_device *dssdev)
 {
 	return dssdev->data;
 }
+#endif
 
 static void orise_get_timings(struct omap_dss_device *dssdev,
 		struct omap_video_timings *timings)
@@ -106,6 +89,7 @@ static void orise_get_resolution(struct omap_dss_device *dssdev,
 	*yres = dssdev->panel.timings.y_res;
 }
 
+#if 0
 static int orise_set_current_fps(struct omap_dss_device *dssdev, const char *fps)
 {
 	struct orise_data *odata = dev_get_drvdata(&dssdev->dev);
@@ -173,6 +157,7 @@ static ssize_t orise_get_fps(struct omap_dss_device *dssdev, char *buf, size_t l
 
 	return r;
 }
+#endif
 
 static int orise_read_reg(struct omap_dss_device *dssdev, u16 reg, u8 *value)
 {
@@ -230,7 +215,6 @@ static int orise_write_reg(struct omap_dss_device *dssdev, u16 reg, u8 value)
 static ssize_t orise_reg_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
 {
 	struct omap_dss_device *dssdev = to_dss_device(dev);
-	struct orise_data *d2d = dev_get_drvdata(&dssdev->dev);
 	u16 reg = 0;
 	u8 value = 0;
 	int r;
@@ -282,7 +266,7 @@ static int orise_enable_reg(struct device *dev, u8 reg, int onoff)
 	}
 
 	dsi_bus_lock(dssdev);
-	r = dsi_vc_gen_short_write_nosync(dssdev, d2d->channel_cmd, buf, sizeof(buf));
+	r = dsi_vc_generic_write_nosync(dssdev, d2d->channel_cmd, buf, sizeof(buf));
 	dsi_bus_unlock(dssdev);
 
 	return r;
@@ -380,11 +364,15 @@ static int orise_probe(struct omap_dss_device *dssdev)
 		return r;
 	}
 
+	dssdev->panel.config = OMAP_DSS_LCD_TFT;
+	dssdev->panel.dsi_pix_fmt = bpp_to_datatype(dssdev->ctrl.pixel_size);
 	d2d->dssdev = dssdev;
 	strcpy(d2d->cabc_mode, "none");
 
+#if 0
 	if (get_dsi_data(dssdev))
 		d2d->current_fps = get_dsi_data(dssdev)[0];
+#endif
 
 	mutex_init(&d2d->lock);
 
@@ -434,7 +422,7 @@ static int orise_power_on(struct omap_dss_device *dssdev)
 	/* At power on the first vsync has not been received yet */
 	dssdev->first_vsync = false;
 
-	dev_dbg(&dssdev->dev, "power_on\n");
+	dev_dbg(&dssdev->dev, "power_on -- skip_init==%d\n", dssdev->skip_init);
 
 	if (dssdev->platform_enable)
 		dssdev->platform_enable(dssdev);
@@ -446,14 +434,18 @@ static int orise_power_on(struct omap_dss_device *dssdev)
 	}
 
 	if (!dssdev->skip_init) {
-		omapdss_dsi_vc_enable_hs(dssdev, d2d->channel0, true);
-
 		/* do extra job to match kozio registers (???) */
 		dsi_videomode_panel_preinit(dssdev);
-	}
+		msleep(1);
 
-	dsi_video_mode_enable(dssdev, bpp_to_datatype(dssdev->ctrl.pixel_size));
-	dssdev->skip_init = false;
+		omapdss_dsi_vc_enable_hs(dssdev, d2d->channel0, true);
+		omapdss_dsi_vc_enable_hs(dssdev, d2d->channel_cmd, true);
+
+		dsi_enable_video_output(dssdev, d2d->channel0);
+	} else {
+		dssdev->skip_init = false;
+		r = dss_mgr_enable(dssdev->manager);
+	}
 
 	dev_dbg(&dssdev->dev, "power_on done\n");
 
@@ -470,7 +462,8 @@ err_disp_enable:
 
 static void orise_power_off(struct omap_dss_device *dssdev)
 {
-	dsi_video_mode_disable(dssdev, false);
+	struct orise_data *d2d = dev_get_drvdata(&dssdev->dev);
+	dsi_disable_video_output(dssdev, d2d->channel0);
 
 	omapdss_dsi_display_disable(dssdev, false, false);
 
@@ -549,9 +542,12 @@ static struct omap_dss_driver orise_driver = {
 	.set_timings	= orise_set_timings,
 	.check_timings	= orise_check_timings,
 
+/* HASH: DISABLE USERSPACE FPS SHARING */
+#if 0
 	.set_current_fps	= orise_set_current_fps,
 	.get_current_fps	= orise_get_current_fps,
 	.get_fps		= orise_get_fps,
+#endif
 
 	.driver         = {
 		.name   = "orise-panel",

@@ -35,6 +35,8 @@
 #include <video/omapdss.h>
 #include <video/omap-panel-dsi.h>
 
+#include "../dss/dss.h"
+
 /* device private data structure */
 struct novatek_data {
 	struct mutex lock;
@@ -44,37 +46,18 @@ struct novatek_data {
 	int channel0;
 	int channel_cmd;
 	struct dentry *dbg_dir;
+#if 0
 	const struct panel_dsi_fps_data *current_fps;
+#endif
 	char cabc_mode[6];
 };
 
+#if 0
 static inline struct panel_dsi_fps_data ** get_dsi_fps_data(struct omap_dss_device *dssdev)
 {
 	return dssdev->data;
 }
-
-static inline u8 bpp_to_datatype(int bpp)
-{
-	/* 0x0e - 16bit
-	 * 0x1e - packed 18bit
-	 * 0x2e - unpacked 18bit
-	 * 0x3e - 24bit
-	 */
-
-	switch(bpp) {
-	case 16:
-		return 0x0e;
-	case 18:
-		return 0x1e;
-	case 24:
-		return 0x3e;
-	default:
-		pr_err("unsupported pixel size: %d", bpp);
-		BUG();
-	}
-
-	return 0;
-} 
+#endif
 
 static void novatek_get_timings(struct omap_dss_device *dssdev,
 		struct omap_video_timings *timings)
@@ -89,14 +72,14 @@ static int novatek_unlock_page(struct omap_dss_device *dssdev, int channel, u32 
 	data[0] = 0xf3;	
 	data[1] = (0xa0 + page);
 
-	return dsi_vc_gen_short_write_nosync(dssdev, channel, data, sizeof(data));
+	return dsi_vc_generic_write_nosync(dssdev, channel, data, sizeof(data));
 }
 
 static int novatek_lock_page(struct omap_dss_device *dssdev, int channel)
 {
 	u8 data[2] = { 0, 0 };
 	
-	return dsi_vc_gen_short_write_nosync(dssdev, channel, data, 0);
+	return dsi_vc_generic_write_nosync(dssdev, channel, data, 0);
 }
 
 static int novatek_write_reg(struct omap_dss_device *dssdev, int channel, u32 reg, u32 value)
@@ -106,12 +89,12 @@ static int novatek_write_reg(struct omap_dss_device *dssdev, int channel, u32 re
 	data[0] = reg;
 	data[1] = value;
 
-	return dsi_vc_gen_short_write_nosync(dssdev, channel, data, sizeof(data));
+	return dsi_vc_generic_write_nosync(dssdev, channel, data, sizeof(data));
 }
 
 static int novatek_read_reg(struct omap_dss_device *dssdev, int channel, u8 reg, u8 *value)
 {
-	return dsi_vc_gen_read_1(dssdev, channel, reg, value, 1);
+	return dsi_vc_generic_read_1(dssdev, channel, reg, value, 1);
 }
 
 static int novatek_unlock_and_write(struct omap_dss_device *dssdev, u8 page, u8 reg, u8 value)
@@ -210,6 +193,7 @@ static void novatek_get_resolution(struct omap_dss_device *dssdev,
 	*yres = dssdev->panel.timings.y_res;
 }
 
+#if 0
 static int novatek_set_current_fps(struct omap_dss_device *dssdev, const char *fps)
 {
 	struct novatek_data *ndata = dev_get_drvdata(&dssdev->dev);
@@ -277,6 +261,7 @@ static ssize_t novatek_get_fps(struct omap_dss_device *dssdev, char *buf, size_t
 
 	return r;
 }
+#endif
 
 static ssize_t novatek_reg_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
 {
@@ -301,11 +286,12 @@ static ssize_t novatek_reg_store(struct device *dev, struct device_attribute *at
 	if (r == 3) {
 		r = novatek_unlock_and_write(dssdev, page, reg, value);
 	} else {
-		dsi_video_mode_disable(dssdev, true);
+		dsi_disable_video_output(dssdev, d2d->channel0);
 		omapdss_dsi_vc_enable_hs(dssdev, d2d->channel0, false);
 		r = novatek_unlock_and_read(dssdev, page, reg, &value);
 		omapdss_dsi_vc_enable_hs(dssdev, d2d->channel0, true);
-		dsi_video_mode_enable(dssdev, bpp_to_datatype(dssdev->ctrl.pixel_size));
+		dssdev->panel.dsi_pix_fmt = bpp_to_datatype(dssdev->ctrl.pixel_size);
+		dsi_enable_video_output(dssdev, d2d->channel0);
 	
 		if (r >= 0) {
 			dev_info(&dssdev->dev, "%hhx:%hhx=%hhx\n", page, reg, value);
@@ -402,11 +388,15 @@ static int novatek_probe(struct omap_dss_device *dssdev)
 		return r;
 	}
 
+	dssdev->panel.config = OMAP_DSS_LCD_TFT;
+	dssdev->panel.dsi_pix_fmt = bpp_to_datatype(dssdev->ctrl.pixel_size);
 	d2d->dssdev = dssdev;
 	strcpy(d2d->cabc_mode, "none");
 	
+#if 0
 	if (get_dsi_fps_data(dssdev))
 		d2d->current_fps = get_dsi_fps_data(dssdev)[0];
+#endif
 
 	mutex_init(&d2d->lock);
 
@@ -464,7 +454,7 @@ static int novatek_power_on(struct omap_dss_device *dssdev)
 	/* At power on the first vsync has not been received yet */
 	dssdev->first_vsync = false;
 
-	dev_dbg(&dssdev->dev, "power_on\n");
+	dev_dbg(&dssdev->dev, "power_on -- skip_init==%d\n", dssdev->skip_init);
 
 	if (dssdev->platform_enable)
 		dssdev->platform_enable(dssdev);
@@ -487,10 +477,15 @@ static int novatek_power_on(struct omap_dss_device *dssdev)
 		/* do extra job to match kozio registers (???) */
 		dsi_videomode_panel_preinit(dssdev);
 		msleep(1);
-	}
 
-	dsi_video_mode_enable(dssdev, bpp_to_datatype(dssdev->ctrl.pixel_size));
-	dssdev->skip_init=false;
+		omapdss_dsi_vc_enable_hs(dssdev, d2d->channel0, true);
+		omapdss_dsi_vc_enable_hs(dssdev, d2d->channel_cmd, true);
+
+		dsi_enable_video_output(dssdev, d2d->channel0);
+	} else {
+		dssdev->skip_init = false;
+		r = dss_mgr_enable(dssdev->manager);
+	}
 
 	r = novatek_unlock_and_write(dssdev, 0, 0xE5, 0x0);
 
@@ -513,7 +508,8 @@ err_disp_enable:
 
 static void novatek_power_off(struct omap_dss_device *dssdev)
 {
-	dsi_video_mode_disable(dssdev, false);
+	struct novatek_data *d2d = dev_get_drvdata(&dssdev->dev);
+	dsi_disable_video_output(dssdev, d2d->channel0);
 
 	omapdss_dsi_display_disable(dssdev, false, false);
 
@@ -585,7 +581,7 @@ static void maxim9606_enable(struct maxim9606 *mx)
 
 	int retry_count = 0;
 	u8 value = 0;
-	const u8 buf[2] = { 0x54, 0x4D };
+	// const u8 buf[2] = { 0x54, 0x4D };
 	s32 r = 0;
 	u8 test_mode[3] = { 0xFF, 0x54, 0x4D };
 	u8 cmd1[2] = { 0x5F, 0x02 };
@@ -742,7 +738,7 @@ static ssize_t maxim9606_update_mvp(struct device *dev, struct device_attribute 
 {
 	struct i2c_client *cl = to_i2c_client(dev);
 	u8 to_mvp[3] = { 0x00, 0x01, 0x67 };
-	u8 from_mvp[3] = { 0x00, 0x01, 0x76 }; 
+	//u8 from_mvp[3] = { 0x00, 0x01, 0x76 };
 	const u8 test_mode[2] = { 0x54, 0x4D };
 	int try_count = 0;
 	struct i2c_msg mvp;
@@ -922,10 +918,12 @@ static struct omap_dss_driver novatek_driver = {
 	.set_timings	= novatek_set_timings,
 	.check_timings	= novatek_check_timings,
 
+/* HASH: DISABLE USERSPACE FPS SHARING */
+#if 0
 	.set_current_fps	= novatek_set_current_fps,
 	.get_current_fps	= novatek_get_current_fps,
 	.get_fps		= novatek_get_fps,
-
+#endif
 	.driver         = {
 		.name   = "novatek-panel",
 		.owner  = THIS_MODULE,
