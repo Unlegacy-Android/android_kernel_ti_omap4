@@ -109,6 +109,23 @@ static int boostpulse_duration_val = DEFAULT_MIN_SAMPLE_TIME;
 /* End time of boost pulse in ktime converted to usecs */
 static u64 boostpulse_endtime;
 
+#ifdef CONFIG_CPU_FREQ_USE_BOOST_HINT
+/*
+ * Video playback hint status
+ */
+static unsigned int video_playback_on;
+
+/*
+ * Panel hint status
+ */
+static unsigned int panel_on;
+
+/*
+ * mutex to protect hints modification
+ */
+static struct mutex hint_lock;
+#endif
+
 /*
  * Max additional time to wait in idle, beyond timer_rate, at speeds above
  * minimum before wakeup to reduce speed, or -1 if unnecessary.
@@ -121,6 +138,12 @@ static bool io_is_busy;
 static int cpufreq_governor_interactive(struct cpufreq_policy *policy,
 		unsigned int event);
 
+#ifdef CONFIG_CPU_FREQ_USE_BOOST_HINT
+static void store_video_hint(unsigned int hint);
+static void store_panel_hint(unsigned int hint);
+static inline void adjust_hispeed_freq(bool boosted);
+#endif
+
 #ifndef CONFIG_CPU_FREQ_DEFAULT_GOV_INTERACTIVE
 static
 #endif
@@ -129,6 +152,10 @@ struct cpufreq_governor cpufreq_gov_interactive = {
 	.governor = cpufreq_governor_interactive,
 	.max_transition_latency = 10000000,
 	.owner = THIS_MODULE,
+#ifdef CONFIG_CPU_FREQ_USE_BOOST_HINT
+	.store_video_hint = store_video_hint,
+	.store_panel_hint = store_panel_hint,
+#endif
 };
 
 static inline cputime64_t get_cpu_idle_time_jiffy(unsigned int cpu,
@@ -399,6 +426,9 @@ static void cpufreq_interactive_timer(unsigned long data)
 	cpu_load = loadadjfreq / pcpu->policy->cur;
 	boosted = boost_val || now < boostpulse_endtime;
 
+#ifdef CONFIG_CPU_FREQ_USE_BOOST_HINT
+	adjust_hispeed_freq(boosted);
+#endif
 	if (cpu_load >= go_hispeed_load || boosted) {
 		if (pcpu->target_freq < hispeed_freq) {
 			new_freq = hispeed_freq;
@@ -1048,6 +1078,80 @@ static struct attribute *interactive_attributes[] = {
 	NULL,
 };
 
+#ifdef CONFIG_CPU_FREQ_USE_BOOST_HINT
+static void store_video_hint(unsigned int hint)
+{
+	int old_mode;
+	int new_mode;
+
+	if (video_playback_on == hint) {
+		/* no need to do anything */
+		return;
+	}
+
+	mutex_lock(&hint_lock);
+
+	old_mode = video_playback_on || !panel_on;
+	video_playback_on = hint;
+	new_mode = video_playback_on || !panel_on;
+
+	if (old_mode != new_mode) {
+		boost_val = !new_mode;
+		if (boost_val) {
+			trace_cpufreq_interactive_boost("on");
+			cpufreq_interactive_boost();
+		} else {
+			trace_cpufreq_interactive_unboost("off");
+		}
+	}
+	mutex_unlock(&hint_lock);
+}
+
+static inline void adjust_hispeed_freq(bool boosted)
+{
+	if (!panel_on && !boosted) {
+		hispeed_freq = 396800;
+	} else {
+		hispeed_freq = 1500000;
+	}
+}
+
+static void store_panel_hint(unsigned int hint)
+{
+	int old_mode;
+	int new_mode;
+
+	mutex_lock(&hint_lock);
+
+	if (panel_on == hint) {
+		/* no need to do anything */
+		mutex_unlock(&hint_lock);
+		return;
+	}
+
+	old_mode = video_playback_on || !panel_on;
+	panel_on = hint;
+	new_mode = video_playback_on || !panel_on;
+
+	if (panel_on)
+		adjust_hispeed_freq(true);
+	else
+		adjust_hispeed_freq(false);
+
+	if (old_mode != new_mode) {
+		boost_val = !new_mode;
+		if (boost_val) {
+			trace_cpufreq_interactive_boost("on");
+			cpufreq_interactive_boost();
+		} else {
+			trace_cpufreq_interactive_unboost("off");
+		}
+	}
+	mutex_unlock(&hint_lock);
+}
+
+#endif
+
 static struct attribute_group interactive_attr_group = {
 	.attrs = interactive_attributes,
 	.name = "interactive",
@@ -1089,6 +1193,18 @@ static int cpufreq_governor_interactive(struct cpufreq_policy *policy,
 
 		mutex_lock(&gov_lock);
 
+#ifdef CONFIG_CPU_FREQ_USE_BOOST_HINT
+		/*
+		 * Hints for cpu boost
+		 */
+		video_playback_on = 0;
+		panel_on = 1;
+
+		/*
+		  * Enable boost at boot-up
+		  */
+		boost_val = 1;
+#endif
 		freq_table =
 			cpufreq_frequency_get_table(policy->cpu);
 		if (!hispeed_freq)
@@ -1243,6 +1359,10 @@ static int __init cpufreq_interactive_init(void)
 
 	/* NB: wake up so the thread does not look hung to the freezer */
 	wake_up_process(speedchange_task);
+
+#ifdef CONFIG_CPU_FREQ_USE_BOOST_HINT
+	mutex_init(&hint_lock);
+#endif
 
 	return cpufreq_register_governor(&cpufreq_gov_interactive);
 }
