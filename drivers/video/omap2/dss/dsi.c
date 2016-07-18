@@ -214,6 +214,9 @@ struct dsi_reg { u16 idx; };
 #endif
 #define DSI_DT_GENERIC_READ_2		0x24
 #define DSI_DT_GENERIC_LONG_WRITE	0x29
+#ifdef CONFIG_MACH_OMAP_BN_HD
+#define DSI_DT_TURN_ON_PERIPHERAL	0x32
+#endif
 
 #define DSI_DT_RX_ACK_WITH_ERR		0x02
 #ifdef CONFIG_MACH_OMAP_BN
@@ -5248,3 +5251,12 @@ void dsi_videomode_panel_preinit(struct omap_dss_device *dssdev)
 }
 EXPORT_SYMBOL(dsi_videomode_panel_preinit);
 
+#ifdef CONFIG_MACH_OMAP_BN_HD
+int dsi_vc_turn_on_peripheral(struct omap_dss_device *dssdev, int channel)
+{
+	struct platform_device *dsidev = dsi_get_dsidev_from_dssdev(dssdev);
+
+	return dsi_vc_send_short(dsidev, channel, DSI_DT_TURN_ON_PERIPHERAL, (DSI_DT_TURN_ON_PERIPHERAL << 8) | DSI_DT_TURN_ON_PERIPHERAL, 0);
+}
+EXPORT_SYMBOL(dsi_vc_turn_on_peripheral);
+#endif

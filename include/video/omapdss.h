@@ -287,6 +287,9 @@ int dsi_vc_gen_read_1(struct omap_dss_device *dssdev, int channel, u16 cmd,
 		u8 *buf, int buflen);
 #endif
 void dsi_videomode_panel_preinit(struct omap_dss_device *dssdev);
+#ifdef CONFIG_MACH_OMAP_BN_HD
+int dsi_vc_turn_on_peripheral(struct omap_dss_device *dssdev, int channel);
+#endif
 
 
 /* Board specific data */
