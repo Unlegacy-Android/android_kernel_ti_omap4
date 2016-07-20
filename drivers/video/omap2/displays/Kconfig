@@ -123,19 +123,22 @@ config PANEL_AUO
 config PANEL_HYDIS
 	tristate "Hydis HV080X01-100 panel"
 	depends on OMAP2_DSS
+	select OMAP2_DSS_DSI
         select BACKLIGHT_CLASS_DEVICE
 	help
 	  Hydis panel HV080X01-100
 
 config PANEL_ORISE
 	tristate "Orise based TCON display panel"
-	depends on OMAP2_DSS_DSI
+	depends on OMAP2_DSS
+	select OMAP2_DSS_DSI
 	help
 	  Say yes here if you have an Orise TCON based panel.
 
 config PANEL_NOVATEK
 	tristate "Novatek based TCON display panel"
-	depends on OMAP2_DSS_DSI
+	depends on OMAP2_DSS
+	select OMAP2_DSS_DSI
 	help
 	  Say yes here if you have a Novatek TCON based panel.
 
