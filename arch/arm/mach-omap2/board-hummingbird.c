@@ -428,7 +428,7 @@ static phys_addr_t hummingbird_get_ram_size(void)
 	return ram_size;
 }
 
-
+#if 0
 static void __init hummingbird_mem_init(void)
 {
 	bool supported = 0;
@@ -477,6 +477,7 @@ static void __init hummingbird_mem_init(void)
 	if (!supported)
 		pr_err("Memory type not supported [VID: 0x%X, SYSTEM_REV: 0x%X]\n", omap_sdram_vendor(), system_rev);
 }
+#endif
 
 static struct regulator_consumer_supply hummingbird_lcd_tp_supply[] = {
 	{ .supply = "vtp" },
@@ -543,7 +544,7 @@ static void __init omap_hummingbird_init(void)
 	gpio_request(GG_CE,"GG-CE");
 	gpio_direction_output(GG_CE, 0);
 
-	hummingbird_mem_init();
+	bn_emif_init();
 	omap_board_config = hummingbird_config;
 	omap_board_config_size = ARRAY_SIZE(hummingbird_config);
 	omap_create_board_props();

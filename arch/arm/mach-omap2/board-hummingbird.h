@@ -28,6 +28,7 @@ int hummingbird_touch_init(void);
 int hummingbird_panel_init(void);
 int hummingbird_button_init(void);
 void hummingbird_android_display_setup(void);
+void bn_emif_init(void);
 void bn_power_init(void);
 void bn_wilink_init(void);
 

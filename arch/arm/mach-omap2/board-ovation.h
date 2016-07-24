@@ -30,6 +30,7 @@ int ovation_touch_init(void);
 int ovation_sensor_init(void);
 int ovation_panel_init(void);
 int ovation_button_init(void);
+void bn_emif_init(void);
 void bn_power_init(void);
 void bn_wilink_init(void);
 void ovation_android_display_setup(void);
