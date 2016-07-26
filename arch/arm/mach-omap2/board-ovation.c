@@ -404,12 +404,17 @@ static inline void __init board_serial_init(void)
 	gpio_request(GPIO_UART_DDC_SWITCH, "UART1_DDC_SWITCH");
 	gpio_direction_output(GPIO_UART_DDC_SWITCH, 1);
 
+#if 0
 	/* DC/DC Enable for the level Shifter */
 	gpio_request(GPIO_LS_DCDC_EN , "LS_DCDC_EN");
 	gpio_direction_output(GPIO_LS_DCDC_EN, 1);
 
 	gpio_request(GPIO_LS_OE, "LS_OE");
 	gpio_direction_output(GPIO_LS_OE, 1);
+#endif
+	/* NOTE: Didn't control the LS_DCDC_EN/CT_CP_HPD and LS_OE gpio pins,
+	 * because they're controlled by the DSS HDMI subsystem now.
+	 */
 
 	omap_serial_init_port(&ovation_uart1_board_data, &ovation_uart_info_uncon);
 	omap_serial_init_port(&ovation_uart4_board_data, &ovation_uart_info_uncon);
