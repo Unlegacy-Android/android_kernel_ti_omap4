@@ -38,6 +38,7 @@
 
 #include "dss.h"
 #include "dss_features.h"
+#include <linux/pm_qos.h>
 
 static struct {
 	struct platform_device *pdev;
@@ -405,10 +406,13 @@ static void omap_dss_driver_disable(struct omap_dss_device *dssdev)
 		blocking_notifier_call_chain(&dssdev->state_notifiers,
 				OMAP_DSS_DISPLAY_DISABLED, dssdev);
 	dssdev->driver->disable_orig(dssdev);
+	dss_tput_request(PM_QOS_MEMORY_THROUGHPUT_DEFAULT_VALUE);
 }
 
 static int omap_dss_driver_enable(struct omap_dss_device *dssdev)
 {
+	if (omap_dss_overlay_ensure_bw())
+		dss_tput_request(PM_QOS_MEMORY_THROUGHPUT_HIGH_VALUE);
 	int r = dssdev->driver->enable_orig(dssdev);
 	if (!r && dssdev->state == OMAP_DSS_DISPLAY_ACTIVE)
 		blocking_notifier_call_chain(&dssdev->state_notifiers,
