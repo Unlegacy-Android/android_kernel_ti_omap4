@@ -15,6 +15,7 @@
  */
 
 #include <linux/kernel.h>
+#include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>
 #include <linux/i2c.h>
@@ -28,8 +29,8 @@
 #include "board-bn-hd.h"
 #include "mux.h"
 
-#if defined(CONFIG_TOUCHSCREEN_FT5X06_BN) || defined(CONFIG_TOUCHSCREEN_FT5X06_BN_MODULE)
-#include <linux/input/ft5x06_bn.h>
+#if defined(CONFIG_TOUCHSCREEN_FT5X06) || defined(CONFIG_TOUCHSCREEN_FT5X06_MODULE)
+#include <linux/input/ft5x06_ts.h>
 #endif
 
 #define TOUCHPANEL_GPIO_IRQ     37
@@ -40,6 +41,7 @@ int Vdd_LCD_CT_PEN_enable(struct device *dev, const char *supply_name);
 int Vdd_LCD_CT_PEN_disable(struct device *dev, const char *supply_name);
 int Vdd_LCD_CT_PEN_release_supply(struct device *dev, const char *supply_name);
 
+#if 0
 static struct gpio bn_touch_gpios[] = {
 	{ TOUCHPANEL_GPIO_IRQ,		GPIOF_IN,			"touch_irq"   },
 	{ TOUCHPANEL_GPIO_RESET,	GPIOF_OUT_INIT_LOW,	"touch_reset" },
@@ -79,6 +81,7 @@ static int bn_touch_release_resources(struct device  *dev)
 
 	return 0;
 }
+#endif
 
 static int bn_touch_power_on(struct device  *dev)
 {
@@ -110,15 +113,47 @@ static int bn_touch_power_off(struct device  *dev)
 	return 0;
 }
 
-#if defined(CONFIG_TOUCHSCREEN_FT5X06_BN) || defined(CONFIG_TOUCHSCREEN_FT5X06_BN_MODULE)
-static struct ft5x06_platform_data ft5x06_platform_data = {
+static int touch_power_init(bool enable)
+{
+	if (enable)
+		if (Vdd_LCD_CT_PEN_request_supply(NULL, "vtp"))
+			pr_err("ft5x06: %s: Could not get touch supplies\n", __func__);
+	else
+		if (Vdd_LCD_CT_PEN_release_supply(NULL, "vtp"))
+			pr_err("ft5x06: %s: Could not release touch supplies\n", __func__);
+
+	return 0;
+}
+
+static int touch_power_on(bool enable)
+{
+	if (enable)
+		bn_touch_power_on(NULL);
+	else
+		bn_touch_power_off(NULL);
+
+	return 0;
+}
+
+#if defined(CONFIG_TOUCHSCREEN_FT5X06) || defined(CONFIG_TOUCHSCREEN_FT5X06_MODULE)
+static struct ft5x06_ts_platform_data ft5x06_platform_data = {
+	.irqflags			= IRQF_TRIGGER_FALLING,
+	.irq_gpio			= TOUCHPANEL_GPIO_IRQ,
+	.irq_gpio_flags		= GPIOF_IN,
+	.reset_gpio			= TOUCHPANEL_GPIO_RESET,
+	.reset_gpio_flags	= GPIOF_OUT_INIT_LOW,
+	.x_max				= machine_is_omap_ovation() ? 1920 : 900,
+	.y_max				= machine_is_omap_ovation() ? 1280 : 1440,
+	.flags				= machine_is_omap_ovation() ?
+						  REVERSE_X_FLAG | REVERSE_Y_FLAG : 0,
+	.ignore_id_check	= true,
+	.power_init			= touch_power_init,
+	.power_on			= touch_power_on,
+#if 0 // AM: old pdata left here mostly for reference
 	.max_tx_lines		= machine_is_omap_ovation() ? 38 : 32,
 	.max_rx_lines		= machine_is_omap_ovation() ? 26 : 20,
 	.maxx				= machine_is_omap_ovation() ? 1280 : 900,
 	.maxy				= machine_is_omap_ovation() ? 1280 : 1440,
-	.flags				= machine_is_omap_ovation() ?
-						  REVERSE_X_FLAG | REVERSE_Y_FLAG : 0,
-	.reset_gpio			= TOUCHPANEL_GPIO_RESET,
 	.use_st				= FT_USE_ST,
 	.use_mt				= FT_USE_MT,
 	.use_trk_id			= FT_USE_TRACKING_ID,
@@ -128,13 +163,14 @@ static struct ft5x06_platform_data ft5x06_platform_data = {
 	.release_resources	= bn_touch_release_resources,
 	.power_on			= bn_touch_power_on,
 	.power_off			= bn_touch_power_off,
+#endif
 };
 #endif
 
 static struct i2c_board_info __initdata bn_i2c_3_boardinfo[] = {
-#if defined(CONFIG_TOUCHSCREEN_FT5X06_BN) || defined(CONFIG_TOUCHSCREEN_FT5X06_BN_MODULE)
+#if defined(CONFIG_TOUCHSCREEN_FT5X06) || defined(CONFIG_TOUCHSCREEN_FT5X06_MODULE)
 	{
-		I2C_BOARD_INFO(FT_DEVICE_5x06_NAME, FT5x06_I2C_SLAVEADDRESS),
+		I2C_BOARD_INFO("ft5x06_ts", 0x70 >> 1),
 		.platform_data = &ft5x06_platform_data,
 		.irq = OMAP_GPIO_IRQ(TOUCHPANEL_GPIO_IRQ),
 	},
