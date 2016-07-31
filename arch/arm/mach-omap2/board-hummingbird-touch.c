@@ -28,7 +28,7 @@
 #include <linux/regulator/consumer.h>
 
 #if defined(CONFIG_TOUCHSCREEN_FT5X06) || defined(CONFIG_TOUCHSCREEN_FT5X06_MODULE)
-#include <linux/input/ft5x06.h>
+#include <linux/input/ft5x06_ts.h>
 #endif /* defined(CONFIG_TOUCHSCREEN_FT5X06) || defined(CONFIG_TOUCHSCREEN_FT5X06_MODULE) */
 
 #define TOUCHPANEL_GPIO_IRQ     37
@@ -37,26 +37,19 @@
 #define HUMMINGBIRD_TOUCH_X_RES 900
 #define HUMMINGBIRD_TOUCH_Y_RES 1440
 
+#if 0
 static struct gpio hummingbird_touch_gpios[] = {
 	{ TOUCHPANEL_GPIO_IRQ,		GPIOF_IN,		"touch_irq"   },
 	{ TOUCHPANEL_GPIO_RESET,	GPIOF_OUT_INIT_LOW,	"touch_reset" },
 };
+#endif
+
 static struct regulator *hummingbird_touch_vdd;
 static struct regulator *hummingbird_touch_power;
 
 static int hummingbird_touch_request_resources(struct device  *dev)
 {
 	int ret;
-
-	/* Request GPIO lines */
-	ret = gpio_request_array(hummingbird_touch_gpios, ARRAY_SIZE(hummingbird_touch_gpios));
-	if (ret)
-	{
-		dev_err(dev, "%s: Could not get touch gpios\n", __func__);
-		ret = -EBUSY;
-		goto err_gpio_request;
-	}
-	gpio_set_value(TOUCHPANEL_GPIO_RESET, 0);
 
 	/* Request the required power supplies */
 	hummingbird_touch_vdd = regulator_get(NULL, "touch_vdd");
@@ -78,8 +71,6 @@ static int hummingbird_touch_request_resources(struct device  *dev)
 err_regulator_get_vtp:
 	regulator_put(hummingbird_touch_vdd);
 err_regulator_get:
-	gpio_free_array(hummingbird_touch_gpios, ARRAY_SIZE(hummingbird_touch_gpios));
-err_gpio_request:
 	return ret;
 
 }
@@ -89,7 +80,6 @@ static int hummingbird_touch_release_resources(struct device  *dev)
 
 	regulator_put(hummingbird_touch_vdd);
 	regulator_put(hummingbird_touch_power);
-	gpio_free_array(hummingbird_touch_gpios, ARRAY_SIZE(hummingbird_touch_gpios));
 
 	return 0;
 }
@@ -173,14 +163,44 @@ static int hummingbird_touch_power_off(struct device  *dev)
 	return 0;
 }
 
+static int hummingbird_touch_power_init(bool enable)
+{
+	if (enable)
+		hummingbird_touch_request_resources(NULL);
+	else
+		hummingbird_touch_release_resources(NULL);
+
+	return 0;
+}
+
+static int hummingbird_touch_pwr_toggle(bool enable)
+{
+	if (enable)
+		hummingbird_touch_power_on(NULL);
+	else
+		hummingbird_touch_power_off(NULL);
+
+	return 0;
+}
+
 #if defined(CONFIG_TOUCHSCREEN_FT5X06) || defined(CONFIG_TOUCHSCREEN_FT5X06_MODULE)
-static struct ft5x06_platform_data ft5x06_platform_data = {
+static struct ft5x06_ts_platform_data ft5x06_platform_data = {
+	.irqflags			= IRQF_TRIGGER_FALLING,
+	.irq_gpio			= TOUCHPANEL_GPIO_IRQ,
+	.irq_gpio_flags		= GPIOF_IN,
+	.reset_gpio			= TOUCHPANEL_GPIO_RESET,
+	.reset_gpio_flags	= GPIOF_OUT_INIT_LOW,
+	.x_max				= HUMMINGBIRD_TOUCH_X_RES,
+	.y_max				= HUMMINGBIRD_TOUCH_Y_RES,
+	.ignore_id_check	= true,
+	.power_init			= hummingbird_touch_power_init,
+	.power_on			= hummingbird_touch_pwr_toggle,
+#if 0 // AM: old pdata left here mostly for reference
 	.max_tx_lines = 32,
 	.max_rx_lines = 20,
 	.maxx = HUMMINGBIRD_TOUCH_X_RES,
 	.maxy = HUMMINGBIRD_TOUCH_Y_RES,
 	//.flags =  REVERSE_Y_FLAG | REVERSE_X_FLAG,
-	.reset_gpio = TOUCHPANEL_GPIO_RESET,
 	.use_st = FT_USE_ST,
 	.use_mt = FT_USE_MT,
 	.use_trk_id = FT_USE_TRACKING_ID,
@@ -190,13 +210,14 @@ static struct ft5x06_platform_data ft5x06_platform_data = {
 	.release_resources = hummingbird_touch_release_resources,
 	.power_on          = hummingbird_touch_power_on,
 	.power_off         = hummingbird_touch_power_off,
+#endif
 };
 #endif /* defined(CONFIG_TOUCHSCREEN_FT5X06) || defined(CONFIG_TOUCHSCREEN_FT5X06_MODULE) */
 
 static struct i2c_board_info __initdata hummingbird_i2c_3_boardinfo[] = {
 #if defined(CONFIG_TOUCHSCREEN_FT5X06) || defined(CONFIG_TOUCHSCREEN_FT5X06_MODULE)
         {
-                I2C_BOARD_INFO(FT_DEVICE_5x06_NAME, FT5x06_I2C_SLAVEADDRESS),
+                I2C_BOARD_INFO("ft5x06_ts", 0x70 >> 1),
                 .platform_data = &ft5x06_platform_data,
                 .irq = OMAP_GPIO_IRQ(TOUCHPANEL_GPIO_IRQ),
         },
