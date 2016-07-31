@@ -49,6 +49,8 @@
 #define FT_TOUCH_EVENT_POS	3
 #define FT_TOUCH_ID_POS		5
 
+#define SWAP(a, b) do { a ^= b; b ^= a; a ^= b; } while(0)
+
 #define POINT_READ_BUF	(3 + FT_TOUCH_STEP * CFG_MAX_TOUCH_POINTS)
 
 /*register address*/
@@ -213,6 +215,19 @@ static int ft5x06_handle_touchdata(struct ft5x06_ts_data *data)
 		event->y[i] =
 		    (s16) (buf[FT_TOUCH_Y_H_POS + FT_TOUCH_STEP * i] & 0x0F) <<
 		    8 | (s16) buf[FT_TOUCH_Y_L_POS + FT_TOUCH_STEP * i];
+
+		/* Determine if display is tilted */
+		if (data->pdata->flags & FLIP_DATA_FLAG)
+			SWAP(event->x[i], event->y[i]);
+
+		/* Check for switch in X origin */
+		if (data->pdata->flags & REVERSE_X_FLAG)
+			event->x[i] = data->pdata->x_max - event->x[i];
+
+		/* Check for switch in Y origin */
+		if (data->pdata->flags & REVERSE_Y_FLAG)
+			event->y[i] = data->pdata->y_max - event->y[i];
+
 		event->touch_event[i] =
 		    buf[FT_TOUCH_EVENT_POS + FT_TOUCH_STEP * i] >> 6;
 		event->finger_id[i] =
