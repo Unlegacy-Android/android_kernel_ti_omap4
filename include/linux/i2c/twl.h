@@ -785,6 +785,7 @@ struct twl4030_codec_audio_data {
 
 	/* twl6040 */
 	int vddhf_uV;
+	int vddhf_gpo;
 };
 
 struct twl4030_codec_vibra_data {
