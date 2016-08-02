@@ -79,6 +79,7 @@ struct twl6040_data {
 	unsigned int clk_in;
 	unsigned int sysclk;
 	struct regulator *vddhf_reg;
+	int vddhf_gpo;
 	u16 hs_left_step;
 	u16 hs_right_step;
 	u16 hf_left_step;
@@ -471,21 +472,50 @@ static int twl6040_hf_boost_event(struct snd_soc_dapm_widget *w,
 {
 	struct snd_soc_codec *codec = w->codec;
 	struct twl6040_data *priv = snd_soc_codec_get_drvdata(codec);
+	struct twl6040 *twl6040 = codec->control_data;
 	int ret;
-
-	if (!priv->vddhf_reg)
-		return 0;
+	u8 val = 0;
 
 	if (SND_SOC_DAPM_EVENT_ON(event)) {
-		ret = regulator_enable(priv->vddhf_reg);
-		if (ret)
-			dev_err(codec->dev, "failed to enable VDDHF regulator %d\n",
-				ret);
+		if (priv->vddhf_reg) {
+			ret = regulator_enable(priv->vddhf_reg);
+			if (ret)
+				dev_err(codec->dev, "failed to enable VDDHF regulator %d\n",
+					ret);
+		}
+		if (priv->vddhf_gpo) {
+			val = twl6040_reg_read(twl6040, TWL6040_REG_GPOCTL);
+			if (val < 0) {
+				dev_err(codec->dev, "failed to read GPOCTL %d\n", ret);
+				return val;
+			}
+
+			val |= priv->vddhf_gpo;
+
+			ret = twl6040_reg_write(twl6040, TWL6040_REG_GPOCTL, val);
+			if (ret < 0)
+				dev_err(codec->dev, "failed to write GPOCTL %d\n", ret);
+		}
 	} else {
-		ret = regulator_disable(priv->vddhf_reg);
-		if (ret)
-			dev_err(codec->dev, "failed to disable VDDHF regulator %d\n",
-				ret);
+		if (priv->vddhf_reg) {
+			ret = regulator_disable(priv->vddhf_reg);
+			if (ret)
+				dev_err(codec->dev, "failed to disable VDDHF regulator %d\n",
+					ret);
+		}
+		if (priv->vddhf_gpo) {
+			val = twl6040_reg_read(twl6040, TWL6040_REG_GPOCTL);
+			if (val < 0) {
+				dev_err(codec->dev, "failed to read GPOCTL %d\n", ret);
+				return val;
+			}
+
+			val &= ~priv->vddhf_gpo;
+
+			ret = twl6040_reg_write(twl6040, TWL6040_REG_GPOCTL, val);
+			if (ret < 0)
+				dev_err(codec->dev, "failed to write GPOCTL %d\n", ret);
+		}
 	}
 
 	return ret;
@@ -1388,7 +1418,9 @@ static int twl6040_probe(struct snd_soc_codec *codec)
 
 	wake_lock_init(&priv->wake_lock, WAKE_LOCK_SUSPEND, "twl6040");
 
-	if (pdata && pdata->vddhf_uV) {
+	priv->vddhf_gpo = pdata->vddhf_gpo;
+
+	if (pdata && !pdata->vddhf_gpo) {
 		priv->vddhf_reg = regulator_get(codec->dev, "vddhf");
 		if (IS_ERR(priv->vddhf_reg)) {
 			ret = PTR_ERR(priv->vddhf_reg);
