@@ -595,7 +595,9 @@ static int omap_abe_twl6040_init(struct snd_soc_pcm_runtime *rtd)
 		if (machine_is_omap_4430sdp() ||
 			machine_is_omap_tabletblaze() ||
 			machine_is_omap5_sevm() ||
-			machine_is_omap5_panda())
+			machine_is_omap5_panda() ||
+			machine_is_omap_ovation() ||
+			machine_is_omap_hummingbird())
 			twl6040_hs_jack_detect(codec, &hs_jack, SND_JACK_HEADSET);
 		else
 			snd_soc_jack_report(&hs_jack, SND_JACK_HEADSET, SND_JACK_HEADSET);
