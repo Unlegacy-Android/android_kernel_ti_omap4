@@ -189,10 +189,12 @@ static struct twl6040_codec_data twl6040_codec = {
 	.hf_left_step	= 0x1d,
 	.hf_right_step	= 0x1d,
 	.vddhf_gpo	= TWL6040_GPO1,
+#if 0
 	.lineout_gpio 	= OMAP_LINEOUT_DTC_GPIO,
 	.hook_gpadc_ch	= 2,
 	.hook_ref_vol	= 450,
 	.hs_jack_debounce	= 0,
+#endif
 };
 
 static int twl6040_platform_init(struct twl6040 *twl6040)
@@ -245,6 +247,7 @@ static struct twl4030_platform_data twldata = {
 
 void __init bn_power_init(void)
 {
+#if 0
 #ifdef CONFIG_MACH_OMAP_HUMMINGBIRD
 	if(system_rev <= HUMMINGBIRD_EVT2)
 		twl6040_data.codec->hs_jack_debounce = 1;
@@ -252,6 +255,7 @@ void __init bn_power_init(void)
 #ifdef CONFIG_MACH_OMAP_OVATION
 	if(system_rev <= OVATION_EVT2)
 		twl6040_data.codec->hs_jack_debounce = 1;
+#endif
 #endif
 	omap4_pmic_get_config(&twldata, TWL_COMMON_PDATA_USB |
 			TWL_COMMON_PDATA_MADC | \
