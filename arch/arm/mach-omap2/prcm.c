@@ -97,10 +97,7 @@ void omap_prcm_restart(char mode, const char *cmd)
 		prcm_offs = OMAP3430_GR_MOD;
 		omap3_ctrl_write_boot_mode((cmd ? (u8)*cmd : 0));
 	} else if (cpu_is_omap44xx()) {
-		if (cmd == NULL || !strcmp(cmd, "") || !strcmp(cmd,"recovery"))
-			omap4_prminst_global_cold_sw_reset(); /* never returns */
-		else
-			omap4_prminst_global_warm_sw_reset(); /* never returns */
+		omap4_prminst_global_warm_sw_reset(); /* never returns */
 	} else if (cpu_is_omap54xx()) {
 		/*
 		 * Erratum i744:
