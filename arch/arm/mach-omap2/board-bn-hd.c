@@ -798,13 +798,12 @@ static void __init omap_bn_init(void)
 #ifdef CONFIG_MACH_OMAP_OVATION
 	ovation_touch_init();
 	ovation_panel_init();
-	ovation_button_init();
 #endif
 #ifdef CONFIG_MACH_OMAP_HUMMINGBIRD
 	hummingbird_touch_init();
 	hummingbird_panel_init();
-	hummingbird_button_init();
 #endif
+	bn_button_init();
 	bn_pmic_mux_init();
 #ifdef CONFIG_INPUT_KXTF9
 	kxtj9_dev_init();

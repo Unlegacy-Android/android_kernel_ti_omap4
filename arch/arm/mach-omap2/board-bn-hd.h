@@ -27,7 +27,6 @@
 
 int hummingbird_touch_init(void);
 int hummingbird_panel_init(void);
-int hummingbird_button_init(void);
 void hummingbird_android_display_setup(void);
 #endif
 
@@ -43,10 +42,10 @@ void hummingbird_android_display_setup(void);
 
 int ovation_touch_init(void);
 int ovation_panel_init(void);
-int ovation_button_init(void);
 void ovation_android_display_setup(void);
 #endif
 
+int bn_button_init(void);
 void bn_emif_init(void);
 void bn_power_init(void);
 void bn_wilink_init(void);
