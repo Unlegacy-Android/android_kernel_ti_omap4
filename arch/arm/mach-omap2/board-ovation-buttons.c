@@ -21,7 +21,7 @@
 #include <plat/omap_apps_brd_id.h>
 
 #include "mux.h"
-#include "board-ovation.h"
+#include "board-bn-hd.h"
 #include <plat/omap4-keypad.h>
 
 static int ovation_keymap[] = {

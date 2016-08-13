@@ -36,7 +36,7 @@
 #include <plat/omap_apps_brd_id.h>
 #include <plat/android-display.h>
 
-#include "board-ovation.h"
+#include "board-bn-hd.h"
 #include "control.h"
 #include "mux.h"
 

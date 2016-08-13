@@ -26,7 +26,7 @@
 #include <plat/omap-serial.h>
 #include <plat/gpio.h>
 
-#include "board-ovation.h"
+#include "board-bn-hd.h"
 #include "mux.h"
 
 #define WILINK_UART_DEV_NAME	"/dev/ttyO3"

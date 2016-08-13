@@ -40,7 +40,7 @@
 #include <plat/sgx_omaplfb.h>
 #include <plat/android-display.h>
 
-#include "board-hummingbird.h"
+#include "board-bn-hd.h"
 #include "control.h"
 #include "mux.h"
 

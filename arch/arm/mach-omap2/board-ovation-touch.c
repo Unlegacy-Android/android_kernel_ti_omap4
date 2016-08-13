@@ -22,7 +22,7 @@
 #include <linux/io.h>
 #include <linux/gpio.h>
 #include <plat/i2c.h>
-#include "board-ovation.h"
+#include "board-bn-hd.h"
 #include "mux.h"
 #include <linux/delay.h>
 #include <linux/regulator/consumer.h>

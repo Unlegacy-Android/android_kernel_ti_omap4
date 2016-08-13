@@ -14,8 +14,7 @@
 #include "common-board-devices.h"
 #include "common.h"
 
-#include "board-hummingbird.h"
-#include "board-ovation.h"
+#include "board-bn-hd.h"
 
 #define OMAP44XX_EMIF1				0x4c000000
 

@@ -32,8 +32,7 @@
 #include <asm/system_info.h>
 
 #include "common-board-devices.h"
-#include "board-hummingbird.h"
-#include "board-ovation.h"
+#include "board-bn-hd.h"
 #include "mux.h"
 
 #define TWL6041_AUDPWRON_GPIO	112
