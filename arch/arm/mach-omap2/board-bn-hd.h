@@ -26,8 +26,6 @@
 #define HUMMINGBIRD_PVT			0x5
 
 int hummingbird_touch_init(void);
-int hummingbird_panel_init(void);
-void hummingbird_android_display_setup(void);
 #endif
 
 #ifdef CONFIG_MACH_OMAP_OVATION
@@ -41,11 +39,11 @@ void hummingbird_android_display_setup(void);
 #define OVATION_PVT				0x7
 
 int ovation_touch_init(void);
-int ovation_panel_init(void);
-void ovation_android_display_setup(void);
 #endif
 
 int bn_button_init(void);
+int bn_panel_init(void);
+void bn_android_display_setup(void);
 void bn_emif_init(void);
 void bn_power_init(void);
 void bn_wilink_init(void);

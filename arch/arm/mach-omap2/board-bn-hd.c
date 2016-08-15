@@ -472,7 +472,6 @@ static void __init bn_lcd_touch_init(void)
 				ARRAY_SIZE(bn_lcd_touch_devices));
 }
 
-#ifdef CONFIG_MACH_OMAP_OVATION
 static struct regulator *bn_tp_vdd;
 static int bn_tp_vdd_enabled;
 static struct regulator *bn_lcd_tp_pwr[ARRAY_SIZE(bn_lcd_tp_supply)];
@@ -757,7 +756,6 @@ int Vdd_LCD_CT_PEN_disable(struct device *dev, const char *supply_name)
 	return 0;
 }
 EXPORT_SYMBOL(Vdd_LCD_CT_PEN_disable);
-#endif
 
 static void __init omap_bn_init(void)
 {
@@ -797,12 +795,11 @@ static void __init omap_bn_init(void)
 	bn_lcd_touch_init();
 #ifdef CONFIG_MACH_OMAP_OVATION
 	ovation_touch_init();
-	ovation_panel_init();
 #endif
 #ifdef CONFIG_MACH_OMAP_HUMMINGBIRD
 	hummingbird_touch_init();
-	hummingbird_panel_init();
 #endif
+	bn_panel_init();
 	bn_button_init();
 	bn_pmic_mux_init();
 #ifdef CONFIG_INPUT_KXTF9
@@ -834,12 +831,7 @@ static void __init omap_bn_reserve(void)
 	omap_ram_console_init(OMAP_RAM_CONSOLE_START_DEFAULT, OMAP_RAM_CONSOLE_SIZE_DEFAULT);
 	omap_rproc_reserve_cma(RPROC_CMA_OMAP4);
 
-#ifdef CONFIG_MACH_OMAP_OVATION
-	ovation_android_display_setup();
-#endif
-#ifdef CONFIG_MACH_OMAP_HUMMINGBIRD
-	hummingbird_android_display_setup();
-#endif
+	bn_android_display_setup();
 #ifdef CONFIG_ION_OMAP
 	omap4_ion_init();
 #endif
