@@ -793,12 +793,7 @@ static void __init omap_bn_init(void)
 	omap4_audio_conf();
 	omap4_i2c_init();
 	bn_lcd_touch_init();
-#ifdef CONFIG_MACH_OMAP_OVATION
-	ovation_touch_init();
-#endif
-#ifdef CONFIG_MACH_OMAP_HUMMINGBIRD
-	hummingbird_touch_init();
-#endif
+	bn_touch_init();
 	bn_panel_init();
 	bn_button_init();
 	bn_pmic_mux_init();

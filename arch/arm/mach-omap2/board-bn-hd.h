@@ -24,8 +24,6 @@
 #define HUMMINGBIRD_EVT2		0x3
 #define HUMMINGBIRD_DVT			0x4
 #define HUMMINGBIRD_PVT			0x5
-
-int hummingbird_touch_init(void);
 #endif
 
 #ifdef CONFIG_MACH_OMAP_OVATION
@@ -37,12 +35,11 @@ int hummingbird_touch_init(void);
 #define OVATION_EVT2			0x5
 #define OVATION_DVT				0x6
 #define OVATION_PVT				0x7
-
-int ovation_touch_init(void);
 #endif
 
 int bn_button_init(void);
 int bn_panel_init(void);
+int bn_touch_init(void);
 void bn_android_display_setup(void);
 void bn_emif_init(void);
 void bn_power_init(void);
