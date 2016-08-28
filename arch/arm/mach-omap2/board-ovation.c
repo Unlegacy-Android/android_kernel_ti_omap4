@@ -235,11 +235,11 @@ struct kxtf9_platform_data kxtf9_platform_data_here = {
 	.shift_adj	= SHIFT_ADJ_2G,
 
 	/* Map the axes from the sensor to the device */
-	.axis_map_x	= 0,
-	.axis_map_y	= 1,
+	.axis_map_x	= 1,
+	.axis_map_y	= 0,
 	.axis_map_z	= 2,
 	.negate_x	= 0,
-	.negate_y	= 0,
+	.negate_y	= 1,
 	.negate_z	= 0,
 	.data_odr_init		= ODR12_5F,
 	.ctrl_reg1_init		= KXTF9_G_8G | RES_12BIT | TDTE | WUFE | TPE,

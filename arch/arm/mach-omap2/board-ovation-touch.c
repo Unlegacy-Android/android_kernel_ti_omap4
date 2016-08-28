@@ -35,7 +35,7 @@
 #define TOUCHPANEL_GPIO_RESET   39
 
 #define OVATION_TOUCH_X_RES 1280
-#define OVATION_TOUCH_Y_RES 1920
+//#define OVATION_TOUCH_Y_RES 1920
 
 extern int Vdd_LCD_CT_PEN_request_supply(struct device *dev, const char *supply_name);
 extern int Vdd_LCD_CT_PEN_enable(struct device *dev, const char *supply_name);
@@ -126,8 +126,9 @@ static struct ft5x06_platform_data ft5x06_platform_data = {
 	.max_tx_lines = 38,
 	.max_rx_lines = 26,
 	.maxx = OVATION_TOUCH_X_RES,
-	.maxy = OVATION_TOUCH_Y_RES,
-	.flags = FLIP_DATA_FLAG | REVERSE_Y_FLAG,
+	.maxy = OVATION_TOUCH_X_RES,
+	//.flags = FLIP_DATA_FLAG | REVERSE_Y_FLAG,
+	.flags = REVERSE_X_FLAG | REVERSE_Y_FLAG,
 	.reset_gpio = TOUCHPANEL_GPIO_RESET,
 	.use_st = FT_USE_ST,
 	.use_mt = FT_USE_MT,
