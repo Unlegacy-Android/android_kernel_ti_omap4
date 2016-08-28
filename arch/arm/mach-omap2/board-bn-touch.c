@@ -115,10 +115,9 @@ static struct ft5x06_platform_data ft5x06_platform_data = {
 	.max_tx_lines		= machine_is_omap_ovation() ? 38 : 32,
 	.max_rx_lines		= machine_is_omap_ovation() ? 26 : 20,
 	.maxx				= machine_is_omap_ovation() ? 1280 : 900,
-	.maxy				= machine_is_omap_ovation() ? 1920 : 1440,
+	.maxy				= machine_is_omap_ovation() ? 1280 : 1440,
 	.flags				= machine_is_omap_ovation() ?
-						  FLIP_DATA_FLAG | REVERSE_Y_FLAG :
-						  REVERSE_Y_FLAG | REVERSE_X_FLAG,
+						  REVERSE_X_FLAG | REVERSE_Y_FLAG : 0,
 	.reset_gpio			= TOUCHPANEL_GPIO_RESET,
 	.use_st				= FT_USE_ST,
 	.use_mt				= FT_USE_MT,
