@@ -25,7 +25,7 @@
  *
  */
 #define PRINTK_COLORS
-//#define CONFIG_TOUCHSCREEN_FT5x06_TEST
+#define CONFIG_TOUCHSCREEN_FT5x06_TEST
 
 #include <linux/module.h>
 #include <linux/kobject.h>
@@ -49,9 +49,9 @@
 #include <linux/debugfs.h>
 #endif /* defined(CONFIG_DEBUG_FS) */
 
+#ifdef CONFIG_TOUCHSCREEN_FT5x06_TEST
 #include <asm/uaccess.h>
 
-#ifdef CONFIG_TOUCHSCREEN_FT5x06_TEST
 #define FT5x06_SCAN_DELAY_MS            20
 #define FT5x06_CALIBRATION_DELAY_MS   300
 #define FT5x06_TPK_UPGRADEVER1		0x5C
@@ -3443,131 +3443,6 @@ static ssize_t ftx_suspend_state_show(struct device *dev, struct device_attribut
 }
 static DEVICE_ATTR(power_state, 0444, ftx_suspend_state_show, NULL);
 
-/*Same as ft5x06_read_data */
-static int ft5x06_read_rawdata(struct i2c_client *client, int data[][FT5x06_NUM_RX])
-{
-	u8 testmode = 0x00;
-	u8 readlen = 0;
-	int retval  = 0;
-	u8 regaddr = 0x00;
-	int i       = 0;
-	int j       = 0;
-	int rx = 0;
-	u16 dataval = 0x0000;
-	u8  devmode = 0x00;
-	u8  rownum  = 0x00;
-	u8 read_buffer[FT5x06_NUM_RX * 2];
-
-	DBG_PRINT(dbg_level_debug, "%s: " FTX_TAG ": %s(): DEBUG: Verifying that touch panel is in factory mode.\n", dev_name(&(client->dev)), __func__);
-	retval = i2c_smbus_read_i2c_block_data(client, FT5x06_FMREG_DEVICE_MODE, sizeof(u8), &devmode);
-	if (0 > retval)
-	{
-		DBG_PRINT(dbg_level_error, "%s: " FTX_TAG ": %s(): ERROR: Could not read from DEVICE MODE register.\n", dev_name(&(client->dev)), __func__);
-		goto error_return;
-	}
-
-	if (FT5x06_MODE_FACTORY != (devmode & FT5x06_MODE_MASK))
-	{
-		DBG_PRINT(dbg_level_error, "%s: " FTX_TAG ": %s(): ERROR: Touch panel is not in factory mode\n", dev_name(&(client->dev)), __func__);
-		retval = FT5x06_ERR_NOT_FACTORY_MODE;
-		goto error_return;
-	}
-
-	DBG_PRINT(dbg_level_debug, "%s: " FTX_TAG ": %s(): DEBUG: Initiating a scan for raw data...\n", dev_name(&(client->dev)), __func__);
-
-	devmode |=  FT5x06_SCAN_START;
-	retval = i2c_smbus_write_i2c_block_data(client, FT5x06_FMREG_DEVICE_MODE, sizeof(u8), &devmode);
-	if (0 != retval)
-	{
-		DBG_PRINT(dbg_level_error, "%s: " FTX_TAG ": %s(): ERROR: Could not initiate scan for raw data...\n", dev_name(&(client->dev)), __func__);
-		goto error_return;
-	}
-
-	msleep(FT5x06_SCAN_DELAY);
-
-	retval = i2c_smbus_read_i2c_block_data(client, FT5x06_FMREG_DEVICE_MODE, sizeof(u8), &devmode);
-	if (0 > retval)
-	{
-		DBG_PRINT(dbg_level_error, "%s: " FTX_TAG ": %s(): ERROR: Could not read updated value of DEVICE MODE register.\n", dev_name(&(client->dev)), __func__);
-		goto error_return;
-	}
-
-	if (FT5x06_SCAN_DONE != (devmode & FT5x06_SCAN_MASK))
-	{
-		DBG_PRINT(dbg_level_error, "%s: " FTX_TAG ": %s(): ERROR: Raw data did not complete after %u ms.\n", dev_name(&(client->dev)), __func__, FT5x06_SCAN_DELAY);
-		retval = FT5x06_ERR_SCAN_NOT_DONE;
-		goto error_return;
-	}
-
-	DBG_PRINT(dbg_level_debug, "%s: " FTX_TAG ": %s(): DEBUG: Reading raw data...\n", dev_name(&(client->dev)), __func__);
-
-	for(i=0; i<FT5x06_NUM_TX; i++) {
-		memset(read_buffer, 0x00, (FT5x06_NUM_RX * 2));
-		rownum = i;
-		retval = i2c_smbus_write_i2c_block_data(client, FT5x06_FMREG_ROW_ADDR, sizeof(u8), &rownum);
-		if (0 != retval) {
-			DBG_PRINT(dbg_level_error, "%s: " FTX_TAG ": %s(): ERROR: Could not write the row number %u\n", dev_name(&(client->dev)), __func__, rownum);
-			goto error_return;
-		}
-
-		msleep(1);
-
-		/* Read the data for this row FT5606_TEST_MODE_RX=20*/
-		for (j = 0; j < (FT5x06_NUM_RX/FT5606_TEST_MODE_RX + ((FT5x06_NUM_RX % FT5606_TEST_MODE_RX)?1:0)); j++) {
-			if (j > 0) {
-				testmode = ft5606_factory_mode[j] << 4;
-				retval = i2c_smbus_write_i2c_block_data(client, FT5x06_FMREG_DEVICE_MODE, sizeof(u8), &testmode);
-				if (0 != retval)
-				{
-					DBG_PRINT(dbg_level_error, "%s: " FTX_TAG ": %s(): ERROR: Could not initiate scan for raw data...\n", dev_name(&(client->dev)), __func__);
-					goto error_return;
-				}
-			}
-
-			readlen = (FT5x06_NUM_RX - FT5606_TEST_MODE_RX*j) * 2;
-
-			if (0 == readlen) {
-				readlen = FT5606_TEST_MODE_RX * 2;
-			}
-
-			if (readlen > FT5606_TEST_MODE_RX*2)
-				readlen = FT5606_TEST_MODE_RX * 2;
-
-			regaddr = FT5x06_FMREG_RAWDATA_0_H;
-			//retval = i2c_smbus_read_i2c_block_data(client, FT5x06_FMREG_RAWDATA_0_H, readlen, read_buffer + j*FT5606_TEST_MODE_RX*2);
-			retval = ft5x0x_i2c_Read(client, &regaddr, 1,  read_buffer + j*FT5606_TEST_MODE_RX*2, readlen);
-			if (0 > retval)
-			{
-				DBG_PRINT(dbg_level_error, "%s: " FTX_TAG ": %s(): ERROR: Could not read row %u raw data.\n", dev_name(&(client->dev)), __func__, rownum);
-				goto error_return;
-			}
-		}
-
-		/*return test mode 0*/
-		testmode = FACTORY_MODE0 <<4;
-		retval = i2c_smbus_write_i2c_block_data(client, FT5x06_FMREG_DEVICE_MODE, sizeof(u8), &testmode);
-		if (0 != retval)
-		{
-			DBG_PRINT(dbg_level_error, "%s: " FTX_TAG ": %s(): ERROR: Could not initiate scan for raw data...\n", dev_name(&(client->dev)), __func__);
-			goto error_return;
-		}
-
-		rx = 0;
-		/* Each data value can be up to 5 chars long. Add a space and we need 6 chars to store it. */
-		for (j = 0; j < FT5x06_NUM_RX * 2; j += 2)
-		{
-			dataval  = read_buffer[j];
-			dataval  = (dataval << 8);
-			dataval |= read_buffer[j+1];
-			data[i][rx] = dataval;
-			rx++;
-		}
-	}
-	retval = 0;
-error_return:
-	return retval;
-}
-
 #ifdef CONFIG_TOUCHSCREEN_FT5x06_TEST
 // Add for factory testing
 #define MAX_READ_DATA 16
@@ -3878,6 +3753,131 @@ static int writeTXRXdatatofile(char * filepath, int data[][FT5x06_NUM_RX])
 	filp_close(pfile, NULL);
 	set_fs(old_fs);
 	return 0;
+}
+
+/*Same as ft5x06_read_data */
+static int ft5x06_read_rawdata(struct i2c_client *client, int data[][FT5x06_NUM_RX])
+{
+	u8 testmode = 0x00;
+	u8 readlen = 0;
+	int retval  = 0;
+	u8 regaddr = 0x00;
+	int i       = 0;
+	int j       = 0;
+	int rx = 0;
+	u16 dataval = 0x0000;
+	u8  devmode = 0x00;
+	u8  rownum  = 0x00;
+	u8 read_buffer[FT5x06_NUM_RX * 2];
+
+	DBG_PRINT(dbg_level_debug, "%s: " FTX_TAG ": %s(): DEBUG: Verifying that touch panel is in factory mode.\n", dev_name(&(client->dev)), __func__);
+	retval = i2c_smbus_read_i2c_block_data(client, FT5x06_FMREG_DEVICE_MODE, sizeof(u8), &devmode);
+	if (0 > retval)
+	{
+		DBG_PRINT(dbg_level_error, "%s: " FTX_TAG ": %s(): ERROR: Could not read from DEVICE MODE register.\n", dev_name(&(client->dev)), __func__);
+		goto error_return;
+	}
+
+	if (FT5x06_MODE_FACTORY != (devmode & FT5x06_MODE_MASK))
+	{
+		DBG_PRINT(dbg_level_error, "%s: " FTX_TAG ": %s(): ERROR: Touch panel is not in factory mode\n", dev_name(&(client->dev)), __func__);
+		retval = FT5x06_ERR_NOT_FACTORY_MODE;
+		goto error_return;
+	}
+
+	DBG_PRINT(dbg_level_debug, "%s: " FTX_TAG ": %s(): DEBUG: Initiating a scan for raw data...\n", dev_name(&(client->dev)), __func__);
+
+	devmode |=  FT5x06_SCAN_START;
+	retval = i2c_smbus_write_i2c_block_data(client, FT5x06_FMREG_DEVICE_MODE, sizeof(u8), &devmode);
+	if (0 != retval)
+	{
+		DBG_PRINT(dbg_level_error, "%s: " FTX_TAG ": %s(): ERROR: Could not initiate scan for raw data...\n", dev_name(&(client->dev)), __func__);
+		goto error_return;
+	}
+
+	msleep(FT5x06_SCAN_DELAY);
+
+	retval = i2c_smbus_read_i2c_block_data(client, FT5x06_FMREG_DEVICE_MODE, sizeof(u8), &devmode);
+	if (0 > retval)
+	{
+		DBG_PRINT(dbg_level_error, "%s: " FTX_TAG ": %s(): ERROR: Could not read updated value of DEVICE MODE register.\n", dev_name(&(client->dev)), __func__);
+		goto error_return;
+	}
+
+	if (FT5x06_SCAN_DONE != (devmode & FT5x06_SCAN_MASK))
+	{
+		DBG_PRINT(dbg_level_error, "%s: " FTX_TAG ": %s(): ERROR: Raw data did not complete after %u ms.\n", dev_name(&(client->dev)), __func__, FT5x06_SCAN_DELAY);
+		retval = FT5x06_ERR_SCAN_NOT_DONE;
+		goto error_return;
+	}
+
+	DBG_PRINT(dbg_level_debug, "%s: " FTX_TAG ": %s(): DEBUG: Reading raw data...\n", dev_name(&(client->dev)), __func__);
+
+	for(i=0; i<FT5x06_NUM_TX; i++) {
+		memset(read_buffer, 0x00, (FT5x06_NUM_RX * 2));
+		rownum = i;
+		retval = i2c_smbus_write_i2c_block_data(client, FT5x06_FMREG_ROW_ADDR, sizeof(u8), &rownum);
+		if (0 != retval) {
+			DBG_PRINT(dbg_level_error, "%s: " FTX_TAG ": %s(): ERROR: Could not write the row number %u\n", dev_name(&(client->dev)), __func__, rownum);
+			goto error_return;
+		}
+
+		msleep(1);
+
+		/* Read the data for this row FT5606_TEST_MODE_RX=20*/
+		for (j = 0; j < (FT5x06_NUM_RX/FT5606_TEST_MODE_RX + ((FT5x06_NUM_RX % FT5606_TEST_MODE_RX)?1:0)); j++) {
+			if (j > 0) {
+				testmode = ft5606_factory_mode[j] << 4;
+				retval = i2c_smbus_write_i2c_block_data(client, FT5x06_FMREG_DEVICE_MODE, sizeof(u8), &testmode);
+				if (0 != retval)
+				{
+					DBG_PRINT(dbg_level_error, "%s: " FTX_TAG ": %s(): ERROR: Could not initiate scan for raw data...\n", dev_name(&(client->dev)), __func__);
+					goto error_return;
+				}
+			}
+
+			readlen = (FT5x06_NUM_RX - FT5606_TEST_MODE_RX*j) * 2;
+
+			if (0 == readlen) {
+				readlen = FT5606_TEST_MODE_RX * 2;
+			}
+
+			if (readlen > FT5606_TEST_MODE_RX*2)
+				readlen = FT5606_TEST_MODE_RX * 2;
+
+			regaddr = FT5x06_FMREG_RAWDATA_0_H;
+			//retval = i2c_smbus_read_i2c_block_data(client, FT5x06_FMREG_RAWDATA_0_H, readlen, read_buffer + j*FT5606_TEST_MODE_RX*2);
+			retval = ft5x0x_i2c_Read(client, &regaddr, 1,  read_buffer + j*FT5606_TEST_MODE_RX*2, readlen);
+			if (0 > retval)
+			{
+				DBG_PRINT(dbg_level_error, "%s: " FTX_TAG ": %s(): ERROR: Could not read row %u raw data.\n", dev_name(&(client->dev)), __func__, rownum);
+				goto error_return;
+			}
+		}
+
+		/*return test mode 0*/
+		testmode = FACTORY_MODE0 <<4;
+		retval = i2c_smbus_write_i2c_block_data(client, FT5x06_FMREG_DEVICE_MODE, sizeof(u8), &testmode);
+		if (0 != retval)
+		{
+			DBG_PRINT(dbg_level_error, "%s: " FTX_TAG ": %s(): ERROR: Could not initiate scan for raw data...\n", dev_name(&(client->dev)), __func__);
+			goto error_return;
+		}
+
+		rx = 0;
+		/* Each data value can be up to 5 chars long. Add a space and we need 6 chars to store it. */
+		for (j = 0; j < FT5x06_NUM_RX * 2; j += 2)
+		{
+			dataval  = read_buffer[j];
+			dataval  = (dataval << 8);
+			dataval |= read_buffer[j+1];
+			data[i][rx] = dataval;
+			rx++;
+		}
+	}
+	retval = 0;
+error_return:
+	return retval;
 }
 
 int baseline_full[FT5x06_NUM_TX][FT5x06_NUM_RX];
