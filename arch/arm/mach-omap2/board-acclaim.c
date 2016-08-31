@@ -950,6 +950,9 @@ static void __init omap_tablet_map_io(void)
 
 static void __init omap_tablet_reserve(void)
 {
+#ifdef CONFIG_ION_OMAP
+	struct omap_ion_platform_data *ion = get_omap_ion_platform_data();
+#endif
 	/* do the static reservations first */
 	memblock_remove(PHYS_ADDR_SMC_MEM, PHYS_ADDR_SMC_SIZE);
 	memblock_remove(PHYS_ADDR_DUCATI_MEM, PHYS_ADDR_DUCATI_SIZE);
@@ -957,7 +960,12 @@ static void __init omap_tablet_reserve(void)
 	omap_ipu_set_static_mempool(PHYS_ADDR_DUCATI_MEM, PHYS_ADDR_DUCATI_SIZE +
 					OMAP4_ION_HEAP_SECURE_INPUT_SIZE);
 #ifdef CONFIG_ION_OMAP
-	acclaim_android_display_setup(get_omap_ion_platform_data());
+	acclaim_android_display_setup(ion);
+
+	ion->tiler1d_size = (SZ_1M * 90);
+	ion->secure_output_wfdhdcp_size = (SZ_1M * 16);
+	ion->ducati_heap_size = (SZ_1M * 105);
+
 	omap_ion_init();
 #else
 	acclaim_android_display_setup(NULL);
