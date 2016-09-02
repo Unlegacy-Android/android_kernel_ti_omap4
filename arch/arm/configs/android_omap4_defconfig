@@ -99,7 +99,8 @@ CONFIG_COMPACTION=y
 CONFIG_KSM=y
 CONFIG_KSM_CHECK_PAGE=y
 CONFIG_ARM_FLUSH_CONSOLE_ON_RESTART=y
-CONFIG_CMDLINE="console=ttyO2,115200n8 mem=1G vmalloc=768M androidboot.console=ttyO2 omap_wdt.timer_margin=30"
+#CONFIG_CMDLINE="console=ttyO2,115200n8 mem=1G vmalloc=768M androidboot.console=ttyO2 omap_wdt.timer_margin=30"
+CONFIG_CMDLINE="console=ttyO0,115200n8 androidboot.console=ttyO0"
 CONFIG_CMDLINE_EXTEND=y
 
 CONFIG_ALLOW_CPU_ALIGNMENT=y
