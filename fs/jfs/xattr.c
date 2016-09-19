@@ -693,16 +693,14 @@ static int can_set_system_xattr(struct inode *inode, const char *name,
 			return rc;
 		}
 		if (acl) {
-			mode_t mode = inode->i_mode;
-			rc = posix_acl_equiv_mode(acl, &mode);
+			rc = posix_acl_update_mode(inode, &inode->i_mode, &acl);
 			posix_acl_release(acl);
-			if (rc < 0) {
+			if (rc) {
 				printk(KERN_ERR
 				       "posix_acl_equiv_mode returned %d\n",
 				       rc);
 				return rc;
 			}
-			inode->i_mode = mode;
 			mark_inode_dirty(inode);
 		}
 		/*

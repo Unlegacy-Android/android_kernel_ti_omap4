@@ -88,18 +88,18 @@ generic_acl_set(struct dentry *dentry, const char *name, const void *value,
 		if (error)
 			goto failed;
 		switch (type) {
-		case ACL_TYPE_ACCESS:
-			mode = inode->i_mode;
-			error = posix_acl_equiv_mode(acl, &mode);
-			if (error < 0)
+		case ACL_TYPE_ACCESS: {
+			struct posix_acl *saved_acl = acl;
+
+			error = posix_acl_update_mode(inode, &inode->i_mode, &acl);
+			if (acl == NULL)
+				posix_acl_release(saved_acl);
+			if (error)
 				goto failed;
 			inode->i_mode = mode;
 			inode->i_ctime = CURRENT_TIME;
-			if (error == 0) {
-				posix_acl_release(acl);
-				acl = NULL;
-			}
 			break;
+		}
 		case ACL_TYPE_DEFAULT:
 			if (!S_ISDIR(inode->i_mode)) {
 				error = -EINVAL;
