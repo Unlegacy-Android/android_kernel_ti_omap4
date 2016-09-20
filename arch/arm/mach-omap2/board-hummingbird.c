@@ -342,6 +342,19 @@ static struct omap_i2c_bus_board_data __initdata hummingbird_i2c_2_bus_pdata;
 static struct omap_i2c_bus_board_data __initdata hummingbird_i2c_3_bus_pdata;
 static struct omap_i2c_bus_board_data __initdata hummingbird_i2c_4_bus_pdata;
 
+//#define OMAP4_I2Cx_SDA_PULLUPRESX_MASK(x) OMAP4_I2C##x##_SDA_PULLUPRESX_MASK
+//#define OMAP4_I2Cx_SCL_PULLUPRESX_MASK(x) OMAP4_I2C##x##_SCL_PULLUPRESX_MASK
+#define OMAP4_I2Cx_PULLUPRESX_MASK(x) ( OMAP4_I2C##x##_SDA_PULLUPRESX_MASK |	\
+										OMAP4_I2C##x##_SCL_PULLUPRESX_MASK )
+
+#define omap2_i2c_pullups_en_dis(bus_id, enable)								\
+({																				\
+	u32 val = omap4_ctrl_pad_readl(OMAP4_CTRL_MODULE_PAD_CORE_CONTROL_I2C_0);	\
+	enable ? (val &= ~OMAP4_I2Cx_PULLUPRESX_MASK(bus_id)) :						\
+			 (val |=  OMAP4_I2Cx_PULLUPRESX_MASK(bus_id));						\
+	omap4_ctrl_pad_writel(val, OMAP4_CTRL_MODULE_PAD_CORE_CONTROL_I2C_0);		\
+})
+
 static int __init omap4_i2c_init(void)
 {
 	omap_i2c_hwspinlock_init(1, 0, &hummingbird_i2c_1_bus_pdata);
@@ -366,6 +379,7 @@ static int __init omap4_i2c_init(void)
 
 	// Disable the strong pull-ups on I2C3 and I2C4
 	omap2_i2c_pullups_en_dis(3, 0);
+	//omap2_i2c_pullups_en_dis(4, 0);
 
 	/*
 	 * This will allow unused regulator to be shutdown. This flag
