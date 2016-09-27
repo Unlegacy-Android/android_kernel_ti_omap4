@@ -272,7 +272,8 @@ static irqreturn_t twl6030_usb_irq(int irq, void *_twl)
 					&twl->comparator);
 			if (charger_type == POWER_SUPPLY_TYPE_USB_DCP)
 				event = USB_EVENT_CHARGER;
-			else
+			else if ((charger_type == POWER_SUPPLY_TYPE_USB_CDP) ||
+			         (charger_type == POWER_SUPPLY_TYPE_USB))
 				event = USB_EVENT_VBUS;
 			twl->asleep = 1;
 			status = OMAP_MUSB_VBUS_VALID;
