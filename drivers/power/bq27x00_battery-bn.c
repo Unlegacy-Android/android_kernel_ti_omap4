@@ -181,6 +181,9 @@ extern bool bq2419x_is_charging_done(void);
 * we get it manually on probe. */
 extern int twl6030_usbotg_get_status(void);
 
+int twl6030_usb_register_notifier(struct notifier_block *nb);
+int twl6030_usb_unregister_notifier(struct notifier_block *nb);
+
 static struct bq27x00_device_info *bq27x00_di;
 
 static unsigned int poll_interval = 30000;
@@ -1207,7 +1210,7 @@ static int bq27x00_battery_probe(struct i2c_client *client,
 	di->nb.notifier_call = usb_xceiv_events_callback;
 	di->otg = usb_get_phy(USB_PHY_TYPE_USB2);
 	if (di->otg) {
-		retval = usb_register_notifier(di->otg, &di->nb);
+		retval = twl6030_usb_register_notifier(&di->nb);
 		if (retval) {
 			dev_err(di->dev, "otg register notifier"
 						" failed %d\n", retval);

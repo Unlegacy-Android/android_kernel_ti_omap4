@@ -131,6 +131,9 @@ static int bq2419x_wall_get_property(struct power_supply *psy,
 * we get it manually on probe. */
 int twl6030_usbotg_get_status(void);
 
+int twl6030_usb_register_notifier(struct notifier_block *nb);
+int twl6030_usb_unregister_notifier(struct notifier_block *nb);
+
 /* i2c read/write util functions */
 static int bq2419x_write_block(struct bq2419x_device_info *di, u8 *value,
 			       u8 reg, unsigned num_bytes)
@@ -2178,7 +2181,7 @@ static int __devinit bq2419x_charger_probe(struct i2c_client *client,
 
 	di->otg = usb_get_phy(USB_PHY_TYPE_USB2);
 	if (di->otg) {
-		ret = usb_register_notifier(di->otg, &di->nb);
+		ret = twl6030_usb_register_notifier(&di->nb);
 		if (ret) {
 			dev_err(di->dev, "otg register notifier"
 						" failed %d\n", ret);
@@ -2228,7 +2231,7 @@ static int __devexit bq2419x_charger_remove(struct i2c_client *client)
 
 	sysfs_remove_group(&client->dev.kobj, &bq2419x_mfg_attr_group);
 	flush_scheduled_work();
-	usb_unregister_notifier(di->otg, &di->nb);
+	twl6030_usb_unregister_notifier(&di->nb);
 	kfree(di);
 
 	return 0;
@@ -2238,7 +2241,7 @@ static void bq2419x_charger_shutdown(struct i2c_client *client)
 {
 	struct bq2419x_device_info * const di = i2c_get_clientdata(client);
 	free_irq(OMAP_GPIO_IRQ(di->gpio_int),di->dev);
-	usb_unregister_notifier(di->otg, &di->nb);
+	twl6030_usb_unregister_notifier(&di->nb);
 	stopdmtimershutdown = true;
 	omap_dm_timer_stop(wdt_timer_ptr);
 	omap_dm_timer_disable(wdt_timer_ptr);
