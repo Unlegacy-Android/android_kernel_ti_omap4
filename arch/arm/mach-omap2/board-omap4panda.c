@@ -24,14 +24,12 @@
 #include <linux/leds.h>
 #include <linux/gpio.h>
 #include <linux/usb/otg.h>
-#include <linux/i2c-gpio.h>
 #include <linux/i2c/twl.h>
 #include <linux/mfd/twl6040.h>
 #include <linux/regulator/machine.h>
 #include <linux/regulator/fixed.h>
 #include <linux/wl12xx.h>
 #include <linux/platform_data/omap-abe-twl6040.h>
-#include <linux/omapfb.h>
 #include <linux/memblock.h>
 
 #include <mach/hardware.h>
@@ -44,13 +42,11 @@
 #include <plat/board.h>
 #include "common.h"
 #include <plat/usb.h>
-#include <plat/omap_apps_brd_id.h>
 #include <plat/mmc.h>
 #include <plat/drm.h>
 #include <plat/omap_apps_brd_id.h>
 #include <plat/remoteproc.h>
 #include <video/omap-panel-dvi.h>
-#include <plat/vram.h>
 
 #include "hsmmc.h"
 #include "control.h"
@@ -58,14 +54,6 @@
 #include "common-board-devices.h"
 #include "omap4_ion.h"
 #include "omap_ram_console.h"
-
-#include <video/omap-panel-generic-dpi.h>
-
-#include <drm/drm_edid.h>
-
-#include <plat/sgx_omaplfb.h>
-#define OMAP4_SEVM_FB_RAM_SIZE       (SZ_16M + SZ_4M) /* 1280×800*4 * 2 */
-
 
 #define GPIO_HUB_POWER		1
 #define GPIO_HUB_NRESET		62
@@ -280,14 +268,13 @@ static struct twl6040_platform_data twl6040_data = {
 /* Panda board uses the common PMIC configuration */
 static struct twl4030_platform_data omap4_panda_twldata;
 
-
 /*
  * Display monitor features are burnt in their EEPROM as EDID data. The EEPROM
  * is connected as I2C slave device, and can be accessed at address 0x50
  */
-static struct i2c_board_info __initdata hdmi_i2c_eeprom[] = {
+static struct i2c_board_info __initdata panda_i2c_eeprom[] = {
 	{
-		I2C_BOARD_INFO("eeprom", DDC_ADDR),
+		I2C_BOARD_INFO("eeprom", 0x50),
 	},
 };
 
@@ -309,7 +296,12 @@ static int __init omap4_panda_i2c_init(void)
 	omap4_pmic_init("twl6030", &omap4_panda_twldata,
 			&twl6040_data, OMAP44XX_IRQ_SYS_2N);
 	omap_register_i2c_bus(2, 400, NULL, 0);
-	omap_register_i2c_bus(3, 400, NULL, 0);
+	/*
+	 * Bus 3 is attached to the DVI port where devices like the pico DLP
+	 * projector don't work reliably with 400kHz
+	 */
+	omap_register_i2c_bus(3, 100, panda_i2c_eeprom,
+					ARRAY_SIZE(panda_i2c_eeprom));
 	omap_register_i2c_bus(4, 400, NULL, 0);
 	return 0;
 }
@@ -440,20 +432,31 @@ static int __init omap4_panda_dvi_init(void)
 	return r;
 }
 
+static struct gpio panda_hdmi_gpios[] = {
+	{ HDMI_GPIO_CT_CP_HPD, GPIOF_OUT_INIT_HIGH, "hdmi_gpio_ct_cp_hpd" },
+	{ HDMI_GPIO_LS_OE,	GPIOF_OUT_INIT_HIGH, "hdmi_gpio_ls_oe" },
+	{ HDMI_GPIO_HPD, GPIOF_DIR_IN, "hdmi_gpio_hpd" },
+};
+
 static int omap4_panda_panel_enable_hdmi(struct omap_dss_device *dssdev)
 {
-	return 0;
+	int status;
+
+	status = gpio_request_array(panda_hdmi_gpios,
+				    ARRAY_SIZE(panda_hdmi_gpios));
+	if (status)
+		pr_err("Cannot request HDMI GPIOs\n");
+
+	return status;
 }
 
 static void omap4_panda_panel_disable_hdmi(struct omap_dss_device *dssdev)
 {
-
+	gpio_free_array(panda_hdmi_gpios, ARRAY_SIZE(panda_hdmi_gpios));
 }
 
 static struct omap_dss_hdmi_data omap4_panda_hdmi_data = {
 	.hpd_gpio = HDMI_GPIO_HPD,
-	.ct_cp_hpd_gpio = HDMI_GPIO_CT_CP_HPD,
-	.ls_oe_gpio = HDMI_GPIO_LS_OE,
 };
 
 static struct omap_dss_device  omap4_panda_hdmi_device = {
@@ -477,38 +480,16 @@ static struct omap_dss_board_info omap4_panda_dss_data = {
 	.default_device	= &omap4_panda_dvi_device,
 };
 
-static struct omapfb_platform_data panda_fb_pdata = {
-	.mem_desc = {
-		.region_cnt = 1,
-		.region = {
-			[0] = {
-				.size = OMAP4_SEVM_FB_RAM_SIZE,
-			},
-		},
-	},
-};
-
-
 static void __init omap4_panda_display_init(void)
 {
 	int r;
-
-	struct sgx_omaplfb_config data = {
-		.tiler2d_buffers = 0,
-		.swap_chain_length = 2,
-		.vram_buffers = 2,
-	};
-
-	omapfb_set_platform_data(&panda_fb_pdata);
-	omap_vram_set_sdram_vram(OMAP4_SEVM_FB_RAM_SIZE, 0);
-	sgx_omaplfb_set(0, &data);
 
 	r = omap4_panda_dvi_init();
 	if (r)
 		pr_err("error initializing panda DVI\n");
 
-	i2c_register_board_info(0, hdmi_i2c_eeprom,
-			ARRAY_SIZE(hdmi_i2c_eeprom));
+	omap_display_init(&omap4_panda_dss_data);
+
 	/*
 	 * OMAP4460SDP/Blaze and OMAP4430 ES2.3 SDP/Blaze boards and
 	 * later have external pull up on the HDMI I2C lines
@@ -521,9 +502,6 @@ static void __init omap4_panda_display_init(void)
 	omap_mux_init_gpio(HDMI_GPIO_LS_OE, OMAP_PIN_OUTPUT);
 	omap_mux_init_gpio(HDMI_GPIO_CT_CP_HPD, OMAP_PIN_OUTPUT);
 	omap_mux_init_gpio(HDMI_GPIO_HPD, OMAP_PIN_INPUT_PULLDOWN);
-
-	omap_display_init(&omap4_panda_dss_data);
-
 }
 
 static void omap4_panda_init_rev(void)
@@ -569,7 +547,6 @@ static void __init omap4_panda_init(void)
 	omap4_panda_init_rev();
 	omap_create_board_props();
 	omap4_panda_i2c_init();
-	omap_create_board_props();
 	omap4_register_ion();
 	platform_add_devices(panda_devices, ARRAY_SIZE(panda_devices));
 	platform_device_register(&omap_vwlan_device);
