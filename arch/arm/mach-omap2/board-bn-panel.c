@@ -407,14 +407,13 @@ static struct omap_dss_hdmi_data bn_hdmi_data = {
 };
 
 static struct dsscomp_platform_data dsscomp_config = {
-	.tiler1d_slotsz = machine_is_omap_ovation() ?
-					  (SZ_16M + SZ_16M + SZ_2M) :
-					  (SZ_16M + SZ_2M + SZ_8M + SZ_1M),
+	.tiler1d_slotsz = (SZ_16M + SZ_8M),
 };
 
 static struct sgx_omaplfb_config omaplfb_config[] = {
 	{
-		.vram_buffers = 4,
+		.vram_buffers = machine_is_omap_hummingbird() ? 0 : 2,
+		.tiler2d_buffers = machine_is_omap_ovation() ? 0 : 2,
 		.swap_chain_length = 2,
 	},
 #if defined(CONFIG_OMAP4_DSS_HDMI)
