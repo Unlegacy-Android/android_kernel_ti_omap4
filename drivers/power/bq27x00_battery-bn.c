@@ -1011,6 +1011,8 @@ static void bq27x00_powersupply_unregister(struct bq27x00_device_info *di)
 
 	power_supply_unregister(&di->bat);
 
+	twl6030_usb_unregister_notifier(&di->nb);
+
 	mutex_destroy(&di->lock);
 }
 
@@ -1309,6 +1311,11 @@ MODULE_DEVICE_TABLE(i2c, bq27x00_id);
 
 static int bq27x00_battery_suspend(struct device *dev)
 {
+	struct platform_device * const pdev = to_platform_device(dev);
+	struct bq27x00_device_info * const di = platform_get_drvdata(pdev);
+
+	twl6030_usb_unregister_notifier(&di->nb);
+
 	return 0;
 }
 
@@ -1321,6 +1328,9 @@ static int bq27x00_battery_resume(struct device *dev)
 	di->rapid_poll_cycle = 0;
 	schedule_delayed_work(&di->work,
 		msecs_to_jiffies(T_POLL_PLUG_MS));
+
+	if (twl6030_usb_register_notifier(&di->nb))
+		dev_err(&pdev->dev, "twl6030 usb register notifier failed\n");
 
 	return 0;
 }

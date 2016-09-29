@@ -2255,6 +2255,11 @@ static void bq2419x_charger_shutdown(struct i2c_client *client)
 
 static int bq2419x_charger_suspend(struct device *dev)
 {
+	struct platform_device * const pdev = to_platform_device(dev);
+	struct bq2419x_device_info * const di = platform_get_drvdata(pdev);
+
+	twl6030_usb_unregister_notifier(&di->nb);
+
 	return 0;
 }
 
@@ -2265,6 +2270,9 @@ static int bq2419x_charger_resume(struct device *dev)
 
 	cancel_work_sync(&di->iwork);
 	schedule_work(&di->iwork);
+
+	if (twl6030_usb_register_notifier(&di->nb))
+		dev_err(&pdev->dev, "twl6030 usb register notifier failed\n");
 
 	return 0;
 }
