@@ -125,16 +125,7 @@ static int plat_uart_disable(struct kim_data_s *kdata)
 	int port_id = 0;
 	int err = 0;
 	if (uart_req) {
-		if (!kdata) {
-			pr_err("%s: NULL kim_data pointer\n", __func__);
-			return -EINVAL;
-		}
-		err = sscanf(kdata->dev_name, "/dev/ttyO%d", &port_id);
-		if (!err) {
-			pr_err("%s: Wrong UART name: %s\n", __func__,
-				kdata->dev_name);
-			return -EINVAL;
-		}
+		sscanf(WILINK_UART_DEV_NAME, "/dev/ttyO%d", &port_id);
 		err = omap_serial_ext_uart_disable(port_id);
 		if (!err)
 			uart_req = false;
@@ -149,16 +140,7 @@ static int plat_uart_enable(struct kim_data_s *kdata)
 	int port_id = 0;
 	int err = 0;
 	if (!uart_req) {
-		if (!kdata) {
-			pr_err("%s: NULL kim_data pointer\n", __func__);
-			return -EINVAL;
-		}
-		err = sscanf(kdata->dev_name, "/dev/ttyO%d", &port_id);
-		if (!err) {
-			pr_err("%s: Wrong UART name: %s\n", __func__,
-				kdata->dev_name);
-			return -EINVAL;
-		}
+		sscanf(WILINK_UART_DEV_NAME, "/dev/ttyO%d", &port_id);
 		err = omap_serial_ext_uart_enable(port_id);
 		if (!err)
 			uart_req = true;
@@ -201,7 +183,6 @@ void bn_wilink_set_power(bool enable)
 	}
 }
 
-#if 0
 static int plat_chip_enable(struct kim_data_s *kdata)
 {
 	bn_wilink_set_power(true);
@@ -213,7 +194,6 @@ static int plat_chip_disable(struct kim_data_s *kdata)
 	bn_wilink_set_power(false);
 	return plat_uart_disable(NULL);
 }
-#endif
 
 /* wl2xx WiFi platform data */
 static struct wl12xx_platform_data wl12xx_pdata = {
@@ -231,8 +211,8 @@ static struct ti_st_plat_data ti_st_pdata = {
 	.baud_rate = 3686400,
 	.suspend = plat_wlink_kim_suspend,
 	.resume = plat_wlink_kim_resume,
-	.chip_enable = plat_uart_enable,
-	.chip_disable = plat_uart_disable,
+	.chip_enable = plat_chip_enable,
+	.chip_disable = plat_chip_disable,
 	.chip_asleep = plat_uart_disable,
 	.chip_awake  = plat_uart_enable,
 };
