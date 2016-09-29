@@ -400,11 +400,13 @@ static struct i2c_board_info __initdata lp8556_i2c_boardinfo[] = {
 	},
 };
 
+#ifdef CONFIG_OMAP4_DSS_HDMI
 static struct omap_dss_hdmi_data bn_hdmi_data = {
 	.hpd_gpio		= HDMI_GPIO_HPD,
 	.ct_cp_hpd_gpio	= HDMI_GPIO_CT_CP_HPD,
 	.ls_oe_gpio		= HDMI_GPIO_LS_OE,
 };
+#endif
 
 static struct dsscomp_platform_data dsscomp_config = {
 	.tiler1d_slotsz = (SZ_16M + SZ_8M),
@@ -418,12 +420,13 @@ static struct sgx_omaplfb_config omaplfb_config[] = {
 	},
 #if defined(CONFIG_OMAP4_DSS_HDMI)
 	{
-	.vram_buffers = 2,
-	.swap_chain_length = 2,
+		.vram_buffers = 2,
+		.swap_chain_length = 2,
 	},
 #endif
 };
 
+#ifdef CONFIG_OMAP4_DSS_HDMI
 static void __init bn_hdmi_mux_init(void)
 {
 	u32 r;
@@ -476,6 +479,7 @@ static void __init bn_hdmi_mux_init(void)
 	omap_mux_init_gpio(HDMI_GPIO_CT_CP_HPD, OMAP_PIN_OUTPUT);
 	omap_mux_init_gpio(HDMI_GPIO_HPD, OMAP_PIN_INPUT_PULLDOWN);
 }
+#endif
 
 static void __init bn_lcd_init(void)
 {
@@ -549,6 +553,7 @@ static void auo_disable_dsi(struct omap_dss_device *dssdev)
 }
 #endif
 
+#ifdef CONFIG_OMAP4_DSS_HDMI
 static int bn_enable_hdmi(struct omap_dss_device *dssdev)
 {
 #ifdef CONFIG_MACH_OMAP_HUMMINGBIRD
@@ -593,6 +598,7 @@ static void bn_disable_hdmi(struct omap_dss_device *dssdev)
 	} else
 		gpio_direction_output(GPIO_UART_DDC_SWITCH, 1);
 }
+#endif
 
 #ifdef CONFIG_MACH_OMAP_OVATION
 static int pwm_level;
@@ -925,6 +931,7 @@ static struct omap_dss_device bn_lcd_orise = {
 };
 #endif
 
+#ifdef CONFIG_OMAP4_DSS_HDMI
 static struct omap_dss_device bn_hdmi_device = {
 	.name = "hdmi",
 	.driver_name = "hdmi_panel",
@@ -944,10 +951,13 @@ static struct omap_dss_device bn_hdmi_device = {
 	.platform_enable	= bn_enable_hdmi,
 	.platform_disable	= bn_disable_hdmi,
 };
+#endif
 
 static struct omap_dss_device *bn_dss_devices[] = {
 	&bn_lcd_novatek,
+#ifdef CONFIG_OMAP4_DSS_HDMI
 	&bn_hdmi_device,
+#endif
 };
 
 static struct omap_dss_board_info bn_dss_data = {
@@ -1020,7 +1030,9 @@ int __init bn_panel_init(void)
 	int bus_i = 3;
 
 	bn_lcd_init();
+#ifdef CONFIG_OMAP4_DSS_HDMI
 	bn_hdmi_mux_init();
+#endif
 
 #ifdef CONFIG_MACH_OMAP_HUMMINGBIRD
 	hummingbird_lcd_mux_init();

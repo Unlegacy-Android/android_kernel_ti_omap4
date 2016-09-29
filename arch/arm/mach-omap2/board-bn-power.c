@@ -163,10 +163,12 @@ static struct platform_device bn_spdif_dit = {
 	.id	= -1,
 };
 
+#ifdef CONFIG_OMAP4_DSS_HDMI
 static struct platform_device bn_hdmi_audio = {
 	.name	= "hdmi-audio-codec",
 	.id	= -1,
 };
+#endif
 
 static struct omap_abe_twl6040_data bn_abe_audio_data = {
 	.card_name = "B&N Audio",
@@ -202,7 +204,9 @@ static struct platform_device bn_abe_audio = {
 static struct platform_device *bn_audio_devices[] __initdata = {
 	&bn_dmic_codec,
 	&bn_spdif_dit,
+#ifdef CONFIG_OMAP4_DSS_HDMI
 	&bn_hdmi_audio,
+#endif
 	&bn_abe_audio,
 };
 
