@@ -189,6 +189,9 @@ static bool memeq(const void *a, const void *b, size_t size)
 #endif
 
 #ifndef memzero
+#if (__GNUC__ * 100 + __GNUC_MINOR__ * 10 + __GNUC_PATCHLEVEL__) < 490
+static void memzero(void *buf, size_t size) __attribute__((optimize("O2")));
+#endif
 static void memzero(void *buf, size_t size)
 {
 	uint8_t *b = buf;
