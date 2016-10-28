@@ -17,4 +17,4 @@ obj-$(CONFIG_PANEL_BOXER) += panel-boxer.o
 obj-$(CONFIG_PANEL_AUO) += panel-auo.o
 obj-$(CONFIG_PANEL_HYDIS) += panel-hydis.o
 obj-$(CONFIG_PANEL_NOVATEK) += panel-novatek2.o
-obj-$(CONFIG_PANEL_ORISE) += panel-orise2.o
+obj-$(CONFIG_PANEL_ORISE) += panel-orise.o
