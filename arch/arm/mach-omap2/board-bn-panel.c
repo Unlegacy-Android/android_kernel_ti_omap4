@@ -818,9 +818,9 @@ static struct omap_dss_device bn_lcd_novatek = {
 };
 
 #ifdef CONFIG_MACH_OMAP_HUMMINGBIRD
-static struct omap_dss_device bn_lcd_orise = {
+static struct omap_dss_device bn_lcd_norise = {
 	.name                   = "lcd",
-	.driver_name            = "orise-panel",
+	.driver_name            = "novatek-panel",
 	.type                   = OMAP_DISPLAY_TYPE_DSI,
 	.phy.dsi                = {
 		.clk_lane       = 1,
@@ -987,8 +987,8 @@ void bn_android_display_setup(void)
 {
 #ifdef CONFIG_MACH_OMAP_HUMMINGBIRD
 	if ((system_rev >= HUMMINGBIRD_EVT0B) && !strncmp(display, "AUO", 3)) {
-		bn_dss_devices[0] = &bn_lcd_orise;
-		bn_dss_data.default_device = &bn_lcd_orise;
+		bn_dss_devices[0] = &bn_lcd_norise;
+		bn_dss_data.default_device = &bn_lcd_norise;
 	}
 #endif
 
@@ -1042,10 +1042,12 @@ int __init bn_panel_init(void)
 
 	omap_display_init(&bn_dss_data);
 
+#if 0
 #ifdef CONFIG_MACH_OMAP_HUMMINGBIRD
 	if (strncmp(display, "AUO", 3))
 		i2c_register_board_info(3, maxim9606_i2c_boardinfo,
 						ARRAY_SIZE(maxim9606_i2c_boardinfo));
+#endif
 #endif
 
 #ifdef CONFIG_MACH_OMAP_OVATION
