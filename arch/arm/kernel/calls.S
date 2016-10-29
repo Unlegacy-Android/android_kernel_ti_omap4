@@ -385,6 +385,9 @@
 		CALL(sys_syncfs)
 		CALL(sys_sendmmsg)
 /* 375 */	CALL(sys_setns)
+		CALL(sys_ni_syscall)
+		CALL(sys_ni_syscall)
+		CALL(sys_ni_syscall)
 		CALL(sys_finit_module)
 /* 380 */	CALL(sys_ni_syscall)
 #ifndef syscalls_counted
