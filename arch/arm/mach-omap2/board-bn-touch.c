@@ -81,7 +81,6 @@ static int bn_touch_release_resources(struct device  *dev)
 
 	return 0;
 }
-#endif
 
 static int bn_touch_power_on(struct device  *dev)
 {
@@ -134,6 +133,7 @@ static int touch_power_on(bool enable)
 
 	return 0;
 }
+#endif
 
 #if defined(CONFIG_TOUCHSCREEN_FT5X06) || defined(CONFIG_TOUCHSCREEN_FT5X06_MODULE)
 static struct ft5x06_ts_platform_data ft5x06_platform_data = {
@@ -147,9 +147,9 @@ static struct ft5x06_ts_platform_data ft5x06_platform_data = {
 	.flags				= machine_is_omap_ovation() ?
 						  REVERSE_X_FLAG | REVERSE_Y_FLAG : 0,
 	.ignore_id_check	= true,
+#if 0 // AM: old pdata left here mostly for reference
 	.power_init			= touch_power_init,
 	.power_on			= touch_power_on,
-#if 0 // AM: old pdata left here mostly for reference
 	.max_tx_lines		= machine_is_omap_ovation() ? 38 : 32,
 	.max_rx_lines		= machine_is_omap_ovation() ? 26 : 20,
 	.maxx				= machine_is_omap_ovation() ? 1280 : 900,

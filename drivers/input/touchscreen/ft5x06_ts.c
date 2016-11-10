@@ -299,7 +299,7 @@ static int ft5x06_power_init(struct ft5x06_ts_data *data, bool on)
 	if (!on)
 		goto pwr_deinit;
 
-	data->vdd = regulator_get(&data->client->dev, "vdd");
+	data->vdd = regulator_get(&data->client->dev, "touch_vdd");
 	if (IS_ERR(data->vdd)) {
 		rc = PTR_ERR(data->vdd);
 		dev_err(&data->client->dev,
@@ -307,6 +307,7 @@ static int ft5x06_power_init(struct ft5x06_ts_data *data, bool on)
 		return rc;
 	}
 
+#ifndef CONFIG_MACH_OMAP_BN_HD
 	if (regulator_count_voltages(data->vdd) > 0) {
 		rc = regulator_set_voltage(data->vdd, FT5X06_VTG_MIN_UV,
 					   FT5X06_VTG_MAX_UV);
@@ -316,8 +317,9 @@ static int ft5x06_power_init(struct ft5x06_ts_data *data, bool on)
 			goto reg_vdd_put;
 		}
 	}
+#endif
 
-	data->vcc_i2c = regulator_get(&data->client->dev, "vcc_i2c");
+	data->vcc_i2c = regulator_get(&data->client->dev, "vtp");
 	if (IS_ERR(data->vcc_i2c)) {
 		rc = PTR_ERR(data->vcc_i2c);
 		dev_err(&data->client->dev,
@@ -325,6 +327,7 @@ static int ft5x06_power_init(struct ft5x06_ts_data *data, bool on)
 		goto reg_vdd_set_vtg;
 	}
 
+#ifndef CONFIG_MACH_OMAP_BN_HD
 	if (regulator_count_voltages(data->vcc_i2c) > 0) {
 		rc = regulator_set_voltage(data->vcc_i2c, FT5X06_I2C_VTG_MIN_UV,
 					   FT5X06_I2C_VTG_MAX_UV);
@@ -334,6 +337,7 @@ static int ft5x06_power_init(struct ft5x06_ts_data *data, bool on)
 			goto reg_vcc_i2c_put;
 		}
 	}
+#endif
 
 	return 0;
 
