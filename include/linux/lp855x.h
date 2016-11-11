@@ -131,6 +131,7 @@ struct lp855x_rom_data {
 	1 : update values of eeprom or eprom registers on loading driver
  * @size_program : total size of lp855x_rom_data
  * @rom_data : list of new eeprom/eprom registers
+ * @gpio_en : num of GPIO driving enable pin
  */
 struct lp855x_platform_data {
 	char *name;
@@ -141,6 +142,8 @@ struct lp855x_platform_data {
 	u8 load_new_rom_data;
 	int size_program;
 	struct lp855x_rom_data *rom_data;
+	int gpio_en;
+	const char *regulator_name;
 };
 
 #endif
