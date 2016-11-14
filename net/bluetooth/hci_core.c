@@ -1146,9 +1146,7 @@ static void hci_power_off(struct work_struct *work)
 
 	BT_DBG("%s", hdev->name);
 
-#ifndef CONFIG_MACH_OMAP_BN_HD
 	hci_dev_do_close(hdev);
-#endif
 }
 
 static void hci_discov_off(struct work_struct *work)
