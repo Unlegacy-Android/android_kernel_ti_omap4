@@ -204,6 +204,9 @@ static int lp855x_init_device(struct lp855x *lp)
 	if (lp->regulator)
 		regulator_enable(lp->regulator);
 
+	if (pd->power_init)
+		pd->power_init(true);
+
 	msleep(20);
 
 	ret = (lp->cfg->pre_init_device) ? lp->cfg->pre_init_device(lp) : 0;
@@ -269,6 +272,9 @@ static int lp855x_power_off(struct lp855x *lp)
 
 	if (lp->gpio_enable)
 		gpio_set_value(pd->gpio_en, 0);
+
+	if (pd->power_init)
+		pd->power_init(false);
 
 	if (lp->regulator)
 		regulator_disable(lp->regulator);

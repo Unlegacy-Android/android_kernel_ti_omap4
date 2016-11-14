@@ -176,6 +176,7 @@ struct lp855x_platform_data {
 	u8 boost_freq;
 	u8 nonlinearity_factor;
 	int gpio_en;
+	int (*power_init) (bool);
 	const char *regulator_name;
 };
 
