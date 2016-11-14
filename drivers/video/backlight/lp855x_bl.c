@@ -37,6 +37,10 @@
 #define LP8557_EPROM_START		0x10
 #define LP8557_EPROM_END		0x1E
 
+/* CFG5 8556 */
+#define CFG5_REG		0xA5
+#define CFG6_REG		0xA6
+
 #define BUF_SIZE		20
 #define DEFAULT_BL_NAME		"lcd-backlight"
 #define MAX_BRIGHTNESS		255
@@ -215,6 +219,25 @@ static int lp855x_init_device(struct lp855x *lp)
 	if (ret)
 		return ret;
 
+	/* only apply on lp8556 */
+	if (lp->chip_id == LP8556) {
+		lp855x_read_byte(lp, CFG5_REG, &val);
+		dev_dbg(lp->dev, "led setting [0x%02X]\n", val);
+		if (val != pd->led_setting) {
+			dev_dbg(lp->dev, "update led setting to [0x%02X]\n", pd->led_setting);
+			ret = lp855x_write_byte(lp, CFG5_REG, pd->led_setting);
+		}
+
+		lp855x_read_byte(lp, CFG6_REG, &val);
+		dev_dbg(lp->dev, "boost frequency setting [0x%02X]\n", val);
+		if (val != pd->boost_freq) {
+			val &= pd->initial_brightness;
+			val |= pd->boost_freq;
+			dev_dbg(lp->dev, "update boost frequency to [0x%02X]\n", val);
+			ret = lp855x_write_byte(lp, CFG6_REG, val);
+		}
+	}
+
 	if (pd->load_new_rom_data && pd->size_program) {
 		for (i = 0; i < pd->size_program; i++) {
 			addr = pd->rom_data[i].addr;
@@ -238,6 +261,43 @@ static int lp855x_init_device(struct lp855x *lp)
 	return 0;
 }
 
+#define BRIGHTNESS_CALC_MUL	(10000)
+#define NO_OF_EXP_MEMBERS	(10)
+
+int f_lut[] = {
+	24246246, 11517471, 7288654, 5184774, 3930809, 3101741, 2515406, 2080713,
+	 1747050,  1484040, 1272349, 1099082,  955307,  834642,  732403,  645074,
+	  569966,   504985,  448478,  399119,  355838,  317756,  284148,  254410,
+	  228034,   204593,  183721,  165105,  148479,  133609,  120294,  108360,
+	   97653,    88040,   79401,   71632,   64643,   58350,   52683,   47576
+};
+
+/** Implement: return = (e^((a/10)*x/255)-1)*(255/(e^(a/10)-1)) **/
+static u8 calc_exp(int a, u8 x) {
+	u64 sum, temp;
+	int i;
+
+	sum = x * a * BRIGHTNESS_CALC_MUL;
+	sum = div_u64(sum, 2550);
+
+	temp = sum;
+
+	for (i = 2; i < NO_OF_EXP_MEMBERS; i++) {
+		temp = temp * x * a;
+		temp = div_u64(temp, 2550 * i);
+		sum += temp;
+	}
+
+	sum *= f_lut[a - 1];
+	sum = div_u64(sum, BRIGHTNESS_CALC_MUL *
+				BRIGHTNESS_CALC_MUL);
+
+	if (sum >= 254)
+		sum = 255;
+
+	return sum;
+}
+
 static int lp855x_bl_update_status(struct backlight_device *bl)
 {
 	struct lp855x *lp = bl_get_data(bl);
@@ -256,6 +316,10 @@ static int lp855x_bl_update_status(struct backlight_device *bl)
 
 	} else if (mode == REGISTER_BASED) {
 		u8 val = bl->props.brightness;
+
+		if (lp->pdata->nonlinearity_factor)
+			val = calc_exp(lp->pdata->nonlinearity_factor, val);
+
 		lp855x_write_byte(lp, lp->cfg->reg_brightness, val);
 	}
 
@@ -427,6 +491,15 @@ static int lp855x_probe(struct i2c_client *cl, const struct i2c_device_id *id)
 	if (ret) {
 		dev_err(lp->dev, "failed to register sysfs. err: %d\n", ret);
 		goto err_sysfs;
+	}
+
+	if (pdata->nonlinearity_factor > 40) {
+		pdata->nonlinearity_factor = 40;
+		dev_warn(lp->dev, "%s: nonlinearity_factor out of range, limited to 40!\n",
+				__func__);
+	} else if (!pdata->nonlinearity_factor) {
+		dev_warn(lp->dev, "%s: nonlinearity_factor undefined, using linear mode!\n",
+				__func__);
 	}
 
 	backlight_update_status(lp->bl);

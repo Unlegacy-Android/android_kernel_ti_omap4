@@ -118,6 +118,36 @@ struct lp855x_rom_data {
 	u8 val;
 };
 
+#define PS_MODE_6P6D		(0x00 << 4)
+#define PS_MODE_5P5D		(0x01 << 4)
+#define PS_MODE_4P4D		(0x02 << 4)
+#define PS_MODE_3P3D		(0x03 << 4)
+#define PS_MODE_2P2D		(0x04 << 4)
+#define PS_MODE_3P6D		(0x05 << 4)
+#define PS_MODE_2P6D		(0x06 << 4)
+#define PS_MODE_1P6D		(0x07 << 4)
+
+#define PWM_FREQ4808HZ		0x00
+#define PWM_FREQ6010HZ		0x01
+#define PWM_FREQ2712HZ		0x02
+#define PWM_FREQ8414HZ		0x03
+#define PWM_FREQ6916HZ		0x04
+#define PWM_FREQ12020HZ		0x05
+#define PWM_FREQ13222HZ		0x06
+#define PWM_FREQ14424HZ		0x07
+#define PWM_FREQ15626HZ		0x08
+#define PWM_FREQ16828HZ		0x09
+#define PWM_FREQ10830HZ		0x0A
+#define PWM_FREQ19232HZ		0x0B
+#define PWM_FREQ24040HZ		0x0C
+#define PWM_FREQ38848HZ		0x0D
+#define PWM_FREQ33656HZ		0x0E
+#define PWM_FREQ38464HZ		0x0F
+
+#define BOOST_FREQ312KHZ	0x00
+#define BOOST_FREQ625KHZ	0x40
+#define BOOST_FREQ1250KHZ	0x80
+
 /**
  * struct lp855x_platform_data
  * @name : Backlight driver name. If it is not defined, default name is set.
@@ -142,6 +172,9 @@ struct lp855x_platform_data {
 	u8 load_new_rom_data;
 	int size_program;
 	struct lp855x_rom_data *rom_data;
+	u8 led_setting;
+	u8 boost_freq;
+	u8 nonlinearity_factor;
 	int gpio_en;
 	const char *regulator_name;
 };
