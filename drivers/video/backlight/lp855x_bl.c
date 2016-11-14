@@ -45,6 +45,8 @@
 #define DEFAULT_BL_NAME		"lcd-backlight"
 #define MAX_BRIGHTNESS		255
 
+#define BL_DRV_SUSPENDED		BL_CORE_DRIVER1
+
 struct lp855x;
 
 /*
@@ -261,6 +263,19 @@ static int lp855x_init_device(struct lp855x *lp)
 	return 0;
 }
 
+static int lp855x_power_off(struct lp855x *lp)
+{
+	struct lp855x_platform_data *pd = lp->pdata;
+
+	if (lp->gpio_enable)
+		gpio_set_value(pd->gpio_en, 0);
+
+	if (lp->regulator)
+		regulator_disable(lp->regulator);
+
+	return 0;
+}
+
 #define BRIGHTNESS_CALC_MUL	(10000)
 #define NO_OF_EXP_MEMBERS	(10)
 
@@ -302,25 +317,42 @@ static int lp855x_bl_update_status(struct backlight_device *bl)
 {
 	struct lp855x *lp = bl_get_data(bl);
 	enum lp855x_brightness_ctrl_mode mode = lp->pdata->mode;
+	int power_new = !(bl->props.state & BL_CORE_SUSPENDED),
+		power_old = !(bl->props.state & BL_DRV_SUSPENDED);
 
-	if (bl->props.state & BL_CORE_SUSPENDED)
-		bl->props.brightness = 0;
+	/* Check for Power On */
+	if (!power_old && power_new) {
+		bl->props.state &= ~BL_DRV_SUSPENDED;
+		lp855x_init_device(lp);
+	}
 
-	if (mode == PWM_BASED) {
-		struct lp855x_pwm_data *pd = &lp->pdata->pwm_data;
-		int br = bl->props.brightness;
-		int max_br = bl->props.max_brightness;
+	/* Apply new brightness value only if device is not suspended */
+	if (power_new || power_old) {
+		if (bl->props.state & BL_CORE_SUSPENDED)
+			bl->props.brightness = 0;
 
-		if (pd->pwm_set_intensity)
-			pd->pwm_set_intensity(br, max_br);
+		if (mode == PWM_BASED) {
+			struct lp855x_pwm_data *pd = &lp->pdata->pwm_data;
+			int br = bl->props.brightness;
+			int max_br = bl->props.max_brightness;
 
-	} else if (mode == REGISTER_BASED) {
-		u8 val = bl->props.brightness;
+			if (pd->pwm_set_intensity)
+				pd->pwm_set_intensity(br, max_br);
 
-		if (lp->pdata->nonlinearity_factor)
-			val = calc_exp(lp->pdata->nonlinearity_factor, val);
+		} else if (mode == REGISTER_BASED) {
+			u8 val = bl->props.brightness;
 
-		lp855x_write_byte(lp, lp->cfg->reg_brightness, val);
+			if (lp->pdata->nonlinearity_factor)
+				val = calc_exp(lp->pdata->nonlinearity_factor, val);
+
+			lp855x_write_byte(lp, lp->cfg->reg_brightness, val);
+		}
+	}
+
+	/* Check for Power Off */
+	if (power_old && !power_new) {
+		bl->props.state |= BL_DRV_SUSPENDED;
+		lp855x_power_off(lp);
 	}
 
 	return 0;
@@ -517,6 +549,7 @@ static int lp855x_remove(struct i2c_client *cl)
 {
 	struct lp855x *lp = i2c_get_clientdata(cl);
 
+	lp->bl->props.state |= BL_CORE_SUSPENDED;
 	lp->bl->props.brightness = 0;
 	backlight_update_status(lp->bl);
 
@@ -530,6 +563,15 @@ static int lp855x_remove(struct i2c_client *cl)
 	lp855x_backlight_unregister(lp);
 
 	return 0;
+}
+
+static void lp855x_shutdown(struct i2c_client *cl)
+{
+	struct lp855x *lp = i2c_get_clientdata(cl);
+
+	lp->bl->props.state |= BL_CORE_SUSPENDED;
+	lp->bl->props.brightness = 0;
+	backlight_update_status(lp->bl);
 }
 
 static const struct i2c_device_id lp855x_ids[] = {
@@ -550,6 +592,7 @@ static struct i2c_driver lp855x_driver = {
 	.probe = lp855x_probe,
 	.remove = lp855x_remove,
 	.id_table = lp855x_ids,
+	.shutdown = lp855x_shutdown,
 };
 
 module_i2c_driver(lp855x_driver);
