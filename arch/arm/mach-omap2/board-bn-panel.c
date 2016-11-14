@@ -91,9 +91,9 @@ static int __init get_display_vendor(char *str)
 early_param("display.vendor", get_display_vendor);
 #endif
 
-static struct regulator *bn_bl_i2c_pullup_power;
+//static struct regulator *bn_bl_i2c_pullup_power;
 static bool lcd_supply_requested = false;
-static bool first_boot = true;
+static bool first_boot = false;
 
 struct omap_tablet_panel_data {
 	struct omap_dss_board_info *board_info;
@@ -136,7 +136,7 @@ static int bn_lcd_request_resources(void)
 	return ret;
 }
 
-#ifdef CONFIG_MACH_OMAP_HUMMINGBIRD
+#if 0
 static int bn_lcd_release_resources(void)
 {
 	/* Release the display power supply */
@@ -174,6 +174,7 @@ static int bn_lcd_disable_supply(void)
 	return Vdd_LCD_CT_PEN_disable(NULL, "vlcd");
 }
 
+#if 0
 static int bn_bl_request_resources(struct device *dev)
 {
 	int ret = gpio_request(LCD_BL_PWR_EN_GPIO, "BL-PWR-EN");
@@ -285,6 +286,21 @@ static int bn_bl_power_off(struct device *dev)
 
 	return 0;
 }
+#endif
+
+static int bn_bl_power_init(bool enable)
+{
+	if (enable) {
+		twl_i2c_write_u8(TWL_MODULE_PWM, 0x7F, LED_PWM1ON);
+		twl_i2c_write_u8(TWL_MODULE_PWM, 0xFF, LED_PWM1OFF);
+		twl_i2c_write_u8(TWL6030_MODULE_ID1, 0x06, TWL6030_TOGGLE3);
+	} else {
+		twl_i2c_write_u8(TWL6030_MODULE_ID1, 0x01, TWL6030_TOGGLE3);
+		twl_i2c_write_u8(TWL6030_MODULE_ID1, 0x07, TWL6030_TOGGLE3);
+	}
+
+	return 0;
+}
 
 static struct lp855x_platform_data lp8556_pdata = {
 	.name = "lcd-backlight",
@@ -292,7 +308,7 @@ static struct lp855x_platform_data lp8556_pdata = {
 	.device_control = LP8556_COMB1_CONFIG
 					| (machine_is_omap_hummingbird() ? LP8556_FAST_CONFIG : 0),
 	.initial_brightness = INITIAL_BRT,
-	.max_brightness = MAX_BRT,
+	.power_init = bn_bl_power_init,
 	.led_setting = (machine_is_omap_ovation() ? PS_MODE_5P5D : PS_MODE_4P4D)
 													| PWM_FREQ6916HZ,
 	.boost_freq = BOOST_FREQ625KHZ,
@@ -300,13 +316,18 @@ static struct lp855x_platform_data lp8556_pdata = {
 	.load_new_rom_data = 1,
 	.size_program = machine_is_omap_ovation() ? 2 : 1,
 	.rom_data = bn_bl_rom_data,
+	.gpio_en = LCD_BL_PWR_EN_GPIO,
+	.regulator_name = "bl_i2c_pup",
+#if 0 // AM: old pdata left here mostly for reference
 	.request_resources = bn_bl_request_resources,
 	.release_resources = bn_bl_release_resources,
 	.power_on = bn_bl_power_on,
 	.power_off = bn_bl_power_off,
+	.max_brightness = MAX_BRT,
+#endif
 };
 
-#ifdef CONFIG_MACH_OMAP_HUMMINGBIRD
+#if 0
 static void _enable_supplies(ulong delay)
 {
 	bool safemode = false;
@@ -508,11 +529,9 @@ static void __init bn_lcd_init(void)
 
 static int lg_enable_dsi(struct omap_dss_device *dssdev)
 {
-#ifdef CONFIG_MACH_OMAP_HUMMINGBIRD
-	_enable_supplies(14);
-#endif
-#ifdef CONFIG_MACH_OMAP_OVATION
 	bn_lcd_enable_supply();
+
+#ifdef CONFIG_MACH_OMAP_OVATION
 	gpio_direction_output(LCD_CM_EN, 1);
 #endif
 
@@ -525,21 +544,18 @@ static void lg_disable_dsi(struct omap_dss_device *dssdev)
 {
 	gpio_direction_output(LCD_DCR_1V8_GPIO_EVT1B, 0);
 
-#ifdef CONFIG_MACH_OMAP_HUMMINGBIRD
-	msleep(100);
-	_disable_supplies();
-#endif
 #ifdef CONFIG_MACH_OMAP_OVATION
 	gpio_direction_output(LCD_CM_EN, 0);
-	bn_lcd_disable_supply();
 #endif
+
+	bn_lcd_disable_supply();
 }
 
 #ifdef CONFIG_MACH_OMAP_HUMMINGBIRD
 static int auo_enable_dsi(struct omap_dss_device *dssdev)
 {
+	bn_lcd_enable_supply();
 
-	_enable_supplies(194);
 	gpio_direction_output(LCD_DCR_1V8_GPIO_EVT1B, 0);
 
 	return 0;
@@ -548,8 +564,8 @@ static int auo_enable_dsi(struct omap_dss_device *dssdev)
 static void auo_disable_dsi(struct omap_dss_device *dssdev)
 {
 	gpio_direction_output(LCD_DCR_1V8_GPIO_EVT1B, 0);
-	msleep(100);
-	_disable_supplies();
+
+	bn_lcd_disable_supply();
 }
 #endif
 
@@ -601,36 +617,6 @@ static void bn_disable_hdmi(struct omap_dss_device *dssdev)
 #endif
 
 #ifdef CONFIG_MACH_OMAP_OVATION
-static int pwm_level;
-
-static int ovation_set_pwm_bl(struct omap_dss_device *dssdev, int level)
-{
-	u8 brightness = 0;
-
-	if (level) {
-		if (level >= 255) {
-			brightness = 0x7f;
-		} else {
-			brightness = (~(level/2)) & 0x7f;
-		}
-
-		twl_i2c_write_u8(TWL_MODULE_PWM, brightness, LED_PWM1ON);
-		twl_i2c_write_u8(TWL_MODULE_PWM, 0XFF, LED_PWM1OFF);
-		twl_i2c_write_u8(TWL6030_MODULE_ID1, 0x06, TWL6030_TOGGLE3);
-	} else {
-		twl_i2c_write_u8(TWL6030_MODULE_ID1, 0x01, TWL6030_TOGGLE3);
-		twl_i2c_write_u8(TWL6030_MODULE_ID1, 0x07, TWL6030_TOGGLE3);
-	}
-
-	pwm_level = level;
-	return 0;
-}
-
-static int ovation_get_pwm_bl(struct omap_dss_device *dssdev)
-{
-	return pwm_level;
-}
-
 static struct omap_dss_device bn_lcd_auo = {
 	.name					= "auo_lcd",
 	.driver_name			= "auo",
@@ -811,10 +797,6 @@ static struct omap_dss_device bn_lcd_novatek = {
 #endif
 	.platform_enable = lg_enable_dsi,
 	.platform_disable = lg_disable_dsi,
-#ifdef CONFIG_MACH_OMAP_OVATION
-	.set_backlight = ovation_set_pwm_bl,
-	.get_backlight = ovation_get_pwm_bl,
-#endif
 };
 
 #ifdef CONFIG_MACH_OMAP_HUMMINGBIRD
