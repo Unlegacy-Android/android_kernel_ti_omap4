@@ -117,7 +117,7 @@ static void __init omap_bn_init_early(void)
 
 static struct omap_musb_board_data musb_board_data = {
 	.interface_type		= MUSB_INTERFACE_UTMI,
-	.mode			= MUSB_OTG,
+	.mode			= MUSB_PERIPHERAL,
 	.power			= 200,
 };
 
