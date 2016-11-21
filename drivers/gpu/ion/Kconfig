@@ -17,3 +17,18 @@ config ION_OMAP
 	help
 	  Choose this option if you wish to use ion on OMAP4.
 
+config ION_SYSTEM_HEAP_SYNCHRONOUS_FREE
+	bool "Ion system heap using synchronous free"
+	depends on ION
+	help
+	  Choose this option to make the system heap not use deferred free,
+	  effectively making the free function synchronous.
+
+config ION_SYSTEM_HEAP_POOL_ONLY
+	bool "Ion system heap using pool memory only"
+	depends on ION
+	help
+	  Choose this option to force all memory allocations to be pooled.
+	  Currently, only uncached memory is pooled, while cached buffers are
+	  allocated from the heap. Enabling this option will make cached
+	  buffers to be pooled along with the uncached ones.
