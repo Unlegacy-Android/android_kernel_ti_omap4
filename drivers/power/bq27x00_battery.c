@@ -185,6 +185,23 @@ module_param(poll_interval, uint, 0644);
 MODULE_PARM_DESC(poll_interval, "battery poll interval in seconds - " \
 				"0 disables polling");
 
+#ifdef CONFIG_CHARGER_BQ2419x
+bool bq2419x_is_charging_done(void);
+#endif
+
+static struct bq27x00_device_info *bq27x00_di;
+
+bool bq27x00_is_battery_present(void) {
+	return ((bq27x00_di->cache.flags < 0) ? 0 : 1);
+}
+EXPORT_SYMBOL(bq27x00_is_battery_present);
+
+int bq27x00_get_battery_temperature(void)
+{
+	return bq27x00_di->cache.temperature;
+}
+EXPORT_SYMBOL(bq27x00_get_battery_temperature);
+
 /*
  * Common code for BQ27x00 devices
  */
@@ -465,8 +482,15 @@ static int bq27x00_battery_status(struct bq27x00_device_info *di,
 			status = POWER_SUPPLY_STATUS_FULL;
 		else if (di->cache.flags & BQ27500_FLAG_DSC)
 			status = POWER_SUPPLY_STATUS_DISCHARGING;
-		else
+		else {
+#ifdef CONFIG_CHARGER_BQ2419x
+			/* Return STATUS_FULL if bq2419x reporting status 3 (Charging Done) */
+			if (bq2419x_is_charging_done())
+				status = POWER_SUPPLY_STATUS_FULL;
+			else
+#endif
 			status = POWER_SUPPLY_STATUS_CHARGING;
+		}
 	} else {
 		if (di->cache.flags & BQ27000_FLAG_FC)
 			status = POWER_SUPPLY_STATUS_FULL;
@@ -532,6 +556,17 @@ static int bq27x00_battery_voltage(struct bq27x00_device_info *di,
 
 	return 0;
 }
+
+int bq27x00_read_voltage_mv(void)
+{
+	union power_supply_propval val;
+
+	val.intval = 0;
+	bq27x00_battery_voltage(bq27x00_di, &val);
+
+	return val.intval;
+}
+EXPORT_SYMBOL_GPL(bq27x00_read_voltage_mv);
 
 static int bq27x00_simple_value(int value,
 	union power_supply_propval *val)
@@ -1078,6 +1113,8 @@ static int bq27x00_battery_probe(struct i2c_client *client,
 		goto batt_failed_2;
 	}
 
+	bq27x00_di = di;
+
 	di->id = num;
 	di->dev = &client->dev;
 	di->chip = id->driver_data;
@@ -1296,6 +1333,8 @@ static int __devinit bq27000_battery_probe(struct platform_device *pdev)
 	ret = bq27x00_powersupply_init(di);
 	if (ret)
 		goto err_free;
+
+	bq27x00_di = di;
 
 	return 0;
 
