@@ -38,6 +38,10 @@ static bool presentation_mode;
 #define NUM_TILER1D_SLOTS 2
 #define MAX_NUM_TILER1D_SLOTS 4
 
+#include <linux/ion.h>
+
+extern struct ion_device *omap_ion_device;
+
 static struct tiler1d_slot {
 	struct list_head q;
 	struct tiler_block *block_handle;
@@ -234,6 +238,9 @@ int dsscomp_gralloc_queue(struct dsscomp_setup_dispc_data *d,
 	int skip;
 	struct dsscomp_gralloc_t *gsync;
 	struct dss2_rect_t win = { .w = 0 };
+	ion_phys_addr_t phys = 0;
+	size_t tiler2d_size;
+	struct tiler_view_t view;
 	bool use_mflag = false;
 
 	/* reserve tiler areas if not already done so */
@@ -417,6 +424,17 @@ int dsscomp_gralloc_queue(struct dsscomp_setup_dispc_data *d,
 			oi->ba += fbi->fix.smem_start;
 			oi->uv += fbi_uv->fix.smem_start;
 			goto skip_map1d;
+		}else if (oi->addressing == OMAP_DSS_BUFADDR_ION) {
+					ion_phys_frm_dev(omap_ion_device,
+					(struct ion_handle *)oi->ba, &phys, &tiler2d_size);
+
+					tilview_create(&view, phys, d->ovls[0].cfg.crop.w,
+								d->ovls[0].cfg.crop.h);
+
+					oi->ba = phys;
+					oi->uv = oi->ba;
+
+					goto skip_map1d;
 		} else if (oi->addressing != OMAP_DSS_BUFADDR_DIRECT) {
 			goto skip_buffer;
 		}
