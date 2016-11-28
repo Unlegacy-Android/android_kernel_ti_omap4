@@ -27,6 +27,7 @@
 #include <linux/fault-inject.h>
 #include <linux/random.h>
 #include <linux/wakelock.h>
+#include <linux/reboot.h>
 
 #include <trace/events/mmc.h>
 
@@ -45,6 +46,7 @@
 #include "sdio_ops.h"
 
 static struct workqueue_struct *workqueue;
+static int mmc_shutdown = 0;
 
 /*
  * Enabling software CRCs on the data blocks can be a significant (30%)
@@ -77,6 +79,9 @@ MODULE_PARM_DESC(
 static int mmc_schedule_delayed_work(struct delayed_work *work,
 				     unsigned long delay)
 {
+	if (mmc_shutdown)
+		return -EFAULT;
+
 	return queue_delayed_work(workqueue, work, delay);
 }
 
@@ -2506,6 +2511,19 @@ void mmc_set_embedded_sdio_data(struct mmc_host *host,
 EXPORT_SYMBOL(mmc_set_embedded_sdio_data);
 #endif
 
+static int mmc_reboot_notifier(struct notifier_block *this,
+		unsigned long code, void *cmd)
+{
+	mmc_shutdown = 1;
+	mmc_flush_scheduled_work();
+
+	return NOTIFY_DONE;
+}
+
+static struct notifier_block mmc_reboot_notifier_block = {
+	.notifier_call = mmc_reboot_notifier,
+};
+
 static int __init mmc_init(void)
 {
 	int ret;
@@ -2525,6 +2543,8 @@ static int __init mmc_init(void)
 	ret = sdio_register_bus();
 	if (ret)
 		goto unregister_host_class;
+
+	register_reboot_notifier(&mmc_reboot_notifier_block);
 
 	return 0;
 
