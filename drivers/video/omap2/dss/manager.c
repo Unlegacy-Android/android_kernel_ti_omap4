@@ -365,10 +365,11 @@ static ssize_t manager_cpr_coef_show(struct omap_overlay_manager *mgr,
 			info.cpr_coefs_sys.bb);
 }
 
+int dss_mgr_touch_cpr(struct omap_overlay_manager *, struct omap_dss_cpr_coefs *);
+
 static ssize_t manager_cpr_coef_store(struct omap_overlay_manager *mgr,
 		const char *buf, size_t size)
 {
-	struct omap_overlay_manager_info info;
 	struct omap_dss_cpr_coefs coefs;
 	int r, i;
 	s16 *arr;
@@ -391,17 +392,8 @@ static ssize_t manager_cpr_coef_store(struct omap_overlay_manager *mgr,
 			return -EINVAL;
 	}
 
-	mgr->get_manager_info(mgr, &info);
-
-	info.cpr_coefs_sys = coefs;
-	// sysfs calls clobbers any dsscomp merged values
-	info.cpr_coefs = coefs;
-
-	r = mgr->set_manager_info(mgr, &info);
-	if (r)
-		return r;
-
-	r = mgr->apply(mgr);
+	// Touch only CPR to avoid flickers
+	r = dss_mgr_touch_cpr(mgr, &coefs);
 	if (r)
 		return r;
 

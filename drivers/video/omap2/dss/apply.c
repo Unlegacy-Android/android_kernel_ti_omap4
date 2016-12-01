@@ -1820,6 +1820,25 @@ out:
 	mutex_unlock(&apply_lock);
 }
 
+int dss_mgr_touch_cpr(struct omap_overlay_manager *mgr,
+		struct omap_dss_cpr_coefs *coefs)
+{
+	struct mgr_priv_data *mp = get_mgr_priv(mgr);
+	unsigned long flags;
+
+	spin_lock_irqsave(&data_lock, flags);
+
+	mp->user_info.cpr_coefs_sys = *coefs;
+	// sysfs calls clobbers any dsscomp merged values
+	mp->user_info.cpr_coefs = *coefs;
+
+	mp->user_info_dirty = true;
+
+	spin_unlock_irqrestore(&data_lock, flags);
+
+	return 0;
+}
+
 int dss_mgr_set_info(struct omap_overlay_manager *mgr,
 		struct omap_overlay_manager_info *info)
 {
