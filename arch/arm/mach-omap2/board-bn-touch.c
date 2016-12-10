@@ -36,12 +36,12 @@
 #define TOUCHPANEL_GPIO_IRQ     37
 #define TOUCHPANEL_GPIO_RESET   39
 
+#if 0
 int Vdd_LCD_CT_PEN_request_supply(struct device *dev, const char *supply_name);
 int Vdd_LCD_CT_PEN_enable(struct device *dev, const char *supply_name);
 int Vdd_LCD_CT_PEN_disable(struct device *dev, const char *supply_name);
 int Vdd_LCD_CT_PEN_release_supply(struct device *dev, const char *supply_name);
 
-#if 0
 static struct gpio bn_touch_gpios[] = {
 	{ TOUCHPANEL_GPIO_IRQ,		GPIOF_IN,			"touch_irq"   },
 	{ TOUCHPANEL_GPIO_RESET,	GPIOF_OUT_INIT_LOW,	"touch_reset" },

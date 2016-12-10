@@ -486,6 +486,7 @@ static void __init bn_lcd_touch_init(void)
 				ARRAY_SIZE(bn_lcd_touch_devices));
 }
 
+#if 0
 static struct regulator *bn_tp_vdd;
 static int bn_tp_vdd_enabled;
 static struct regulator *bn_lcd_tp_pwr[ARRAY_SIZE(bn_lcd_tp_supply)];
@@ -770,6 +771,7 @@ int Vdd_LCD_CT_PEN_disable(struct device *dev, const char *supply_name)
 	return 0;
 }
 EXPORT_SYMBOL(Vdd_LCD_CT_PEN_disable);
+#endif
 
 static void __init omap_bn_init(void)
 {

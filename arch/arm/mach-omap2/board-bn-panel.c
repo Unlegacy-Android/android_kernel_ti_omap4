@@ -75,11 +75,6 @@
 #define LED_PWM1ON				0x00
 #define LED_PWM1OFF				0x01
 
-int Vdd_LCD_CT_PEN_request_supply(struct device *dev, const char *supply_name);
-int Vdd_LCD_CT_PEN_enable(struct device *dev, const char *supply_name);
-int Vdd_LCD_CT_PEN_disable(struct device *dev, const char *supply_name);
-int Vdd_LCD_CT_PEN_release_supply(struct device *dev, const char *supply_name);
-
 #ifdef CONFIG_MACH_OMAP_HUMMINGBIRD
 static char display[51];
 static int __init get_display_vendor(char *str)
@@ -92,6 +87,7 @@ early_param("display.vendor", get_display_vendor);
 #endif
 
 //static struct regulator *bn_bl_i2c_pullup_power;
+static struct regulator *bn_lcd_power;
 static bool lcd_supply_requested = false;
 static bool first_boot = false;
 
@@ -127,16 +123,24 @@ struct lp855x_rom_data bn_bl_rom_data[] = {
 
 static int bn_lcd_request_resources(void)
 {
-	/* Request the display power supply */
-	int ret = Vdd_LCD_CT_PEN_request_supply(NULL, "vlcd");
+	if (!bn_lcd_power) {
+		bn_lcd_power = regulator_get(NULL, "vlcd");
+	}
 
-	if(ret)
-		pr_err("%s: Could not get lcd supply\n", __func__);
+	if (IS_ERR(bn_lcd_power)) {
+		pr_err("%s: failed to get regulator vlcd", __func__);
+		return -EBUSY;
+	}
 
-	return ret;
+	return 0;
 }
 
 #if 0
+int Vdd_LCD_CT_PEN_request_supply(struct device *dev, const char *supply_name);
+int Vdd_LCD_CT_PEN_enable(struct device *dev, const char *supply_name);
+int Vdd_LCD_CT_PEN_disable(struct device *dev, const char *supply_name);
+int Vdd_LCD_CT_PEN_release_supply(struct device *dev, const char *supply_name);
+
 static int bn_lcd_release_resources(void)
 {
 	/* Release the display power supply */
@@ -160,7 +164,7 @@ static int bn_lcd_enable_supply(void)
 			lcd_supply_requested = true;
 		}
 
-		ret = Vdd_LCD_CT_PEN_enable(NULL, "vlcd");
+		ret = regulator_enable(bn_lcd_power);
 
 		msleep(100); // T2 timing
 	} else
@@ -171,7 +175,10 @@ static int bn_lcd_enable_supply(void)
 
 static int bn_lcd_disable_supply(void)
 {
-	return Vdd_LCD_CT_PEN_disable(NULL, "vlcd");
+	if (regulator_is_enabled(bn_lcd_power))
+		regulator_disable(bn_lcd_power);
+
+	return 0;
 }
 
 #if 0
