@@ -42,5 +42,12 @@ struct panel_dsi_data {
 	u32 height_in_um; /* physical dimensions - height in micrometers */
 };
 
+struct panel_board_data {
+	int lcd_en_gpio;
+	int lcd_cm_gpio;
+	int lcd_dcr_gpio;
+	const char *regulator_name;
+};
+
 #endif /* __OMAP_PANEL_DSI_H__ */
 

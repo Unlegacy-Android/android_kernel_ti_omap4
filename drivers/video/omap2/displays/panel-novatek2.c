@@ -28,8 +28,10 @@
 #include <linux/mutex.h>
 #include <linux/debugfs.h>
 #include <linux/uaccess.h>
+#include <linux/gpio.h>
 #include <linux/i2c.h>
 #include <linux/i2c/maxim9606.h>
+#include <linux/regulator/consumer.h>
 #include <linux/earlysuspend.h>
 
 #include <video/omapdss.h>
@@ -44,6 +46,7 @@ struct novatek_data {
 	struct mutex lock;
 
 	struct omap_dss_device *dssdev;
+	struct regulator *regulator;
 
 	int channel0;
 	int channel_cmd;
@@ -259,6 +262,11 @@ static struct i2c_driver maxim9606_driver = {
 	.id_table	= maxim9606_i2c_id,
 };
 
+static struct panel_board_data *get_board_data(struct omap_dss_device *dssdev)
+{
+	return (struct panel_board_data *)dssdev->data;
+}
+
 static void novatek_get_timings(struct omap_dss_device *dssdev,
 		struct omap_video_timings *timings)
 {
@@ -296,6 +304,7 @@ static void novatek_get_resolution(struct omap_dss_device *dssdev,
 
 static int novatek_probe(struct omap_dss_device *dssdev)
 {
+	struct panel_board_data *pbdata;
 	struct novatek_data *d2d;
 	int r = 0;
 
@@ -315,6 +324,54 @@ static int novatek_probe(struct omap_dss_device *dssdev)
 	mutex_init(&d2d->lock);
 
 	dev_set_drvdata(&dssdev->dev, d2d);
+	pbdata = get_board_data(dssdev);
+
+	if (pbdata->lcd_en_gpio > 0) {
+		r = gpio_request(pbdata->lcd_en_gpio, "lcd_en");
+		if (r) {
+			dev_err(&dssdev->dev, "Can't get lcd_en_gpio (%d)\n",
+				pbdata->lcd_en_gpio);
+			r = -ENODEV;
+			goto err_dev;
+		}
+		r = gpio_direction_output(pbdata->lcd_en_gpio, 1);
+		if (r) {
+			dev_err(&dssdev->dev, "Can't set lcd_en_gpio (%d)\n",
+				pbdata->lcd_en_gpio);
+			r = -ENODEV;
+			goto err_dev;
+		}
+	}
+
+	if (pbdata->lcd_cm_gpio > 0) {
+		r = gpio_request(pbdata->lcd_cm_gpio, "lcd_cm");
+		if (r) {
+			dev_err(&dssdev->dev, "Can't get lcd_cm_gpio (%d)\n",
+				pbdata->lcd_cm_gpio);
+			r = -ENODEV;
+			goto err_dev;
+		}
+	}
+
+	if (pbdata->lcd_dcr_gpio > 0) {
+		r = gpio_request(pbdata->lcd_dcr_gpio, "lcd_dcr");
+		if (r) {
+			dev_err(&dssdev->dev, "Can't get lcd_dcr_gpio (%d)\n",
+				pbdata->lcd_dcr_gpio);
+			r = -ENODEV;
+			goto err_dev;
+		}
+	}
+
+	if (pbdata->regulator_name) {
+		d2d->regulator = regulator_get(&dssdev->dev, pbdata->regulator_name);
+		if (!d2d->regulator) {
+			dev_err(&dssdev->dev, "Can't get regulator %s\n",
+				pbdata->regulator_name);
+			r = -ENODEV;
+			goto err_dev;
+		}
+	}
 
 	r = omap_dsi_request_vc(dssdev, &d2d->channel0);
 	if (r)
@@ -335,21 +392,48 @@ static int novatek_probe(struct omap_dss_device *dssdev)
 	dev_dbg(&dssdev->dev, "novatek_probe done\n");
 
 	/* do I need an err and kfree(d2d) */
+	if (!r)
+		return 0;
+
+err_dev:
+	if (pbdata->lcd_en_gpio > 0)
+		gpio_free(pbdata->lcd_en_gpio);
+
+	if (pbdata->lcd_cm_gpio > 0)
+		gpio_free(pbdata->lcd_cm_gpio);
+
+	if (pbdata->lcd_dcr_gpio > 0)
+		gpio_free(pbdata->lcd_dcr_gpio);
+
 	return r;
 }
 
 static void novatek_remove(struct omap_dss_device *dssdev)
 {
+	struct panel_board_data *pbdata = get_board_data(dssdev);
 	struct novatek_data *d2d = dev_get_drvdata(&dssdev->dev);
 
 	omap_dsi_release_vc(dssdev, d2d->channel0);
 	omap_dsi_release_vc(dssdev, d2d->channel_cmd);
+
+	if (pbdata->lcd_en_gpio > 0)
+		gpio_free(pbdata->lcd_en_gpio);
+
+	if (pbdata->lcd_cm_gpio > 0)
+		gpio_free(pbdata->lcd_cm_gpio);
+
+	if (pbdata->lcd_dcr_gpio > 0)
+		gpio_free(pbdata->lcd_dcr_gpio);
+
+	if (d2d->regulator)
+		regulator_put(d2d->regulator);
 
 	kfree(d2d);
 }
 
 static int novatek_power_on(struct omap_dss_device *dssdev)
 {
+	struct panel_board_data *pbdata = get_board_data(dssdev);
 	struct novatek_data *d2d = dev_get_drvdata(&dssdev->dev);
 	int r;
 
@@ -357,6 +441,19 @@ static int novatek_power_on(struct omap_dss_device *dssdev)
 	dssdev->first_vsync = false;
 
 	dev_dbg(&dssdev->dev, "power_on -- skip_init==%d\n", dssdev->skip_init);
+
+	if (d2d->regulator) {
+		regulator_enable(d2d->regulator);
+		msleep(100); // T2 timing
+	}
+
+	if (pbdata->lcd_cm_gpio > 0) {
+		gpio_direction_output(pbdata->lcd_cm_gpio, 1);
+	}
+
+	if (pbdata->lcd_dcr_gpio > 0) {
+		gpio_direction_output(pbdata->lcd_dcr_gpio, 1);
+	}
 
 	if (dssdev->platform_enable)
 		dssdev->platform_enable(dssdev);
@@ -401,6 +498,17 @@ static int novatek_power_on(struct omap_dss_device *dssdev)
 	return r;
 
 err_disp_enable:
+	if (pbdata->lcd_dcr_gpio > 0) {
+		gpio_direction_output(pbdata->lcd_dcr_gpio, 0);
+	}
+
+	if (pbdata->lcd_cm_gpio > 0) {
+		gpio_direction_output(pbdata->lcd_cm_gpio, 0);
+	}
+
+	if (d2d->regulator)
+		regulator_disable(d2d->regulator);
+
 	if (dssdev->platform_disable)
 		dssdev->platform_disable(dssdev);
 
@@ -409,6 +517,7 @@ err_disp_enable:
 
 static void novatek_power_off(struct omap_dss_device *dssdev)
 {
+	struct panel_board_data *pbdata = get_board_data(dssdev);
 	struct novatek_data *d2d = dev_get_drvdata(&dssdev->dev);
 	dsi_disable_video_output(dssdev, d2d->channel0);
 #if 0
@@ -417,8 +526,20 @@ static void novatek_power_off(struct omap_dss_device *dssdev)
 #endif
 	omapdss_dsi_display_disable(dssdev, false, false);
 
+	if (pbdata->lcd_dcr_gpio > 0) {
+		gpio_direction_output(pbdata->lcd_dcr_gpio, 0);
+	}
+
+	if (pbdata->lcd_cm_gpio > 0) {
+		gpio_direction_output(pbdata->lcd_cm_gpio, 0);
+	}
+
+	if (d2d->regulator)
+		regulator_disable(d2d->regulator);
+
 	if (dssdev->platform_disable)
 		dssdev->platform_disable(dssdev);
+
 #if 0
 	if (novatek_lcd_disable(dssdev))
 		dev_err(&dssdev->dev, "failed to disable LCD\n");
