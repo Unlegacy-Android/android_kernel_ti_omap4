@@ -551,7 +551,7 @@ static void lg_disable_dsi(struct omap_dss_device *dssdev)
 	bn_lcd_disable_supply();
 }
 
-#ifdef CONFIG_MACH_OMAP_HUMMINGBIRD
+#if 0
 static int auo_enable_dsi(struct omap_dss_device *dssdev)
 {
 	bn_lcd_enable_supply();
@@ -616,30 +616,7 @@ static void bn_disable_hdmi(struct omap_dss_device *dssdev)
 }
 #endif
 
-#ifdef CONFIG_MACH_OMAP_OVATION
-static struct omap_dss_device bn_lcd_auo = {
-	.name					= "auo_lcd",
-	.driver_name			= "auo",
-	.type					= OMAP_DISPLAY_TYPE_DPI,
-	.data					= NULL,
-	.phy.dpi.data_lines		= 24,
-	.channel				= OMAP_DSS_CHANNEL_LCD2,
-	.platform_enable		= auo_enable_dpi,
-	.platform_disable		= auo_disable_dpi,
-	.clocks	= {
-		.dispc	= {
-			.dispc_fclk_src	= OMAP_DSS_CLK_SRC_FCK,
-		},
-		.hdmi	= {
-			.regn	= 15,
-			.regm2	= 1,
-			.max_pixclk_khz = 148500,
-		},
-	},
-};
-#endif
-
-static struct omap_dss_device bn_lcd_novatek = {
+static struct omap_dss_device bn_lcd_panel = {
 	.name				= "lcd",
 	.driver_name		= "novatek-panel",
 	.type				= OMAP_DISPLAY_TYPE_DSI,
@@ -799,7 +776,7 @@ static struct omap_dss_device bn_lcd_novatek = {
 	.platform_disable = lg_disable_dsi,
 };
 
-#ifdef CONFIG_MACH_OMAP_HUMMINGBIRD
+#if 0
 static struct omap_dss_device bn_lcd_norise = {
 	.name                   = "lcd",
 	.driver_name            = "novatek-panel",
@@ -936,7 +913,7 @@ static struct omap_dss_device bn_hdmi_device = {
 #endif
 
 static struct omap_dss_device *bn_dss_devices[] = {
-	&bn_lcd_novatek,
+	&bn_lcd_panel,
 #ifdef CONFIG_OMAP4_DSS_HDMI
 	&bn_hdmi_device,
 #endif
@@ -945,7 +922,7 @@ static struct omap_dss_device *bn_dss_devices[] = {
 static struct omap_dss_board_info bn_dss_data = {
 	.num_devices	= ARRAY_SIZE(bn_dss_devices),
 	.devices		= bn_dss_devices,
-	.default_device	= &bn_lcd_novatek,
+	.default_device	= &bn_lcd_panel,
 };
 
 static struct sgx_omaplfb_platform_data omaplfb_plat_data = {
@@ -969,15 +946,46 @@ void bn_android_display_setup(void)
 {
 #ifdef CONFIG_MACH_OMAP_HUMMINGBIRD
 	if ((system_rev >= HUMMINGBIRD_EVT0B) && !strncmp(display, "AUO", 3)) {
-		bn_dss_devices[0] = &bn_lcd_norise;
-		bn_dss_data.default_device = &bn_lcd_norise;
+		bn_lcd_panel.clocks.dsi.regm			= 260;
+		bn_lcd_panel.clocks.dsi.lp_clk_div	= 9;
+
+		bn_lcd_panel.panel.timings.pixel_clock	 = 92444;
+
+		bn_lcd_panel.panel.timings.hfp		= 76;
+		bn_lcd_panel.panel.timings.hsw		= 40;
+		bn_lcd_panel.panel.timings.hbp		= 40;
+		bn_lcd_panel.panel.timings.vfp		= 10;
+		bn_lcd_panel.panel.timings.vsw		= 9;
+		bn_lcd_panel.panel.timings.vbp		= 1;
+
+		bn_lcd_panel.panel.dsi_vm_data.hfp	= 42;
+		bn_lcd_panel.panel.dsi_vm_data.hbp	= 43;
+		bn_lcd_panel.panel.dsi_vm_data.vsa	= 9;
+		bn_lcd_panel.panel.dsi_vm_data.vbp	= 1;
+		bn_lcd_panel.panel.dsi_vm_data.vfp	= 10;
+
+		bn_lcd_panel.panel.dsi_vm_data.blanking_mode = 1;
 	}
 #endif
 
 #ifdef CONFIG_MACH_OMAP_OVATION
 	if (system_rev < OVATION_EVT1B) {
-		bn_dss_devices[0] = &bn_lcd_auo;
-		bn_dss_data.default_device = &bn_lcd_auo;
+		memset(&bn_lcd_panel, 0, sizeof(bn_lcd_panel));
+
+		bn_lcd_panel.name					= "auo_lcd";
+		bn_lcd_panel.driver_name			= "auo";
+		bn_lcd_panel.type					= OMAP_DISPLAY_TYPE_DPI;
+		bn_lcd_panel.data					= NULL;
+		bn_lcd_panel.phy.dpi.data_lines		= 24;
+		bn_lcd_panel.channel				= OMAP_DSS_CHANNEL_LCD2;
+
+		bn_lcd_panel.platform_enable		= auo_enable_dpi;
+		bn_lcd_panel.platform_disable		= auo_disable_dpi;
+
+		bn_lcd_panel.clocks.dispc.dispc_fclk_src	= OMAP_DSS_CLK_SRC_FCK;
+		bn_lcd_panel.clocks.hdmi.regn		= 15;
+		bn_lcd_panel.clocks.hdmi.regm2		= 1;
+		bn_lcd_panel.clocks.hdmi.max_pixclk_khz		= 148500;
 	}
 #endif
 
