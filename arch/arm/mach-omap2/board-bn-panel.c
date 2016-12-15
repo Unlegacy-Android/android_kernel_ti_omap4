@@ -53,9 +53,6 @@
 #define LCD_DCR_1V8_GPIO		153
 /* For board version >= preevt1b */
 #define LCD_CM_EN				145
-
-#define auo_enable_dpi			lg_enable_dsi
-#define auo_disable_dpi			lg_disable_dsi
 #endif
 
 #define INITIAL_BRT				0x3F
@@ -87,9 +84,9 @@ early_param("display.vendor", get_display_vendor);
 #endif
 
 //static struct regulator *bn_bl_i2c_pullup_power;
-static struct regulator *bn_lcd_power;
-static bool lcd_supply_requested = false;
-static bool first_boot = false;
+//static struct regulator *bn_lcd_power;
+//static bool lcd_supply_requested = false;
+//static bool first_boot = false;
 
 struct omap_tablet_panel_data {
 	struct omap_dss_board_info *board_info;
@@ -121,6 +118,7 @@ struct lp855x_rom_data bn_bl_rom_data[] = {
 #endif
 };
 
+#if 0
 static int bn_lcd_request_resources(void)
 {
 	if (!bn_lcd_power) {
@@ -135,7 +133,6 @@ static int bn_lcd_request_resources(void)
 	return 0;
 }
 
-#if 0
 int Vdd_LCD_CT_PEN_request_supply(struct device *dev, const char *supply_name);
 int Vdd_LCD_CT_PEN_enable(struct device *dev, const char *supply_name);
 int Vdd_LCD_CT_PEN_disable(struct device *dev, const char *supply_name);
@@ -151,7 +148,6 @@ static int bn_lcd_release_resources(void)
 
 	return ret;
 }
-#endif
 
 static int bn_lcd_enable_supply(void)
 {
@@ -181,7 +177,6 @@ static int bn_lcd_disable_supply(void)
 	return 0;
 }
 
-#if 0
 static int bn_bl_request_resources(struct device *dev)
 {
 	int ret = gpio_request(LCD_BL_PWR_EN_GPIO, "BL-PWR-EN");
@@ -513,6 +508,7 @@ static void __init bn_lcd_init(void)
 {
 	u32 reg;
 
+#if 0
 #ifdef CONFIG_MACH_OMAP_OVATION
 	if (system_rev < OVATION_EVT1B) {
 		gpio_request(LCD_DCR_1V8_GPIO, "lcd_dcr");
@@ -524,6 +520,12 @@ static void __init bn_lcd_init(void)
 #endif
 
 	gpio_request(LCD_DCR_1V8_GPIO_EVT1B, "lcd_dcr");
+#else
+#ifdef CONFIG_MACH_OMAP_OVATION
+	if (system_rev < OVATION_EVT1B)
+		return;
+#endif
+#endif
 
 	/* Enable 5 lanes in DSI1 module, disable pull down */
 	reg = omap4_ctrl_pad_readl(OMAP4_CTRL_MODULE_PAD_CORE_CONTROL_DSIPHY);
@@ -534,6 +536,7 @@ static void __init bn_lcd_init(void)
 	omap4_ctrl_pad_writel(reg, OMAP4_CTRL_MODULE_PAD_CORE_CONTROL_DSIPHY);
 }
 
+#if 0
 static int lg_enable_dsi(struct omap_dss_device *dssdev)
 {
 	bn_lcd_enable_supply();
@@ -558,7 +561,6 @@ static void lg_disable_dsi(struct omap_dss_device *dssdev)
 	bn_lcd_disable_supply();
 }
 
-#if 0
 static int auo_enable_dsi(struct omap_dss_device *dssdev)
 {
 	bn_lcd_enable_supply();
@@ -623,10 +625,19 @@ static void bn_disable_hdmi(struct omap_dss_device *dssdev)
 }
 #endif
 
+static struct panel_board_data bn_lcd_data = {
+	.lcd_dcr_gpio	= LCD_DCR_1V8_GPIO_EVT1B,
+#ifdef CONFIG_MACH_OMAP_OVATION
+	.lcd_cm_gpio	= LCD_CM_EN,
+#endif
+	.regulator_name	= "vlcd",
+};
+
 static struct omap_dss_device bn_lcd_panel = {
 	.name				= "lcd",
 	.driver_name		= "novatek-panel",
 	.type				= OMAP_DISPLAY_TYPE_DSI,
+	.data				= &bn_lcd_data,
 	.phy.dsi = {
 		.clk_lane		= 1,
 		.clk_pol		= 0,
@@ -779,8 +790,8 @@ static struct omap_dss_device bn_lcd_panel = {
 #else
 	.skip_init = false,
 #endif
-	.platform_enable = lg_enable_dsi,
-	.platform_disable = lg_disable_dsi,
+	.platform_enable = NULL,
+	.platform_disable = NULL,
 };
 
 #if 0
@@ -977,17 +988,21 @@ void bn_android_display_setup(void)
 
 #ifdef CONFIG_MACH_OMAP_OVATION
 	if (system_rev < OVATION_EVT1B) {
+		bn_lcd_data.lcd_en_gpio		= LCD_DCR_1V8_GPIO;
+		bn_lcd_data.lcd_cm_gpio		= 0;
+		bn_lcd_data.lcd_dcr_gpio	= 0;
+
 		memset(&bn_lcd_panel, 0, sizeof(bn_lcd_panel));
 
 		bn_lcd_panel.name					= "auo_lcd";
 		bn_lcd_panel.driver_name			= "auo";
 		bn_lcd_panel.type					= OMAP_DISPLAY_TYPE_DPI;
-		bn_lcd_panel.data					= NULL;
+		bn_lcd_panel.data					= &bn_lcd_data;
 		bn_lcd_panel.phy.dpi.data_lines		= 24;
 		bn_lcd_panel.channel				= OMAP_DSS_CHANNEL_LCD2;
 
-		bn_lcd_panel.platform_enable		= auo_enable_dpi;
-		bn_lcd_panel.platform_disable		= auo_disable_dpi;
+		bn_lcd_panel.platform_enable		= NULL;
+		bn_lcd_panel.platform_disable		= NULL;
 
 		bn_lcd_panel.clocks.dispc.dispc_fclk_src	= OMAP_DSS_CLK_SRC_FCK;
 		bn_lcd_panel.clocks.hdmi.regn		= 15;
