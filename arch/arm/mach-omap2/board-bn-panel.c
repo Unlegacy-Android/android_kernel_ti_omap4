@@ -432,7 +432,9 @@ static struct omap_dss_hdmi_data bn_hdmi_data = {
 #endif
 
 static struct dsscomp_platform_data dsscomp_config = {
-	.tiler1d_slotsz = (SZ_16M + SZ_8M),
+	.tiler1d_slotsz = machine_is_omap_ovation() ?
+					  (SZ_16M + SZ_16M + SZ_2M) :
+					  (SZ_16M + SZ_2M + SZ_8M + SZ_1M),
 };
 
 static struct sgx_omaplfb_config omaplfb_config[] = {
