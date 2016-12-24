@@ -286,7 +286,6 @@ obj-$(CONFIG_MACH_OMAP_ACCLAIM)		+= board-acclaim.o \
 obj-$(CONFIG_MACH_OMAP_BN_HD)		+= board-bn-buttons.o \
 					   board-bn-power.o \
 					   board-bn-panel.o \
-					   board-bn-touch.o \
 					   board-bn-emif.o \
 					   board-bn-wifi.o \
 					   board-bn-hd.o
