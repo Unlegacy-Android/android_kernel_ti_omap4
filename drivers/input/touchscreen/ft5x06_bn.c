@@ -2887,7 +2887,7 @@ static ssize_t ft5x06_interrupttest_show(struct device *dev, struct device_attri
 {
 	struct i2c_client *client = container_of(dev, struct i2c_client, dev);
 	struct ft5x06     *ts     = (struct ft5x06 *)i2c_get_clientdata(client);
-	const int gpio_num = OMAP_IRQ_TO_GPIO(ts->client->irq);
+	const int gpio_num = irq_to_gpio(ts->client->irq);
 	int test_result = 0;
 	int retval   = 0;
 	u8  regval   = 0x00;

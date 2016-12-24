@@ -27,7 +27,7 @@
 #include <linux/i2c.h>
 #include <linux/i2c/twl.h>
 #include <linux/usb/otg.h>
-#include <mach/gpio.h>
+#include <linux/gpio.h>
 #include <linux/irq.h>
 #include <linux/interrupt.h>
 #include <linux/power_supply.h>
@@ -2113,7 +2113,9 @@ static int __devinit bq2419x_charger_probe(struct i2c_client *client,
 			gpio_direction_output(di->gpio_ce, 1);
 	}
 
-	ret = request_irq(OMAP_GPIO_IRQ(di->gpio_int),
+	di->gpio_irq = gpio_to_irq(di->gpio_int);
+
+	ret = request_irq(di->gpio_irq,
 			  bq24196_interrupt,
 			  IRQF_TRIGGER_FALLING,
 			  "chg_nint",
@@ -2221,7 +2223,7 @@ static int __devexit bq2419x_charger_remove(struct i2c_client *client)
 	struct bq2419x_device_info *di = i2c_get_clientdata(client);
 
 	bqRstREG(di);
-	free_irq(OMAP_GPIO_IRQ(di->gpio_int),di->dev);
+	free_irq(di->gpio_irq, di->dev);
 	cancel_work_sync(&di->ework);
 	cancel_work_sync(&di->iwork);
 
@@ -2240,7 +2242,7 @@ static int __devexit bq2419x_charger_remove(struct i2c_client *client)
 static void bq2419x_charger_shutdown(struct i2c_client *client)
 {
 	struct bq2419x_device_info * const di = i2c_get_clientdata(client);
-	free_irq(OMAP_GPIO_IRQ(di->gpio_int),di->dev);
+	free_irq(di->gpio_irq, di->dev);
 	twl6030_usb_unregister_notifier(&di->nb);
 	stopdmtimershutdown = true;
 	omap_dm_timer_stop(wdt_timer_ptr);

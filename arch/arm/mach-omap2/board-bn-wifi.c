@@ -20,11 +20,11 @@
 #include <linux/skbuff.h>
 #include <linux/ti_wilink_st.h>
 #include <linux/delay.h>
+#include <linux/gpio.h>
 
 #include <asm/system_info.h>
 
 #include <plat/omap-serial.h>
-#include <plat/gpio.h>
 
 #include "board-bn-hd.h"
 #include "mux.h"
@@ -277,7 +277,7 @@ void __init bn_wilink_init(void)
 	pr_info("Using Hummingbird wifi configuration\n");
 	bn_wilink_mux_init(GPIO_WIFI_IRQ_EVT1A, GPIO_WIFI_PMENA_EVT1A);
 	vwlan_pdata.gpio = GPIO_WIFI_PMENA_EVT1A;
-	wl12xx_pdata.irq = OMAP_GPIO_IRQ(GPIO_WIFI_IRQ_EVT1A);
+	wl12xx_pdata.irq = gpio_to_irq(GPIO_WIFI_IRQ_EVT1A);
 #else
 	switch (system_rev) {
 	case OVATION_EVT0:
@@ -285,20 +285,20 @@ void __init bn_wilink_init(void)
 		pr_info("Using Ovation ETV0B wifi configuration\n");
 		bn_wilink_mux_init(GPIO_WIFI_IRQ_EVT0B, GPIO_WIFI_PMENA_EVT0B);
 		vwlan_pdata.gpio = GPIO_WIFI_PMENA_EVT0B;
-		wl12xx_pdata.irq = OMAP_GPIO_IRQ(GPIO_WIFI_IRQ_EVT0B);
+		wl12xx_pdata.irq = gpio_to_irq(GPIO_WIFI_IRQ_EVT0B);
 		break;
 	case OVATION_EVT0C:
 		pr_info("Using Ovation ETV0C wifi configuration\n");
 		bn_wilink_mux_init(GPIO_WIFI_IRQ_EVT0C, GPIO_WIFI_PMENA_EVT0C);
 		vwlan_pdata.gpio = GPIO_WIFI_PMENA_EVT0C;
-		wl12xx_pdata.irq = OMAP_GPIO_IRQ(GPIO_WIFI_IRQ_EVT0C);
+		wl12xx_pdata.irq = gpio_to_irq(GPIO_WIFI_IRQ_EVT0C);
 		break;
 	case OVATION_EVT1A:
 	default:
 		pr_info("Using Ovation ETV1A wifi configuration\n");
 		bn_wilink_mux_init(GPIO_WIFI_IRQ_EVT1A, GPIO_WIFI_PMENA_EVT1A);
 		vwlan_pdata.gpio = GPIO_WIFI_PMENA_EVT1A;
-		wl12xx_pdata.irq = OMAP_GPIO_IRQ(GPIO_WIFI_IRQ_EVT1A);
+		wl12xx_pdata.irq = gpio_to_irq(GPIO_WIFI_IRQ_EVT1A);
 		break;
 	}
 #endif

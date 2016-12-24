@@ -38,7 +38,7 @@
 #include <linux/usb/otg.h>
 #include <linux/power/bq27x00_battery.h>
 
-#include <mach/gpio.h>
+#include <linux/gpio.h>
 #include <linux/interrupt.h>
 #include <linux/reboot.h>
 
@@ -1190,7 +1190,7 @@ static int bq27x00_battery_probe(struct i2c_client *client,
 		} else
 			gpio_direction_input(di->gpio_bat_low);
 	}
-	retval = request_irq(OMAP_GPIO_IRQ(di->gpio_bat_low),
+	retval = request_irq(gpio_to_irq(di->gpio_bat_low),
 			  bq27x00_bat_low_interrupt,
 			  IRQF_TRIGGER_FALLING,
 			  "bat_nlow",

@@ -315,6 +315,8 @@ struct bq2419x_device_info {
 	unsigned int		term_currentmA;
 	unsigned int		tick_rate;
 
+	int 			gpio_irq;
+
 	int 			gpio_int;
 	int 			gpio_ce;
 	int 			gpio_psel;
