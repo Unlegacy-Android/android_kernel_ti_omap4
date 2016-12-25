@@ -50,6 +50,7 @@
 #include "pm.h"
 #include "omap4_ion.h"
 #include "omap_ram_console.h"
+#include "omap5_ti_shared_gfx_buf.h"
 
 #include "board-bn-hd.h"
 
@@ -867,6 +868,7 @@ static void __init omap_bn_init(void)
 #ifdef CONFIG_ION_OMAP
 	omap4_register_ion();
 #endif
+	omap5_register_ti_gfx_buf_mgr();
 	board_serial_init();
 	bn_wilink_init();
 
