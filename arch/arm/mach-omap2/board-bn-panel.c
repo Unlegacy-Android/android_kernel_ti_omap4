@@ -632,7 +632,7 @@ static struct panel_board_data bn_lcd_data = {
 #ifdef CONFIG_MACH_OMAP_OVATION
 	.lcd_cm_gpio	= LCD_CM_EN,
 #endif
-	//.regulator_name	= "vlcd",
+	.regulator_name	= "vlcd",
 };
 
 static struct omap_dss_device bn_lcd_panel = {

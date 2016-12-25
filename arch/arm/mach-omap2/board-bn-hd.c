@@ -493,7 +493,7 @@ static inline void __init board_serial_init(void)
 
 static struct regulator_consumer_supply bn_lcd_tp_supply[] = {
 	{ .supply = "vtp" },
-	{ .supply = "panel_supply" },
+	{ .supply = "vlcd" },
 };
 
 static struct regulator_init_data bn_lcd_tp_vinit = {
