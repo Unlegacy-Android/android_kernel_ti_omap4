@@ -22,6 +22,9 @@
 #include <linux/hwspinlock.h>
 #include <linux/regulator/machine.h>
 #include <linux/regulator/fixed.h>
+#include <linux/platform_data/thermistor_sensor.h>
+#include <linux/omap4_duty_cycle_governor.h>
+#include <linux/omap_die_governor.h>
 
 #include <asm/hardware/gic.h>
 #include <asm/mach-types.h>
@@ -153,6 +156,58 @@ static struct omap2_hsmmc_info bn_mmc[] = {
 		.nonremovable	= true,
 	},
 	{}	/* Terminator */
+};
+
+#ifdef CONFIG_OMAP4_DUTY_CYCLE_GOVERNOR
+static struct pcb_section omap4_duty_governor_pcb_sections[] = {
+	{
+		.pcb_temp_level			= DUTY_GOVERNOR_DEFAULT_TEMP,
+		.max_opp			= 1200000,
+		.duty_cycle_enabled		= true,
+		.tduty_params = {
+			.nitro_rate		= 1200000,
+			.cooling_rate		= 1008000,
+			.nitro_interval		= 20000,
+			.nitro_percentage	= 24,
+		},
+	},
+};
+
+static void init_duty_governor(void)
+{
+	omap4_duty_pcb_section_reg(omap4_duty_governor_pcb_sections,
+					ARRAY_SIZE(omap4_duty_governor_pcb_sections));
+}
+#else
+static void init_duty_governor(void){}
+#endif
+
+/* Initial set of thresholds for different thermal zones */
+static struct omap_thermal_zone thermal_zones[] = {
+	OMAP_THERMAL_ZONE("safe", 0, 25000, 65000, 250, 1000, 400),
+	OMAP_THERMAL_ZONE("monitor", 0, 60000, 80000, 250, 250,	250),
+	OMAP_THERMAL_ZONE("alert", 0, 75000, 90000, 250, 250, 150),
+	OMAP_THERMAL_ZONE("critical", 1, 85000,	115000,	250, 250, 50),
+};
+
+static struct omap_die_governor_pdata omap_gov_pdata = {
+	.zones = thermal_zones,
+	.zones_num = ARRAY_SIZE(thermal_zones),
+};
+
+static struct thermistor_pdata thermistor_pdata = {
+	.name = "thermistor_sensor",
+	.slope = 1142,
+	.offset = -393,
+	.domain = "pcb",
+};
+
+static struct platform_device thermistor_device = {
+	.name   =       "thermistor",
+	.id     =       -1,
+	.dev    = {
+		.platform_data = &thermistor_pdata,
+	},
 };
 
 static void omap4_audio_conf(void)
@@ -875,6 +930,10 @@ static void __init omap_bn_init(void)
 	omap_sdrc_init(NULL, NULL);
 	omap4_twl6030_hsmmc_init(bn_mmc);
 	usb_musb_init(&musb_board_data);
+
+	init_duty_governor();
+	platform_device_register(&thermistor_device);
+	omap_die_governor_register_pdata(&omap_gov_pdata);
 
 	omap_enable_smartreflex_on_init();
         if (enable_suspend_off)
