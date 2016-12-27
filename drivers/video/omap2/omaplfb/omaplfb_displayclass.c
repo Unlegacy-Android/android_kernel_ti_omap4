@@ -172,10 +172,13 @@ static IMG_VOID SetDCState(IMG_HANDLE hDevice, IMG_UINT32 ui32State)
 	switch (ui32State)
 	{
 		case DC_STATE_FLUSH_COMMANDS:
-			OMAPLFBAtomicBoolSet(&psDevInfo->sFlushCommands, OMAPLFB_TRUE);
-			break;
-		case DC_STATE_FORCE_SWAP_TO_SYSTEM:
+			/* Flush out any 'real' operation waiting for another flip.
+			 * In flush state we won't pass any 'real' operations along
+			 * to dsscomp_gralloc_queue(); we'll just CmdComplete them
+			 * immediately.
+			 */
 			OMAPLFBFlip(psDevInfo, &psDevInfo->sSystemBuffer);
+			OMAPLFBAtomicBoolSet(&psDevInfo->sFlushCommands, OMAPLFB_TRUE);
 			break;
 		case DC_STATE_NO_FLUSH_COMMANDS:
 			OMAPLFBAtomicBoolSet(&psDevInfo->sFlushCommands, OMAPLFB_FALSE);
@@ -986,6 +989,12 @@ static IMG_BOOL ProcessFlipV2(IMG_HANDLE hCmdCookie,
 	{
 		WARN(1, "must have at least one layer");
 		return IMG_FALSE;
+	}
+
+	if(DontWaitForVSync(psDevInfo))
+	{
+		psDevInfo->sPVRJTable.pfnPVRSRVCmdComplete(hCmdCookie, IMG_TRUE);
+		return IMG_TRUE;
 	}
 
 	if (iUseBltFB)
