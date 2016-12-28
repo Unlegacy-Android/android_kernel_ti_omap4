@@ -84,7 +84,6 @@ static struct regulator_init_data vdac = {
 };
 
 static struct regulator_consumer_supply vaux2_supply[] = {
-	REGULATOR_SUPPLY("av-switch", "omap-abe-twl6040"),
 };
 
 static struct regulator_init_data vaux2 = {
