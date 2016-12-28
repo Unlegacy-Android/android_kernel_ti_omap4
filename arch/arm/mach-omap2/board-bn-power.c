@@ -38,6 +38,46 @@
 #define TWL6041_AUDPWRON_GPIO	112
 #define OMAP_LINEOUT_DTC_GPIO	100
 
+static struct regulator_consumer_supply vmmc_supply[] = {
+	REGULATOR_SUPPLY("vmmc", "omap_hsmmc.0"),
+};
+
+/* VMMC1 for MMC1 card */
+static struct regulator_init_data vmmc = {
+	.constraints = {
+		.min_uV			= 1200000,
+		.max_uV			= 3000000,
+		.apply_uV		= true,
+		.valid_modes_mask	= REGULATOR_MODE_NORMAL
+					| REGULATOR_MODE_STANDBY,
+		.valid_ops_mask		= REGULATOR_CHANGE_VOLTAGE
+					| REGULATOR_CHANGE_MODE
+					| REGULATOR_CHANGE_STATUS,
+		.state_mem = {
+			.disabled	= true,
+		},
+	},
+	.num_consumer_supplies		= ARRAY_SIZE(vmmc_supply),
+	.consumer_supplies		= vmmc_supply,
+};
+
+static struct regulator_init_data vpp = {
+	.constraints = {
+		.min_uV			= 1800000,
+		.max_uV			= 2500000,
+		.apply_uV		= true,
+		.valid_modes_mask	= REGULATOR_MODE_NORMAL
+					| REGULATOR_MODE_STANDBY,
+		.valid_ops_mask		= REGULATOR_CHANGE_VOLTAGE
+					| REGULATOR_CHANGE_MODE
+					| REGULATOR_CHANGE_STATUS,
+		.state_mem = {
+			.disabled	= true,
+		},
+		.initial_state		= PM_SUSPEND_MEM,
+	},
+};
+
 static struct regulator_consumer_supply vwlan_supply[] = {
 	REGULATOR_SUPPLY("wlan-vio", NULL),
 };
@@ -60,6 +100,46 @@ static struct regulator_init_data vusim = {
 	.consumer_supplies		= vwlan_supply,
 };
 
+static struct regulator_init_data vana = {
+	.constraints = {
+		.min_uV			= 2100000,
+		.max_uV			= 2100000,
+		.valid_modes_mask	= REGULATOR_MODE_NORMAL
+					| REGULATOR_MODE_STANDBY,
+		.valid_ops_mask	 = REGULATOR_CHANGE_MODE
+					| REGULATOR_CHANGE_STATUS,
+		.always_on		= true,
+		.state_mem = {
+			.disabled	= true,
+		},
+		.initial_state		= PM_SUSPEND_MEM,
+	},
+};
+
+static struct regulator_consumer_supply vcxio_supply[] = {
+	REGULATOR_SUPPLY("vdds_dsi", "omapdss"),
+	REGULATOR_SUPPLY("vdds_dsi", "omapdss_dsi.0"),
+	REGULATOR_SUPPLY("vdds_dsi", "omapdss_dsi.1"),
+};
+
+static struct regulator_init_data vcxio = {
+	.constraints = {
+		.min_uV			= 1800000,
+		.max_uV			= 1800000,
+		.valid_modes_mask	= REGULATOR_MODE_NORMAL
+					| REGULATOR_MODE_STANDBY,
+		.valid_ops_mask		= REGULATOR_CHANGE_MODE
+					| REGULATOR_CHANGE_STATUS,
+		.always_on		= true,
+		.state_mem = {
+			.disabled       = true,
+		},
+		.initial_state          = PM_SUSPEND_MEM,
+	},
+	.num_consumer_supplies		= ARRAY_SIZE(vcxio_supply),
+	.consumer_supplies		= vcxio_supply,
+};
+
 static struct regulator_consumer_supply vdac_supply[] = {
 	REGULATOR_SUPPLY("hdmi_vref", NULL),
 };
@@ -80,7 +160,50 @@ static struct regulator_init_data vdac = {
 	},
 	.num_consumer_supplies		= ARRAY_SIZE(vdac_supply),
 	.consumer_supplies		= vdac_supply,
-	.supply_regulator	= "V2V1",
+};
+
+static struct regulator_consumer_supply vusb_supply[] = {
+	REGULATOR_SUPPLY("vusb", "twl6030_usb"),
+};
+
+static struct regulator_init_data vusb = {
+	.constraints = {
+		.min_uV			= 3300000,
+		.max_uV			= 3300000,
+		.valid_modes_mask	= REGULATOR_MODE_NORMAL
+					| REGULATOR_MODE_STANDBY,
+		.valid_ops_mask		= REGULATOR_CHANGE_MODE
+					| REGULATOR_CHANGE_STATUS,
+		.state_mem = {
+			.disabled	= true,
+		},
+		.initial_state		= PM_SUSPEND_MEM,
+	},
+	.num_consumer_supplies		= ARRAY_SIZE(vusb_supply),
+	.consumer_supplies		= vusb_supply,
+};
+
+static struct regulator_consumer_supply vaux_supply[] = {
+	REGULATOR_SUPPLY("vmmc", "omap_hsmmc.1"),
+};
+
+static struct regulator_init_data vaux1 = {
+	.constraints = {
+		.min_uV			= 1000000,
+		.max_uV			= 3000000,
+		.apply_uV		= true,
+		.valid_modes_mask	= REGULATOR_MODE_NORMAL
+					| REGULATOR_MODE_STANDBY,
+		.valid_ops_mask		= REGULATOR_CHANGE_VOLTAGE
+					| REGULATOR_CHANGE_MODE
+					| REGULATOR_CHANGE_STATUS,
+		.always_on		= true,
+		.state_mem = {
+			.disabled	= true,
+		},
+	},
+	.num_consumer_supplies		= 1,
+	.consumer_supplies		= vaux_supply,
 };
 
 static struct regulator_consumer_supply vaux2_supply[] = {
@@ -143,6 +266,24 @@ static struct regulator_init_data clk32kg = {
 	.consumer_supplies		= clk32kg_supply,
 };
 
+static struct regulator_init_data clk32kaudio = {
+	.constraints = {
+		.valid_ops_mask		= REGULATOR_CHANGE_STATUS,
+		.always_on		= true,
+	},
+};
+
+static struct regulator_init_data sysen = {
+	.constraints = {
+		.valid_ops_mask		= REGULATOR_CHANGE_STATUS,
+		.always_on		= true,
+		.state_mem = {
+			.disabled	= true,
+		},
+		.initial_state		= PM_SUSPEND_MEM,
+	},
+};
+
 static struct regulator_init_data regen1 = {
 	.constraints = {
 		.valid_ops_mask		= REGULATOR_CHANGE_STATUS,
@@ -151,6 +292,29 @@ static struct regulator_init_data regen1 = {
 		},
 		.initial_state		= PM_SUSPEND_MEM,
 	},
+};
+
+static int batt_table[] = {
+	/* adc code for temperature in degree C */
+	929, 925, /* -2 ,-1 */
+	920, 917, 912, 908, 904, 899, 895, 890, 885, 880, /* 00 - 09 */
+	875, 869, 864, 858, 853, 847, 841, 835, 829, 823, /* 10 - 19 */
+	816, 810, 804, 797, 790, 783, 776, 769, 762, 755, /* 20 - 29 */
+	748, 740, 732, 725, 718, 710, 703, 695, 687, 679, /* 30 - 39 */
+	671, 663, 655, 647, 639, 631, 623, 615, 607, 599, /* 40 - 49 */
+	591, 583, 575, 567, 559, 551, 543, 535, 527, 519, /* 50 - 59 */
+	511, 504, 496 /* 60 - 62 */
+};
+
+static struct twl4030_bci_platform_data bci_data = {
+	.monitoring_interval	= 10,
+	.max_charger_currentmA	= 1500,
+	.max_charger_voltagemV	= 4560,
+	.max_bat_voltagemV	= 4200,
+	.low_bat_voltagemV	= 3300,
+	.sense_resistor_mohm	= 15,
+	.battery_tmp_tbl	= batt_table,
+	.tblsize		= ARRAY_SIZE(batt_table),
 };
 
 static struct platform_device bn_dmic_codec = {
@@ -292,15 +456,26 @@ static struct twl6040_platform_data twl6040_data = {
 
 static struct twl4030_platform_data twldata = {
 	/* TWL6032 regulators at OMAP447X based SOMs */
+	.ldo1		= &vpp,
+	.ldo2		= &vaux1,
 	.ldo3		= &vaux3,
 	.ldo4		= &vaux2,
+	.ldo5		= &vmmc,
+	.ldo6		= &vcxio,
 	.ldo7		= &vusim,
 	.ldoln		= &vdac,
+	.ldousb		= &vusb,
 
 	/* TWL6030/6032 common resources */
+	.vana		= &vana,
 	.clk32kg	= &clk32kg,
+	.clk32kaudio	= &clk32kaudio,
+
+	/* children */
+	.bci		= &bci_data,
 
 	/* External control pins */
+	.sysen		= &sysen,
 	.regen1		= &regen1,
 };
 
@@ -318,18 +493,9 @@ void __init bn_power_init(void)
 #endif
 	omap4_pmic_get_config(&twldata, TWL_COMMON_PDATA_USB |
 			TWL_COMMON_PDATA_MADC | \
-			TWL_COMMON_PDATA_BCI |
 			TWL_COMMON_PDATA_THERMAL,
-			TWL_COMMON_REGULATOR_VAUX1 |
-			TWL_COMMON_REGULATOR_VMMC |
-			TWL_COMMON_REGULATOR_VPP |
-			TWL_COMMON_REGULATOR_VANA |
-			TWL_COMMON_REGULATOR_VCXIO |
-			TWL_COMMON_REGULATOR_VUSB |
 			TWL_COMMON_REGULATOR_V1V8 |
-			TWL_COMMON_REGULATOR_V2V1 |
-			TWL_COMMON_REGULATOR_SYSEN |
-			TWL_COMMON_REGULATOR_CLK32KAUDIO);
+			TWL_COMMON_REGULATOR_V2V1);
 
 	omap4_pmic_init("twl6032", &twldata, &twl6040_data, OMAP44XX_IRQ_SYS_2N);
 
