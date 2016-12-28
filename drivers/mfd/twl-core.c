@@ -1514,7 +1514,10 @@ static const struct i2c_device_id twl_ids[] = {
 };
 MODULE_DEVICE_TABLE(i2c, twl_ids);
 
-static SIMPLE_DEV_PM_OPS(twl_pm_ops, twl_suspend, twl_resume);
+static const struct dev_pm_ops twl_pm_ops = {
+	.suspend	= twl_suspend,
+	.resume 	= twl_resume,
+};
 
 /* One Client Driver , 4 Clients */
 static struct i2c_driver twl_driver = {
