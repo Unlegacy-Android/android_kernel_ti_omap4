@@ -70,10 +70,10 @@ static void omap_prcm_arch_reset(char mode, const char *cmd)
 		prcm_offs = OMAP3430_GR_MOD;
 		omap3_ctrl_write_boot_mode((cmd ? (u8)*cmd : 0));
 	} else if (cpu_is_omap44xx()) {
-#if CONFIG_OVATION_ALWAYS_COLD_BOOT
-		/* Superhack. */
-		omap4_prm_global_cold_sw_reset(); /* never returns */
-#else
+if (cmd)
+printk("Restart reason %s\n", cmd);
+			omap4_prm_global_cold_sw_reset(); /* never returns */
+#if 0
 		if (cmd == NULL || !strcmp(cmd, "") || !strcmp(cmd,"recovery"))
 			omap4_prm_global_cold_sw_reset(); /* never returns */
 		else
