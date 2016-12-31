@@ -40,7 +40,6 @@
 #include <linux/of_platform.h>
 #include <linux/irq.h>
 #include <linux/irqdomain.h>
-#include <linux/interrupt.h>
 #include <linux/slab.h>
 
 #include <linux/regulator/machine.h>
@@ -1353,31 +1352,6 @@ static void __devinit twl_load_regs_setup_script(const char *gendesc,
 	}
 }
 
-#ifdef CONFIG_PM
-static int twl_suspend(struct device *dev)
-{
-	struct i2c_client *client = container_of(dev, struct i2c_client, dev);
-
-	if (device_may_wakeup(dev))
-		irq_set_irq_wake(client->irq, 1);
-
-	return 0;
-}
-
-static int twl_resume(struct device *dev)
-{
-	struct i2c_client *client = container_of(dev, struct i2c_client, dev);
-
-	if (device_may_wakeup(dev))
-		irq_set_irq_wake(client->irq, 0);
-
-	return 0;
-}
-#else
-#define twl_suspend	NULL
-#define twl_resume	NULL
-#endif
-
 static int twl_remove(struct i2c_client *client)
 {
 	unsigned i, num_slaves;
@@ -1641,17 +1615,9 @@ static const struct i2c_device_id twl_ids[] = {
 };
 MODULE_DEVICE_TABLE(i2c, twl_ids);
 
-static const struct dev_pm_ops twl_pm_ops = {
-	.suspend	= twl_suspend,
-	.resume 	= twl_resume,
-};
-
 /* One Client Driver , 4 Clients */
 static struct i2c_driver twl_driver = {
-	.driver		= {
-		.name	= DRIVER_NAME,
-		.pm 	= &twl_pm_ops,
-	},
+	.driver.name	= DRIVER_NAME,
 	.id_table	= twl_ids,
 	.probe		= twl_probe,
 	.remove		= twl_remove,
