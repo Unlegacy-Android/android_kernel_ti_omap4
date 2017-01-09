@@ -709,14 +709,7 @@ static int rpmsg_omx_release(struct inode *inode, struct file *filp)
 	 * needed because it was already destroyed by rpmsg_omx_remove function
 	 */
 	if (omx->state != OMX_FAIL)
-#ifdef CONFIG_USE_AMAZON_DUCATI
-	{
 		rpmsg_destroy_ept(omx->ept);
-		omx->ept = NULL;
-	}
-#else
-		rpmsg_destroy_ept(omx->ept);
-#endif
 	mutex_unlock(&omxserv->lock);
 	kfree(omx);
 
@@ -924,13 +917,6 @@ serv_up:
 
 	dev_info(omxserv->dev, "new OMX connection srv channel: %u -> %u!\n",
 						rpdev->src, rpdev->dst);
-#ifdef CONFIG_USE_AMAZON_DUCATI
-	if (!strcmp("rpmsg-omx1", dev_name(omxserv->dev))) {
-		void rproc_secure_complete(struct rproc *rproc);
-		struct rproc *rproc = vdev_to_rproc(rpdev->vrp->vdev);
-		rproc_secure_complete(rproc);
-	}
-#endif
 	mutex_unlock(&rpmsg_omx_services_lock);
 	return 0;
 
@@ -949,23 +935,14 @@ static void __devexit rpmsg_omx_remove(struct rpmsg_channel *rpdev)
 	struct rpmsg_omx_service *omxserv = dev_get_drvdata(&rpdev->dev);
 	int major = MAJOR(rpmsg_omx_dev);
 	struct rpmsg_omx_instance *omx;
-#ifndef CONFIG_USE_AMAZON_DUCATI
 	struct rproc *rproc = vdev_to_rproc(rpdev->vrp->vdev);
-#endif
 
 	dev_info(omxserv->dev, "rpmsg omx driver is removed\n");
 
-#ifdef CONFIG_USE_AMAZON_DUCATI
-	if (list_empty(&omxserv->list)) {
-		mutex_lock(&rpmsg_omx_services_lock);
-		device_destroy(rpmsg_omx_class, MKDEV(major, omxserv->minor));
-		cdev_del(&omxserv->cdev);
-#else
 	if (rproc->state != RPROC_CRASHED) {
 		device_destroy(rpmsg_omx_class, MKDEV(major, omxserv->minor));
 		cdev_del(&omxserv->cdev);
 		mutex_lock(&rpmsg_omx_services_lock);
-#endif
 		idr_remove(&rpmsg_omx_services, omxserv->minor);
 		mutex_unlock(&rpmsg_omx_services_lock);
 		kfree(omxserv);
@@ -983,18 +960,7 @@ static void __devexit rpmsg_omx_remove(struct rpmsg_channel *rpdev)
 		/* unblock any pending omx thread */
 		complete_all(&omx->reply_arrived);
 		wake_up_interruptible(&omx->readq);
-#ifdef CONFIG_USE_AMAZON_DUCATI
-		/*
-		 * Userspace might have not had the time to recover from
-		 * the rproc crash, so check whether endpoint is alive.
-		 */
-		if (omx->ept) {
-			rpmsg_destroy_ept(omx->ept);
-			omx->ept = NULL;
-		}
-#else
 		rpmsg_destroy_ept(omx->ept);
-#endif
 	}
 	omxserv->rpdev = NULL;
 	mutex_unlock(&omxserv->lock);

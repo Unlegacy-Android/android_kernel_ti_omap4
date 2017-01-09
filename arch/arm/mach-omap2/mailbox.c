@@ -84,11 +84,7 @@ static inline void mbox_write_reg(u32 val, size_t ofs)
 
 static void omap2_mbox_save_ctx(struct omap_mbox *mbox)
 {
-#ifdef CONFIG_USE_AMAZON_DUCATI
-	int i;
-#else
 	int i, max_iter = 100;
-#endif
 
 	if (context_saved)
 		return;
@@ -105,16 +101,6 @@ static void omap2_mbox_save_ctx(struct omap_mbox *mbox)
 	}
 
 	context_saved = true;
-#ifdef CONFIG_USE_AMAZON_DUCATI
-}
-
-static void omap2_mbox_restore_ctx(struct omap_mbox *mbox)
-{
-	int i, max_iter = 100;
-
-	if (!context_saved)
-		return;
-#endif
 
 	/*
 	 * Softreset sequence supposedly fixes user's recovery issues,
@@ -130,7 +116,6 @@ static void omap2_mbox_restore_ctx(struct omap_mbox *mbox)
 			break;
 		udelay(1);
 	}
-#ifndef CONFIG_USE_AMAZON_DUCATI
 }
 
 static void omap2_mbox_restore_ctx(struct omap_mbox *mbox)
@@ -139,7 +124,6 @@ static void omap2_mbox_restore_ctx(struct omap_mbox *mbox)
 
 	if (!context_saved)
 		return;
-#endif
 
 	/* Restore irqs per user */
 	for (i = 0; i < nr_mbox_users; i++) {
