@@ -147,6 +147,10 @@ static int omap_rproc_mbox_callback(struct notifier_block *this,
 	dev_dbg(dev, "mbox msg: 0x%x\n", msg);
 
 	switch (msg) {
+#ifdef CONFIG_USE_AMAZON_DUCATI
+	case RP_MBOX_BOOTINIT_DONE:
+		break;
+#endif
 	case RP_MBOX_CRASH:
 		/* remoteproc detected an exception, notify the rproc core.
 		 * The remoteproc core will handle the recovery. */

@@ -83,6 +83,7 @@ config OMAP_REMOTEPROC_WATCHDOG
 config OMAP4_IPU_CMA_SIZE
 	hex "Cortex M3 physically contiguous memory pool size (in bytes)"
 	depends on (OMAP_REMOTEPROC_IPU && ARCH_OMAP4)
+	default 0x3A00000 if USE_AMAZON_DUCATI
 	default 0x7000000
 	help
 	  Allocate a specified size of physically contiguous memory (CMA)

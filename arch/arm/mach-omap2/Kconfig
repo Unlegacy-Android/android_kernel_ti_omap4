@@ -393,6 +393,14 @@ config MACH_OMAP4_PANDA
 	select REGULATOR_FIXED_VOLTAGE if REGULATOR
 	select OMAP_TPS6236X
 
+config USE_AMAZON_DUCATI
+	bool "Support Amazon Ducati FW"
+	depends on OMAP_REMOTEPROC_IPU
+	depends on ARCH_OMAP4
+	help
+	  Select IPU support/settings which are compatible with the XEM3
+	  Ducati firmware from Amazon
+
 config MACH_OMAP_BN
 	bool "OMAP4 B&N boards"
 	depends on ARCH_OMAP4
