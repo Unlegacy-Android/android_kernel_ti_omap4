@@ -28,6 +28,11 @@
 #include <linux/rproc_drm.h>
 #include <linux/slab.h>
 
+#ifdef CONFIG_ION_OMAP
+#include <linux/ion.h>
+#include <linux/omap_ion.h>
+#endif
+
 #include "remoteproc_internal.h"
 
 /**
@@ -196,6 +201,9 @@ int rproc_secure_parse_fw(struct rproc *rproc, const u8 *elf_data)
 	struct elf32_shdr *shdr = (struct elf32_shdr *)
 					(elf_data + ehdr->e_shoff);
 	const char *name_sect = elf_data + shdr[ehdr->e_shstrndx].sh_offset;
+#ifdef CONFIG_ION_OMAP
+	struct ion_platform_heap *tiler_2d_heap;
+#endif
 
 	if (strcmp(rproc->name, "ipu_c0"))
 		return 0;
@@ -277,17 +285,24 @@ int rproc_secure_parse_fw(struct rproc *rproc, const u8 *elf_data)
 		}
 	}
 
-	/* FIXME: hardcoded, NEED to be acquired from ION */
-	secure_params_local->decoded_buffer_address = (dma_addr_t) 0xB4300000;
-	secure_params_local->decoded_buffer_size = (uint32_t) 0x6000000;
+#ifdef CONFIG_ION_OMAP
+	tiler_2d_heap = omap_ion_get_heap(OMAP_ION_HEAP_TILER);
+	if (!tiler_2d_heap)
+		BUG();
+
+	secure_params_local->decoded_buffer_address = (dma_addr_t) tiler_2d_heap->base;
+	secure_params_local->decoded_buffer_size = (uint32_t) tiler_2d_heap->size;
+
+	dev_dbg(dev, "decode buff addr = %x, decode buff size = %d\n",
+			secure_params_local->decoded_buffer_address, secure_params_local->decoded_buffer_size);
 
 	/* copy the local secure params into a direct-mapped kernel memory */
 	secure_params = kzalloc(sizeof(*secure_params), GFP_KERNEL);
 	if (secure_params)
-		memcpy(secure_params, secure_params_local,
-						sizeof(*secure_params));
+		*secure_params = *secure_params_local;
 	else
 		ret = -ENOMEM;
+#endif
 
 out:
 	return ret;

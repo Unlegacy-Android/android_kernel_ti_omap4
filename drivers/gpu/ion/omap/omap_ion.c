@@ -32,6 +32,7 @@ static int num_heaps;
 static struct ion_heap **heaps;
 static struct ion_heap *tiler_heap;
 static struct ion_heap *nonsecure_tiler_heap;
+static struct ion_platform_data *pdata;
 
 int omap_ion_tiler_alloc(struct ion_client *client,
 			 struct omap_ion_tiler_alloc_data *data)
@@ -97,9 +98,10 @@ static long omap_ion_ioctl(struct ion_client *client, unsigned int cmd,
 
 static int omap_ion_probe(struct platform_device *pdev)
 {
-	struct ion_platform_data *pdata = pdev->dev.platform_data;
 	int err;
 	int i;
+
+	pdata = pdev->dev.platform_data;
 
 	num_heaps = pdata->nr;
 
@@ -252,6 +254,22 @@ err:
 }
 EXPORT_SYMBOL(omap_ion_share_fd_to_handles);
 
+struct ion_platform_heap *omap_ion_get_heap(unsigned int id)
+{
+	struct ion_platform_heap *hdata;
+	int i;
+
+	if (!pdata)
+		return NULL;
+
+	for (i = 0; i < num_heaps; i++) {
+		hdata = &pdata->heaps[i];
+		if (hdata->id == id)
+			return hdata;
+	}
+
+	return NULL;
+}
 
 static struct platform_driver ion_driver = {
 	.probe = omap_ion_probe,
