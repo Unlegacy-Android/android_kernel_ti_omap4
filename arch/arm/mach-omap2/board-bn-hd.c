@@ -139,7 +139,6 @@ static struct omap2_hsmmc_info bn_mmc[] = {
 		.ocr_mask	= MMC_VDD_29_30,
 		.built_in	= 1,
 		.no_off_init	= true,
-		.init_card = omap4_hsmmc_init_card,
 	},
 	{
 		.mmc		= 1,

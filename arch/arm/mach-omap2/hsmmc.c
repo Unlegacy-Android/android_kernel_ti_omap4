@@ -15,8 +15,6 @@
 #include <linux/delay.h>
 #include <linux/gpio.h>
 #include <linux/pm_qos.h>
-#include <linux/mmc/card.h>
-#include <linux/mmc/mmc.h>
 #include <mach/hardware.h>
 #include <plat/mmc.h>
 #include <plat/omap-pm.h>
@@ -430,25 +428,6 @@ static int omap_hsmmc_set_clks_src(struct device *dev, unsigned int id)
 	clk_put(fclk_child);
 	clk_put(fclk_parent);
 	return 0;
-}
-
-void omap4_hsmmc_init_card(struct mmc_card *card)
-{
-	u8 rev;
-
-	if (cpu_is_omap44xx()) {
-		rev = card->ext_csd.rev;
-
-		dev_dbg(mmc_dev(card->host), "Extended CSD rev. 1.%d\n", rev);
-
-		/* eMMC 4.41 doesn't support Sanitize command */
-		if (rev <= 5)
-			return;
-
-		/* In case of eMMC 4.5 drop Sanitize support bit */
-		if (card->ext_csd.sec_feature_support & EXT_CSD_SEC_SANITIZE)
-			card->ext_csd.sec_feature_support &= ~EXT_CSD_SEC_SANITIZE;
-	}
 }
 
 static int __init
