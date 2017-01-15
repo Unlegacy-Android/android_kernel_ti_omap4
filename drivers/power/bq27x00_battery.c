@@ -40,6 +40,7 @@
 #include <linux/debugfs.h>
 #include <linux/thermal_framework.h>
 #include <asm/unaligned.h>
+#include <linux/mfd/palmas.h>
 
 #include <linux/power/bq27x00_battery.h>
 
@@ -183,14 +184,6 @@ static enum power_supply_property bq27x00_usb_props[] = {
 module_param(poll_interval, uint, 0644);
 MODULE_PARM_DESC(poll_interval, "battery poll interval in seconds - " \
 				"0 disables polling");
-
-#ifdef CONFIG_PALMAS_USB
-int palmas_usb_register_notifier(struct notifier_block *nb);
-#endif
-#ifdef CONFIG_TWL6030_USB
-int twl6030_usb_register_notifier(struct notifier_block *nb);
-int twl6030_usb_unregister_notifier(struct notifier_block *nb);
-#endif
 
 #ifdef CONFIG_CHARGER_BQ2419x
 bool bq2419x_is_charging_done(void);
@@ -870,8 +863,6 @@ static void bq27x00_powersupply_unregister(struct bq27x00_device_info *di)
 	 */
 	poll_interval = 0;
 
-	twl6030_usb_unregister_notifier(&di->nb);
-
 	cancel_delayed_work_sync(&di->work);
 
 	power_supply_unregister(&di->bat);
@@ -1147,12 +1138,7 @@ static int bq27x00_battery_probe(struct i2c_client *client,
 	i2c_set_clientdata(client, di);
 
 	di->nb.notifier_call = bq27x00_usb_notifier_call;
-#ifdef CONFIG_PALMAS_USB
 	palmas_usb_register_notifier(&di->nb);
-#endif
-#ifdef CONFIG_TWL6030_USB
-	twl6030_usb_register_notifier(&di->nb);
-#endif
 
 	/* Register Battery as cooling device for Case domain */
 	if (di->battery_present) {
