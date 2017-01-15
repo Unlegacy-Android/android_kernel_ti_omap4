@@ -2899,5 +2899,13 @@ enum usb_irq_events {
 #define PALMAS_GPADC_TRIM15					0xE
 #define PALMAS_GPADC_TRIM16					0xF
 
+#if defined(CONFIG_PALMAS_USB)
 int palmas_usb_register_notifier(struct notifier_block *nb);
+#else
+static inline int palmas_usb_register_notifier(struct notifier_block *nb)
+{
+	return -EINVAL;
+}
+#endif
+
 #endif /*  __LINUX_MFD_PALMAS_H */
