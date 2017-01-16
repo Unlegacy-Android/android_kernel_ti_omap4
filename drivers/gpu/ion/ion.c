@@ -856,7 +856,8 @@ static void ion_buffer_sync_for_device(struct ion_buffer *buffer,
 		struct page *page = buffer->pages[i];
 
 		if (ion_buffer_page_is_dirty(page))
-			__dma_page_cpu_to_dev(page, 0, PAGE_SIZE, dir);
+			get_dma_ops(dev)->sync_single_for_device(dev,
+				pfn_to_dma(dev, page_to_pfn(page)), PAGE_SIZE, dir);
 		ion_buffer_page_clean(buffer->pages + i);
 	}
 	list_for_each_entry(vma_list, &buffer->vmas, list) {

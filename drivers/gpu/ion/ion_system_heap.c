@@ -232,8 +232,9 @@ void ion_system_heap_free(struct ion_buffer *buffer)
 		 * Flush it before returning it to the pool.
 		 */
 		if (cached)
-			__dma_page_cpu_to_dev(
-				page, 0, PAGE_SIZE << order, DMA_BIDIRECTIONAL);
+			arm_dma_ops.sync_single_for_device(NULL,
+				pfn_to_dma(NULL, page_to_pfn(page)),
+				PAGE_SIZE << order, DMA_BIDIRECTIONAL);
 #endif
 		free_buffer_page(sys_heap, buffer, page, order);
 	}
