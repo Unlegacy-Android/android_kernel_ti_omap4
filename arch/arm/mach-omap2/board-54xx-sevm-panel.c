@@ -26,7 +26,6 @@
 #include <linux/omapfb.h>
 #include <video/omapdss.h>
 
-#include <plat/vram.h>
 #include <plat/gpio.h>
 
 #include <video/omapdss.h>
@@ -35,7 +34,6 @@
 
 #include "board-54xx-sevm.h"
 
-#define OMAP5_SEVM_FB_RAM_SIZE       (SZ_16M + SZ_4M)
 #define OMAPLFB_NUM_DEV 1
 
 #define HDMI_GPIO_HPD 193
@@ -202,11 +200,6 @@ static struct platform_device hdmi_edid_device = {
 static struct omapfb_platform_data sevm_fb_pdata = {
 	.mem_desc = {
 		.region_cnt = 1,
-		.region = {
-			[0] = {
-				.size = OMAP5_SEVM_FB_RAM_SIZE,
-			},
-		},
 	},
 };
 

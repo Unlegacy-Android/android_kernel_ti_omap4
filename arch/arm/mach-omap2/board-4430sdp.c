@@ -45,7 +45,6 @@
 #include <asm/mach/map.h>
 
 #include <plat/board.h>
-#include <plat/vram.h>
 #include "common.h"
 #include <plat/usb.h>
 #include <plat/mmc.h>
@@ -71,8 +70,6 @@
 #include "board-44xx-blaze.h"
 #include "omap_ram_console.h"
 #include "pm.h"
-
-#define SDP4430_FB_RAM_SIZE		SZ_16M /* 1920×1080*4 * 2 */
 
 #define ETH_KS8851_IRQ			34
 #define ETH_KS8851_POWER_ON		48
@@ -1334,7 +1331,6 @@ static void __init omap_4430sdp_display_init(void)
 	sdp4430_lcd_init();
 	sdp4430_picodlp_init();
 	omapfb_set_platform_data(&sdp4430_fb_pdata);
-	omap_vram_set_sdram_vram(SDP4430_FB_RAM_SIZE, 0);
 	if (omap_android_display_is_default(&sdp4430_hdmi_device))
 		omap_display_init(&sdp4430_dss_data_hdmi_default_display);
 	else

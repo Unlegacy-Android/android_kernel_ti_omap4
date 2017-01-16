@@ -21,7 +21,6 @@
 #include <linux/leds-omap4430sdp-display.h>
 
 #include <plat/board.h>
-#include <plat/vram.h>
 #include <plat/android-display.h>
 
 #include <video/omapdss.h>
@@ -30,8 +29,6 @@
 #include "mux.h"
 #include "control.h"
 #include "board-44xx-tablet.h"
-
-#define TABLET_FB_RAM_SIZE		SZ_16M /* 1920×1080*4 * 2 */
 
 /* PWM2 and TOGGLE3 register offsets */
 #define LED_PWM2ON		0x03
@@ -397,7 +394,6 @@ int __init tablet_display_init(void)
 	tablet_lcd_init();
 
 	omapfb_set_platform_data(&tablet_fb_pdata);
-	omap_vram_set_sdram_vram(TABLET_FB_RAM_SIZE, 0);
 	if (omap_android_display_is_default(&tablet_hdmi_device))
 		omap_display_init(&tablet_dss_data_hdmi_default_display);
 	else

@@ -30,7 +30,6 @@
 #include <linux/regulator/machine.h>
 #include <linux/regulator/fixed.h>
 
-#include <plat/vram.h>
 #include <plat/omap_apps_brd_id.h>
 #include <mach/board-4430-acclaim.h>
 
@@ -171,15 +170,9 @@ static void tablet_lcd_init(void)
 	omap4_ctrl_pad_writel(reg, OMAP4_CTRL_MODULE_PAD_CORE_CONTROL_DSIPHY);
 }
 
-#define TABLET_FB_RAM_SIZE                SZ_16M /* 1920×1080*4 * 2 */
 static struct omapfb_platform_data tablet_fb_pdata = {
 	.mem_desc = {
 		.region_cnt = 1,
-		.region = {
-			[0] = {
-				.size = TABLET_FB_RAM_SIZE,
-			},
-		},
 	},
 };
 
@@ -220,7 +213,6 @@ int __init acclaim_panel_init(void)
 	acclaim4430_disp_backlight_init();
 	tablet_lcd_init();
 	/* disabling HDMI since Acclaim does not provide such support */
-	omap_vram_set_sdram_vram(TABLET_FB_RAM_SIZE, 0);
 	omapfb_set_platform_data(&tablet_fb_pdata);
 
 	omap_display_init(&tablet_dss_data);

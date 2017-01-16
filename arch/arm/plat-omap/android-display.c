@@ -24,7 +24,6 @@
 
 #include <plat/android-display.h>
 #include <plat/dsscomp.h>
-#include <plat/vram.h>
 
 struct omap_android_display_data {
 	/* members with default values */
@@ -203,7 +202,6 @@ int __init omap_android_display_setup(struct omap_dss_board_info *dss,
 			omapfb_vram += fb->mem_desc.region[i].size;
 
 	pr_info("android_display: setting vram to %u\n", omapfb_vram);
-	omap_vram_set_sdram_vram(omapfb_vram, 0);
 
 	return 0;
 }

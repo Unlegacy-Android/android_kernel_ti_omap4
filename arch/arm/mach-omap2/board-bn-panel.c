@@ -39,7 +39,6 @@
 #include <asm/system_info.h>
 #include <asm/mach-types.h>
 
-#include <plat/vram.h>
 #include <plat/android-display.h>
 
 #include "board-bn-hd.h"
