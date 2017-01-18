@@ -461,8 +461,7 @@ bool omap_wakeupgen_check_interrupts(char *report_string)
 		 * because it is accessible for write only from secure
 		 * privileged mode. So just ignore 8th interrupt in this check.
 		 */
-		if (i == 0 && cpu_is_omap44xx() &&
-		    (omap_type() == OMAP2_DEVICE_TYPE_GP))
+		if (i == 0 && cpu_is_omap44xx())
 			gica &= ~(1 << 8);
 
 		wakea_c0 = wakeupgen_readl(i, 0);
