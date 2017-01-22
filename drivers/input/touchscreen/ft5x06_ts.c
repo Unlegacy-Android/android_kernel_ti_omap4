@@ -670,32 +670,22 @@ static int ft5x06_ts_probe(struct i2c_client *client,
 	}
 
 	if (gpio_is_valid(pdata->irq_gpio)) {
-		err = gpio_request(pdata->irq_gpio, "ft5x06_irq_gpio");
+		err = gpio_request_one(pdata->irq_gpio,
+			pdata->irq_gpio_flags, "ft5x06_irq_gpio");
 		if (err) {
 			dev_err(&client->dev, "irq gpio request failed");
 			goto pwr_off;
 		}
-		err = gpio_direction_input(pdata->irq_gpio);
-		if (err) {
-			dev_err(&client->dev,
-				"set_direction for irq gpio failed\n");
-			goto free_irq_gpio;
-		}
 	}
 
 	if (gpio_is_valid(pdata->reset_gpio)) {
-		err = gpio_request(pdata->reset_gpio, "ft5x06_reset_gpio");
+		err = gpio_request_one(pdata->reset_gpio,
+			pdata->reset_gpio_flags, "ft5x06_reset_gpio");
 		if (err) {
 			dev_err(&client->dev, "reset gpio request failed");
 			goto free_irq_gpio;
 		}
 
-		err = gpio_direction_output(pdata->reset_gpio, 0);
-		if (err) {
-			dev_err(&client->dev,
-				"set_direction for reset gpio failed\n");
-			goto free_reset_gpio;
-		}
 		msleep(FT_RESET_DLY);
 		gpio_set_value_cansleep(data->pdata->reset_gpio, 1);
 	}
