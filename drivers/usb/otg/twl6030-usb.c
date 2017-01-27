@@ -270,12 +270,20 @@ static irqreturn_t twl6030_usb_irq(int irq, void *_twl)
 			regulator_enable(twl->usb3v3);
 			charger_type = omap_usb2_charger_detect(
 					&twl->comparator);
-			if (charger_type == POWER_SUPPLY_TYPE_USB_DCP)
+			if (charger_type == POWER_SUPPLY_TYPE_USB_DCP) {
+				regulator_disable(twl->usb3v3);
+				status = OMAP_MUSB_VBUS_VALID;
 				event = USB_EVENT_CHARGER;
-			else
+			} else if ((charger_type == POWER_SUPPLY_TYPE_USB_CDP)
+					|| (charger_type == POWER_SUPPLY_TYPE_USB)) {
+				status = OMAP_MUSB_VBUS_VALID;
 				event = USB_EVENT_VBUS;
+			} else {
+				regulator_disable(twl->usb3v3);
+				charger_type = POWER_SUPPLY_TYPE_UNKNOWN;
+				status = OMAP_MUSB_ID_FLOAT;
+			}
 			twl->asleep = 1;
-			status = OMAP_MUSB_VBUS_VALID;
 			omap_musb_mailbox(status);
 			blocking_notifier_call_chain(&notifier_list,
 						     event, &charger_type);
