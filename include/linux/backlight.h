@@ -13,10 +13,6 @@
 #include <linux/notifier.h>
 #include <linux/thermal_framework.h>
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-#include <linux/earlysuspend.h>
-#endif
-
 /* Notes on locking:
  *
  * backlight_device->ops_lock is an internal backlight lock protecting the
@@ -111,10 +107,6 @@ struct backlight_device {
 	struct thermal_dev *tdev;
 
 	struct device dev;
-
-#ifdef CONFIG_HAS_EARLYSUSPEND
-	struct early_suspend early_suspend;
-#endif
 };
 
 static inline void backlight_update_status(struct backlight_device *bd)
