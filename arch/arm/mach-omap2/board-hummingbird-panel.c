@@ -295,10 +295,12 @@ static struct i2c_board_info __initdata bl_i2c_boardinfo[] = {
 	},
 };
 
+#ifdef CONFIG_OMAP4_DSS_HDMI
 static struct gpio hummingbird_hdmi_gpios[] = {
 	{HDMI_GPIO_CT_CP_HPD,  GPIOF_OUT_INIT_HIGH,    "hdmi_gpio_hpd"   },
 	{HDMI_GPIO_LS_OE,      GPIOF_OUT_INIT_HIGH,    "hdmi_gpio_ls_oe" },
 };
+#endif
 
 static void __init hummingbird_lcd_mux_init(void)
 {
@@ -318,6 +320,7 @@ static void __init hummingbird_lcd_mux_init(void)
 			OMAP_PIN_OUTPUT);
 }
 
+#ifdef CONFIG_OMAP4_DSS_HDMI
 static void __init hummingbird_hdmi_mux_init(void)
 {
 	u32 r;
@@ -356,6 +359,7 @@ static void __init hummingbird_hdmi_mux_init(void)
 	if (status)
 		pr_err("%s: Cannot request HDMI GPIOs %x \n", __func__, status);
 }
+#endif
 
 static int lg_enable_dsi(struct omap_dss_device *dssdev)
 {
@@ -411,6 +415,7 @@ static void auo_disable_dsi(struct omap_dss_device *dssdev)
 	_disable_supplies();
 }
 
+#ifdef CONFIG_OMAP4_DSS_HDMI
 static int hummingbird_enable_hdmi(struct omap_dss_device *dssdev)
 {
 	if (system_rev > HUMMINGBIRD_EVT0) {
@@ -445,6 +450,7 @@ static void hummingbird_disable_hdmi(struct omap_dss_device *dssdev)
 	} else
 		gpio_direction_output(GPIO_UART_DDC_SWITCH, 1);
 }
+#endif
 
 static DSI_FPS_DATA(30_novatek, 30, 125, 5, 27, 7, 18, 9, 11, 15, 11);
 static DSI_FPS_DATA(48_novatek, 48, 200, 8, 43, 11, 12, 14, 16, 24, 15);
@@ -644,6 +650,7 @@ static struct omap_dss_device hummingbird_lcd_device_orise = {
 	.platform_disable = auo_disable_dsi,
 };
 
+#ifdef CONFIG_OMAP4_DSS_HDMI
 static struct omap_dss_device hummingbird_hdmi_device = {
 	.name = "hdmi",
 	.driver_name = "hdmi_panel",
@@ -659,10 +666,13 @@ static struct omap_dss_device hummingbird_hdmi_device = {
 	.platform_enable	= hummingbird_enable_hdmi,
 	.platform_disable	= hummingbird_disable_hdmi,
 };
+#endif
 
 static struct omap_dss_device *hummingbird_dss_devices[] = {
 	&hummingbird_lcd_device_novatek,
+#ifdef CONFIG_OMAP4_DSS_HDMI
 	&hummingbird_hdmi_device,
+#endif
 };
 
 static struct omap_dss_board_info hummingbird_dss_data = {
@@ -757,7 +767,9 @@ void hummingbird_android_display_setup(struct omap_ion_platform_data *ion)
 int __init hummingbird_panel_init(void)
 {
 	hummingbird_lcd_init();
+#ifdef CONFIG_OMAP4_DSS_HDMI
 	hummingbird_hdmi_mux_init();
+#endif
 	hummingbird_lcd_mux_init();
 
 	omapfb_set_platform_data(&hummingbird_fb_pdata);

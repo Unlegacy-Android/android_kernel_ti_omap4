@@ -218,10 +218,12 @@ static struct i2c_board_info __initdata bl_i2c_boardinfo[] = {
 	},
 };
 
+#ifdef CONFIG_OMAP4_DSS_HDMI
 static struct gpio ovation_hdmi_gpios[] = {
 	{HDMI_GPIO_CT_CP_HPD,  GPIOF_OUT_INIT_HIGH,    "hdmi_gpio_hpd"   },
 	{HDMI_GPIO_LS_OE,      GPIOF_OUT_INIT_HIGH,    "hdmi_gpio_ls_oe" },
 };
+#endif
 
 struct omap_tablet_panel_data {
 	struct omap_dss_board_info *board_info;
@@ -247,7 +249,7 @@ static struct sgx_omaplfb_config omaplfb_config_ovation_wuxga[OMAPLFB_NUM_DEV] =
 	}
 };
 
-
+#ifdef CONFIG_OMAP4_DSS_HDMI
 static void ovation_hdmi_mux_init(void)
 {
 	u32 r;
@@ -299,6 +301,7 @@ static void ovation_hdmi_mux_init(void)
 	if (status)
 		pr_err("%s: Cannot request HDMI GPIOs %x \n", __func__, status);
 }
+#endif
 
 static void __init ovation_panel_init_dpi(void)
 {
@@ -378,6 +381,7 @@ static void ovation_disable_lcd(struct omap_dss_device *dssdev)
 	Vdd_LCD_CT_PEN_disable(NULL, "vlcd");
 }
 
+#ifdef CONFIG_OMAP4_DSS_HDMI
 static int ovation_enable_hdmi(struct omap_dss_device *dssdev)
 {
 	if (system_rev > OVATION_EVT1A) {
@@ -412,6 +416,7 @@ static void ovation_disable_hdmi(struct omap_dss_device *dssdev)
 	} else
 		gpio_direction_output(GPIO_UART_DDC_SWITCH, 1);
 }
+#endif
 
 static struct panel_dsi_data dsi_data = {
 	.x_res		= 1920,
@@ -616,6 +621,7 @@ static struct omap_dss_device ovation_lcd_device = {
 	},
 };
 
+#ifdef CONFIG_OMAP4_DSS_HDMI
 static struct omap_dss_device ovation_hdmi_device = {
 	.name = "hdmi",
 	.driver_name = "hdmi_panel",
@@ -635,10 +641,13 @@ static struct omap_dss_device ovation_hdmi_device = {
 	.platform_enable	= ovation_enable_hdmi,
 	.platform_disable	= ovation_disable_hdmi,
 };
+#endif
 
 static struct omap_dss_device *ovation_dss_devices[] = {
 	&ovation_lcd_device,
+#ifdef CONFIG_OMAP4_DSS_HDMI
 	&ovation_hdmi_device,
+#endif
 };
 
 static struct omap_dss_board_info ovation_dss_data = {
@@ -711,7 +720,9 @@ void ovation_android_display_setup(struct omap_ion_platform_data *ion)
 int __init ovation_panel_init(void)
 {
 	ovation_panel_init_dpi();
+#ifdef CONFIG_OMAP4_DSS_HDMI
 	ovation_hdmi_mux_init();
+#endif
 	omapfb_set_platform_data(&ovation_fb_pdata);
 	omap_display_init(&ovation_dss_data);
 
