@@ -636,7 +636,7 @@ static int ft5x06_ts_probe(struct i2c_client *client,
 	__set_bit(BTN_TOUCH, input_dev->keybit);
 	__set_bit(INPUT_PROP_DIRECT, input_dev->propbit);
 
-	input_mt_init_slots(input_dev, CFG_MAX_TOUCH_POINTS, 0);
+	input_mt_init_slots(input_dev, CFG_MAX_TOUCH_POINTS);
 	input_set_abs_params(input_dev, ABS_MT_POSITION_X, pdata->x_min,
 			     pdata->x_max, 0, 0);
 	input_set_abs_params(input_dev, ABS_MT_POSITION_Y, pdata->y_min,
