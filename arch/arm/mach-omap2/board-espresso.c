@@ -110,9 +110,50 @@ static struct omap_musb_board_data musb_board_data = {
 
 /* Board identification */
 
+#ifdef CONFIG_OMAP_SKIP_BOARDDETECTION
+#ifdef CONFIG_OMAP_P3100
+static bool _board_has_modem = true;
+static bool _board_is_espresso10 = false;
+static bool _board_is_bestbuy_variant = false;
+#endif
+
+#ifdef CONFIG_OMAP_P3110
+static bool _board_has_modem = false;
+static bool _board_is_espresso10 = false;
+static bool _board_is_bestbuy_variant = false;
+#endif
+
+#ifdef CONFIG_OMAP_P3113
+static bool _board_has_modem = false;
+static bool _board_is_espresso10 = false;
+static bool _board_is_bestbuy_variant = true;
+#endif
+
+#ifdef CONFIG_OMAP_P5100
 static bool _board_has_modem = true;
 static bool _board_is_espresso10 = true;
 static bool _board_is_bestbuy_variant = false;
+#endif
+
+#ifdef CONFIG_OMAP_P5110
+static bool _board_has_modem = false;
+static bool _board_is_espresso10 = true;
+static bool _board_is_bestbuy_variant = false;
+#endif
+
+#ifdef CONFIG_OMAP_P5113
+static bool _board_has_modem = false;
+static bool _board_is_espresso10 = true;
+static bool _board_is_bestbuy_variant = true;
+#endif
+
+#else
+
+static bool _board_has_modem = true;
+static bool _board_is_espresso10 = true;
+static bool _board_is_bestbuy_variant = false;
+
+#endif
 
 /*
  * Sets the board type
@@ -128,6 +169,7 @@ static __init int setup_board_type(char *str)
 	 */
 	console_loglevel = 15;
 
+#ifndef CONFIG_OMAP_SKIP_BOARDDETECTION
 	if (kstrtoint(str, 0, &lcd_id)) {
 		pr_err("************************************************\n");
 		pr_err("Cannot parse lcd_panel_id command line parameter\n");
@@ -144,6 +186,7 @@ static __init int setup_board_type(char *str)
 		_board_is_espresso10 = false;
 
 	return 0;
+#endif
 }
 early_param("lcd_panel_id", setup_board_type);
 
@@ -152,12 +195,14 @@ early_param("lcd_panel_id", setup_board_type);
  */
 static int __init espresso_set_subtype(char *str)
 {
+#ifndef CONFIG_OMAP_SKIP_BOARDDETECTION
 	#define CARRIER_WIFI_ONLY "wifi-only"
 
 	if (!strncmp(str, CARRIER_WIFI_ONLY, strlen(CARRIER_WIFI_ONLY)))
 		_board_has_modem = false;
 
 	return 0;
+#endif
 }
 __setup("androidboot.carrier=", espresso_set_subtype);
 
@@ -166,6 +211,7 @@ __setup("androidboot.carrier=", espresso_set_subtype);
  */
 static int __init espresso_set_vendor_type(char *str)
 {
+#ifndef CONFIG_OMAP_SKIP_BOARDDETECTION
 	unsigned int vendor;
 
 	if (kstrtouint(str, 0, &vendor))
@@ -175,6 +221,7 @@ static int __init espresso_set_vendor_type(char *str)
 		_board_is_bestbuy_variant = true;
 
 	return 0;
+#endif
 }
 __setup("sec_vendor=", espresso_set_vendor_type);
 
