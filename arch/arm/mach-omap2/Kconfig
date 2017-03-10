@@ -383,6 +383,41 @@ config MACH_OMAP4_ESPRESSO
 	select REGULATOR_FIXED_VOLTAGE
 	select TWL6030_GPADC
 
+config OMAP_SKIP_BOARDDETECTION
+	bool "Skip intelligent Espresso / Espresso10 detection"
+	depends on MACH_OMAP4_ESPRESSO
+	default n
+
+config OMAP_P3100
+	bool "Force P3100 Tab 2 variant"
+	depends on OMAP_SKIP_BOARDDETECTION
+	default n
+
+config OMAP_P3110
+	bool "Force P3110 Tab 2 variant"
+	depends on OMAP_SKIP_BOARDDETECTION
+	default n
+
+config OMAP_P3113
+	bool "Force P3113 Tab 2 variant"
+	depends on OMAP_SKIP_BOARDDETECTION
+	default n
+
+config OMAP_P5100
+	bool "Force P5100 Tab 2 variant"
+	depends on OMAP_SKIP_BOARDDETECTION
+	default n
+
+config OMAP_P5110
+	bool "Force P5110 Tab 2 variant"
+	depends on OMAP_SKIP_BOARDDETECTION
+	default n
+
+config OMAP_P5113
+	bool "Force P5113 Tab 2 variant"
+	depends on OMAP_SKIP_BOARDDETECTION
+	default n
+
 config MACH_TUNA
 	bool "Tuna Board"
 	default n
