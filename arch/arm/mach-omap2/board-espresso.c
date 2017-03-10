@@ -110,9 +110,40 @@ static struct omap_musb_board_data musb_board_data = {
 
 /* Board identification */
 
+#ifdef CONFIG_OMAP_SKIP_BOARDDETECTION
+#if defined(CONFIG_OMAP_P3100)
+static bool _board_has_modem = true;
+static bool _board_is_espresso10 = false;
+static bool _board_is_bestbuy_variant = false;
+#elif defined(CONFIG_OMAP_P3110)
+static bool _board_has_modem = false;
+static bool _board_is_espresso10 = false;
+static bool _board_is_bestbuy_variant = false;
+#elif defined(CONFIG_OMAP_P3113)
+static bool _board_has_modem = false;
+static bool _board_is_espresso10 = false;
+static bool _board_is_bestbuy_variant = true;
+#elif defined(CONFIG_OMAP_P5100)
 static bool _board_has_modem = true;
 static bool _board_is_espresso10 = true;
 static bool _board_is_bestbuy_variant = false;
+#elif defined(CONFIG_OMAP_P5110)
+static bool _board_has_modem = false;
+static bool _board_is_espresso10 = true;
+static bool _board_is_bestbuy_variant = false;
+#elif defined(CONFIG_OMAP_P5113)
+static bool _board_has_modem = false;
+static bool _board_is_espresso10 = true;
+static bool _board_is_bestbuy_variant = true;
+#endif
+
+#else
+
+static bool _board_has_modem = true;
+static bool _board_is_espresso10 = true;
+static bool _board_is_bestbuy_variant = false;
+
+#endif
 
 /*
  * Sets the board type
@@ -136,17 +167,20 @@ static __init int setup_board_type(char *str)
 		return 1;
 	}
 
+#ifndef CONFIG_OMAP_SKIP_BOARDDETECTION
 	/*
 	 * P51xx bootloaders pass lcd_id=1 and on some older lcd_id=0,
 	 * everything else is P31xx.
 	 */
 	if (lcd_id > 1)
 		_board_is_espresso10 = false;
+#endif
 
 	return 0;
 }
 early_param("lcd_panel_id", setup_board_type);
 
+#ifndef CONFIG_OMAP_SKIP_BOARDDETECTION
 /*
  * Sets whether the device is a wifi-only variant
  */
@@ -177,6 +211,7 @@ static int __init espresso_set_vendor_type(char *str)
 	return 0;
 }
 __setup("sec_vendor=", espresso_set_vendor_type);
+#endif
 
 bool board_is_espresso10(void) {
 	return _board_is_espresso10;
