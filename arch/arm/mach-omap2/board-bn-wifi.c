@@ -140,6 +140,7 @@ static void bn_wilink_set_power(bool enable)
 /* wl2xx WiFi platform data */
 static struct wl12xx_platform_data wl12xx_pdata = {
 	.irq = -EINVAL,
+	.irq_trigger = IRQF_TRIGGER_HIGH,
 	.ref_clock_freq = 38400000,
 	.tcxo_clock_freq = 38400000,
 	//.set_power = bn_wilink_set_power,
