@@ -773,6 +773,11 @@ static noinline_for_stack void free_page_list(struct list_head *free_pages)
 /*
  * shrink_page_list() returns the number of reclaimed pages
  */
+#if (__GNUC__ * 100 + __GNUC_MINOR__ * 10 + __GNUC_PATCHLEVEL__) < 610
+static unsigned long shrink_page_list(struct list_head *page_list,
+				      struct zone *zone,
+				      struct scan_control *sc) __attribute__((optimize("O0")));
+#endif
 static unsigned long shrink_page_list(struct list_head *page_list,
 				      struct zone *zone,
 				      struct scan_control *sc)
