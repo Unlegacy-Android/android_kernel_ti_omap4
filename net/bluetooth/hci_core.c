@@ -939,11 +939,9 @@ static void hci_power_on(struct work_struct *work)
 
 	BT_DBG("%s", hdev->name);
 
-#if !(defined(CONFIG_MACH_OMAP_OVATION)||defined(CONFIG_MACH_OMAP_HUMMINGBIRD))
-// Avoid opening device when we do power on
 	if (hci_dev_open(hdev->id) < 0)
 		return;
-#endif
+
 	if (test_bit(HCI_AUTO_OFF, &hdev->flags))
 		mod_timer(&hdev->off_timer,
 				jiffies + msecs_to_jiffies(AUTO_OFF_TIMEOUT));
@@ -958,10 +956,7 @@ static void hci_power_off(struct work_struct *work)
 
 	BT_DBG("%s", hdev->name);
 
-#if !(defined(CONFIG_MACH_OMAP_OVATION)||defined(CONFIG_MACH_OMAP_HUMMINGBIRD))
-// Avoid closing device when we do power off
 	hci_dev_close(hdev->id);
-#endif
 }
 
 static void hci_auto_off(unsigned long data)
