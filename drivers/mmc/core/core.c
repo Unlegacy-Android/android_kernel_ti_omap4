@@ -78,7 +78,7 @@ static int mmc_schedule_delayed_work(struct delayed_work *work,
 /*
  * Internal function. Flush all scheduled work from the MMC work queue.
  */
-void mmc_flush_scheduled_work(void)
+static void mmc_flush_scheduled_work(void)
 {
 	flush_workqueue(workqueue);
 }
@@ -1673,10 +1673,6 @@ static int mmc_rescan_try_freq(struct mmc_host *host, unsigned freq)
 	return -EIO;
 }
 
-#if (defined(CONFIG_MACH_OMAP_HUMMINGBIRD) || defined(CONFIG_MACH_OMAP_OVATION))
-extern void bn_wilink_set_power(bool);
-#endif
-
 void mmc_rescan(struct work_struct *work)
 {
 	static const unsigned freqs[] = { 400000, 300000, 200000, 100000 };
@@ -1687,11 +1683,6 @@ void mmc_rescan(struct work_struct *work)
 
 	if (host->rescan_disable)
 		return;
-
-#if (defined(CONFIG_MACH_OMAP_HUMMINGBIRD) || defined(CONFIG_MACH_OMAP_OVATION))
-	if (host->caps & MMC_CAP_POWER_OFF_CARD)
-		bn_wilink_set_power(1);
-#endif
 
 	mmc_bus_get(host);
 
@@ -1743,10 +1734,6 @@ void mmc_rescan(struct work_struct *work)
 	mmc_release_host(host);
 
  out:
-#if (defined(CONFIG_MACH_OMAP_HUMMINGBIRD) || defined(CONFIG_MACH_OMAP_OVATION))
-	if (host->caps & MMC_CAP_POWER_OFF_CARD)
-		bn_wilink_set_power(0);
-#endif
 	if (extend_wakelock)
 		wake_lock_timeout(&host->detect_wake_lock, HZ / 2);
 	else
@@ -1866,12 +1853,10 @@ int mmc_card_sleep(struct mmc_host *host)
 	int err = -ENOSYS;
 
 	mmc_bus_get(host);
-	mmc_claim_host(host);
 
 	if (host->bus_ops && !host->bus_dead && host->bus_ops->awake)
 		err = host->bus_ops->sleep(host);
 
-	mmc_release_host(host);
 	mmc_bus_put(host);
 
 	return err;

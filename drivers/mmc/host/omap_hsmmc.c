@@ -250,7 +250,6 @@ struct omap_hsmmc_host {
 	int			use_reg;
 	int			req_in_progress;
 	unsigned int		flags;
-	int			shutdown;
 	unsigned int		errata;
 
 	struct	omap_mmc_platform_data	*pdata;
@@ -889,9 +888,6 @@ omap_hsmmc_start_command(struct omap_hsmmc_host *host, struct mmc_command *cmd,
 	struct mmc_data *data, bool no_autocmd12)
 {
 	int cmdreg = 0, resptype = 0, cmdtype = 0;
-
-	if (host->shutdown)
-		return;
 
 	dev_dbg(mmc_dev(host->mmc), "%s: CMD%d, argument 0x%08x\n",
 		mmc_hostname(host->mmc), cmd->opcode, cmd->arg);
@@ -1690,9 +1686,6 @@ omap_hsmmc_prepare_data(struct omap_hsmmc_host *host, struct mmc_request *req)
 	int ret;
 	int numblks;
 
-	if (host->shutdown)
-		return 0;
-
 	host->data = req->data;
 
 	if (req->data == NULL) {
@@ -2422,7 +2415,6 @@ static int __init omap_hsmmc_probe(struct platform_device *pdev)
 	}
 	host->power_mode = MMC_POWER_OFF;
 	host->flags	= AUTO_CMD12;
-	host->shutdown = 0;
 
 	host->errata = 0;
 	if (cpu_is_omap44xx())
@@ -2847,45 +2839,6 @@ static int omap_hsmmc_runtime_resume(struct device *dev)
 	return 0;
 }
 
-static void omap_hsmmc_shutdown(struct platform_device *pdev)
-{
-	struct mmc_host *mmc = NULL;
-	struct omap_hsmmc_host *host = platform_get_drvdata(pdev);
-	int err = 0;
-
-	if (host->id != OMAP_MMC2_DEVID){/*sdcard or wifi emmc*/
-		return;
-	}
-
-	dev_info(&pdev->dev, "shutting down mmc\n");
-
-	mmc = host->mmc;
-
-	if (mmc_card_can_sleep(host->mmc)) {
-		mmc->caps &= ~MMC_CAP_WAIT_WHILE_BUSY;
-		err = mmc_card_sleep(host->mmc);
-		mmc->caps |= MMC_CAP_WAIT_WHILE_BUSY;
-		if (err) {
-			dev_dbg(mmc_dev(host->mmc),"MMC sleep command CMD5 returned error: %d", err);
-		}
-	}
-
-	host->shutdown = 1;
-
-	if (host->pdata->suspend) {//disable card_detect_irq
-		err = host->pdata->suspend(&pdev->dev, host->slot_id);
-		if (err) {
-			dev_dbg(mmc_dev(host->mmc),
-				"Unable to handle MMC board"
-				" level suspend: %d", err);
-		}
-	}
-
-	if (mmc->caps & MMC_CAP_DISABLE)
-		cancel_delayed_work(&mmc->disable);
-	cancel_delayed_work(&mmc->detect);
-	mmc_flush_scheduled_work();
-}
 
 static struct dev_pm_ops omap_hsmmc_dev_pm_ops = {
 	.suspend	= omap_hsmmc_suspend,
@@ -2896,7 +2849,6 @@ static struct dev_pm_ops omap_hsmmc_dev_pm_ops = {
 
 static struct platform_driver omap_hsmmc_driver = {
 	.remove		= omap_hsmmc_remove,
-	.shutdown       = omap_hsmmc_shutdown,
 	.driver		= {
 		.name = DRIVER_NAME,
 		.owner = THIS_MODULE,
