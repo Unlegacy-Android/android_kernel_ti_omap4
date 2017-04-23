@@ -128,10 +128,14 @@ static void bn_wilink_set_power(bool enable)
 	pr_info("%s(%i)\n", __func__, enable);
 
 	if (enable) {
+		bool skip_delay = regulator_is_enabled(wl12xx_32k) > 0;
 		regulator_enable(wl12xx_vbat);
 		regulator_enable(wl12xx_vio);
 		regulator_enable(wl12xx_32k);
-		mdelay(100);
+		if (!skip_delay) {
+			pr_info("%s: applying 100 ms delay\n", __func__);
+			mdelay(100);
+		}
 	} else {
 		regulator_disable(wl12xx_32k);
 		regulator_disable(wl12xx_vio);
