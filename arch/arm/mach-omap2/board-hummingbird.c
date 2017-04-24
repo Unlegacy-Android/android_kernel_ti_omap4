@@ -606,9 +606,9 @@ static void __init omap_hummingbird_init(void)
 	kxtj9_dev_init();
 	omap4_register_ion();
 	board_serial_init();
-	bn_wilink_init();
 
 	omap4_twl6030_hsmmc_init(mmc);
+	bn_wilink_init(mmc[2].dev);
 	hummingbird_sensor_init();
 	usb_musb_init(&musb_board_data);
 

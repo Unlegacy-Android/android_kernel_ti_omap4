@@ -926,9 +926,9 @@ void __init omap_ovation_init(void)
 	kxtj9_dev_init();
 	omap4_register_ion();
 	board_serial_init();
-	bn_wilink_init();
 
 	omap4_twl6030_hsmmc_init(mmc);
+	bn_wilink_init(mmc[2].dev);
 	usb_musb_init(&musb_board_data);
 
 	omap_enable_smartreflex_on_init();
