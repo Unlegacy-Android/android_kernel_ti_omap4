@@ -88,7 +88,6 @@ static struct regulator_init_data vusim = {
 					| REGULATOR_CHANGE_MODE
 					| REGULATOR_CHANGE_STATUS,
 		.boot_on		= true,
-		.always_on		= true,
 		.initial_state		= PM_SUSPEND_MEM,
 	},
 	.num_consumer_supplies		= ARRAY_SIZE(vwlan_supply),
