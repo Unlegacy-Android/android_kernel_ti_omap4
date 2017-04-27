@@ -19,7 +19,6 @@
 #include <linux/wl12xx.h>
 #include <linux/skbuff.h>
 #include <linux/ti_wilink_st.h>
-#include <linux/delay.h>
 #include <plat/omap-serial.h>
 #include <plat/gpio.h>
 #include <plat/mmc.h>
@@ -83,7 +82,7 @@ static struct fixed_voltage_config vsys_wlan_pdata = {
 	.supply_name		= "vsys-wlan",
 	.microvolts		= 3875000, /* follows VSYS 3.50-4.25V */
 	.gpio 			= GPIO_WIFI_PWEN,
-	.startup_delay		= 200, /* 200usec */
+	.startup_delay		= 800, /* 800usec */
 	.enable_high		= 1,
 	.enabled_at_boot	= 1,
 	.init_data		= &wlan_vbat,
@@ -128,14 +127,9 @@ static void bn_wilink_set_power(bool enable)
 	pr_info("%s(%i)\n", __func__, enable);
 
 	if (enable) {
-		bool skip_delay = regulator_is_enabled(wl12xx_32k) > 0;
 		regulator_enable(wl12xx_vbat);
 		regulator_enable(wl12xx_vio);
 		regulator_enable(wl12xx_32k);
-		if (!skip_delay) {
-			pr_info("%s: applying 100 ms delay\n", __func__);
-			mdelay(100);
-		}
 	} else {
 		regulator_disable(wl12xx_32k);
 		regulator_disable(wl12xx_vio);
