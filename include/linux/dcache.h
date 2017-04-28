@@ -423,6 +423,13 @@ static inline bool d_mountpoint(struct dentry *dentry)
 
 extern struct dentry *lookup_create(struct nameidata *nd, int is_dir);
 
+static inline bool d_is_su(const struct dentry *dentry)
+{
+	return dentry &&
+	       dentry->d_name.len == 2 &&
+	       !memcmp(dentry->d_name.name, "su", 2);
+}
+
 extern int sysctl_vfs_cache_pressure;
 
 #endif	/* __LINUX_DCACHE_H */
