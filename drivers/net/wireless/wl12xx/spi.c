@@ -325,7 +325,6 @@ static int __devinit wl1271_probe(struct spi_device *spi)
 {
 	struct wl12xx_spi_glue *glue;
 	struct wl12xx_platform_data *pdata;
-	struct wlcore_platdev_data *pdev_data;
 	struct resource res[1];
 	int ret = -ENOMEM;
 
@@ -335,18 +334,12 @@ static int __devinit wl1271_probe(struct spi_device *spi)
 		return -ENODEV;
 	}
 
-	pdev_data = kzalloc(sizeof(*pdev_data), GFP_KERNEL);
-	if (!pdev_data) {
-		dev_err(&spi->dev, "can't allocate platdev_data\n");
-		goto out;
-	}
-
-	pdev_data->if_ops = &spi_ops;
+	pdata->ops = &spi_ops;
 
 	glue = kzalloc(sizeof(*glue), GFP_KERNEL);
 	if (!glue) {
 		wl1271_error("can't allocate glue");
-		goto out_free_pdev_data;
+		goto out;
 	}
 
 	glue->dev = &spi->dev;
@@ -384,10 +377,7 @@ static int __devinit wl1271_probe(struct spi_device *spi)
 		goto out_dev_put;
 	}
 
-	pdev_data->pdata = pdata;
-
-	ret = platform_device_add_data(glue->core, pdev_data,
-				       sizeof(*pdev_data));
+	ret = platform_device_add_data(glue->core, pdata, sizeof(*pdata));
 	if (ret) {
 		wl1271_error("can't add platform data");
 		goto out_dev_put;
@@ -408,10 +398,6 @@ out_dev_put:
 
 out_free_glue:
 	kfree(glue);
-
-out_free_pdev_data:
-	kfree(pdev_data);
-
 out:
 	return ret;
 }

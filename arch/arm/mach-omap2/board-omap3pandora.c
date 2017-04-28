@@ -567,12 +567,10 @@ static void __init omap3pandora_init_early(void)
 
 static void __init pandora_wl1251_init(void)
 {
-	struct wl1251_platform_data pandora_wl1251_pdata;
+	struct wl12xx_platform_data pandora_wl1251_pdata;
 	int ret;
 
 	memset(&pandora_wl1251_pdata, 0, sizeof(pandora_wl1251_pdata));
-
-	pandora_wl1251_pdata.power_gpio = -1;
 
 	ret = gpio_request_one(PANDORA_WIFI_IRQ_GPIO, GPIOF_IN, "wl1251 irq");
 	if (ret < 0)
@@ -583,7 +581,7 @@ static void __init pandora_wl1251_init(void)
 		goto fail_irq;
 
 	pandora_wl1251_pdata.use_eeprom = true;
-	ret = wl1251_set_platform_data(&pandora_wl1251_pdata);
+	ret = wl12xx_set_platform_data(&pandora_wl1251_pdata);
 	if (ret < 0)
 		goto fail_irq;
 

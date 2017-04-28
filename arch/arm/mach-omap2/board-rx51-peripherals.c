@@ -63,7 +63,7 @@ enum {
 	RX51_SPI_MIPID,		/* LCD panel */
 };
 
-static struct wl1251_platform_data wl1251_pdata;
+static struct wl12xx_platform_data wl1251_pdata;
 
 #if defined(CONFIG_SENSORS_TSL2563) || defined(CONFIG_SENSORS_TSL2563_MODULE)
 static struct tsl2563_platform_data rx51_tsl2563_platform_data = {
@@ -929,7 +929,13 @@ static inline void board_smc91x_init(void)
 
 #endif
 
+static void rx51_wl1251_set_power(bool enable)
+{
+	gpio_set_value(RX51_WL1251_POWER_GPIO, enable);
+}
+
 static struct gpio rx51_wl1251_gpios[] __initdata = {
+	{ RX51_WL1251_POWER_GPIO, GPIOF_OUT_INIT_LOW,	"wl1251 power"	},
 	{ RX51_WL1251_IRQ_GPIO,	  GPIOF_IN,		"wl1251 irq"	},
 };
 
@@ -946,16 +952,17 @@ static void __init rx51_init_wl1251(void)
 	if (irq < 0)
 		goto err_irq;
 
-	wl1251_pdata.power_gpio = RX51_WL1251_POWER_GPIO;
+	wl1251_pdata.set_power = rx51_wl1251_set_power;
 	rx51_peripherals_spi_board_info[RX51_SPI_WL1251].irq = irq;
 
 	return;
 
 err_irq:
 	gpio_free(RX51_WL1251_IRQ_GPIO);
+	gpio_free(RX51_WL1251_POWER_GPIO);
 error:
 	printk(KERN_ERR "wl1251 board initialisation failed\n");
-	wl1251_pdata.power_gpio = -1;
+	wl1251_pdata.set_power = NULL;
 
 	/*
 	 * Now rx51_peripherals_spi_board_info[1].irq is zero and

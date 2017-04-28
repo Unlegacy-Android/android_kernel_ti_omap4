@@ -25,7 +25,6 @@
 #include <linux/crc7.h>
 #include <linux/spi/spi.h>
 #include <linux/wl12xx.h>
-#include <linux/gpio.h>
 
 #include "wl1251.h"
 #include "reg.h"
@@ -218,8 +217,8 @@ static void wl1251_spi_disable_irq(struct wl1251 *wl)
 
 static int wl1251_spi_set_power(struct wl1251 *wl, bool enable)
 {
-	if (gpio_is_valid(wl->power_gpio))
-		gpio_set_value(wl->power_gpio, enable);
+	if (wl->set_power)
+		wl->set_power(enable);
 
 	return 0;
 }
@@ -235,7 +234,7 @@ static const struct wl1251_if_operations wl1251_spi_ops = {
 
 static int __devinit wl1251_spi_probe(struct spi_device *spi)
 {
-	struct wl1251_platform_data *pdata;
+	struct wl12xx_platform_data *pdata;
 	struct ieee80211_hw *hw;
 	struct wl1251 *wl;
 	int ret;
@@ -267,33 +266,22 @@ static int __devinit wl1251_spi_probe(struct spi_device *spi)
 		goto out_free;
 	}
 
-	wl->power_gpio = pdata->power_gpio;
-
-	if (gpio_is_valid(wl->power_gpio)) {
-		ret = devm_gpio_request_one(&spi->dev, wl->power_gpio,
-					GPIOF_OUT_INIT_LOW, "wl1251 power");
-		if (ret) {
-			wl1251_error("Failed to request gpio: %d\n", ret);
-			goto out_free;
-		}
-	} else {
-		wl1251_error("set power gpio missing in platform data");
-		ret = -ENODEV;
-		goto out_free;
+	wl->set_power = pdata->set_power;
+	if (!wl->set_power) {
+		wl1251_error("set power function missing in platform data");
+		return -ENODEV;
 	}
 
 	wl->irq = spi->irq;
 	if (wl->irq < 0) {
 		wl1251_error("irq missing in platform data");
-		ret = -ENODEV;
-		goto out_free;
+		return -ENODEV;
 	}
 
 	wl->use_eeprom = pdata->use_eeprom;
 
 	irq_set_status_flags(wl->irq, IRQ_NOAUTOEN);
-	ret = devm_request_irq(&spi->dev, wl->irq, wl1251_irq, 0,
-							DRIVER_NAME, wl);
+	ret = request_irq(wl->irq, wl1251_irq, 0, DRIVER_NAME, wl);
 	if (ret < 0) {
 		wl1251_error("request_irq() failed: %d", ret);
 		goto out_free;
@@ -303,9 +291,12 @@ static int __devinit wl1251_spi_probe(struct spi_device *spi)
 
 	ret = wl1251_init_ieee80211(wl);
 	if (ret)
-		goto out_free;
+		goto out_irq;
 
 	return 0;
+
+ out_irq:
+	free_irq(wl->irq, wl);
 
  out_free:
 	ieee80211_free_hw(hw);

@@ -245,7 +245,7 @@ static struct platform_device omap_vwlan_device = {
 struct wl12xx_platform_data omap_panda_wlan_data  __initdata = {
 	.irq = OMAP_GPIO_IRQ(GPIO_WIFI_IRQ),
 	/* PANDA ref clock is 38.4 MHz */
-	.ref_clock_freq = 38400000,
+	.board_ref_clock = 2,
 };
 
 static int omap4_twl6030_hsmmc_late_init(struct device *dev)

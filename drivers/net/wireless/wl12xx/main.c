@@ -32,7 +32,6 @@
 #include <linux/slab.h>
 #include <linux/wl12xx.h>
 #include <linux/interrupt.h>
-#include <linux/irq.h>
 
 #include "wl12xx.h"
 #include "wl12xx_80211.h"
@@ -776,7 +775,7 @@ irqreturn_t wl1271_irq(int irq, void *cookie)
 	 * In case edge triggered interrupt must be used, we cannot iterate
 	 * more than once without introducing race conditions with the hardirq.
 	 */
-	if (wl->irq_flags & (IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING))
+	if (wl->platform_quirks & WL12XX_PLATFORM_QUIRK_EDGE_IRQ)
 		loopcount = 1;
 
 	mutex_lock(&wl->mutex);
@@ -3986,6 +3985,7 @@ struct ieee80211_hw *wl1271_alloc_hw(void)
 	wl->ap_ps_map = 0;
 	wl->ap_fw_ps_map = 0;
 	wl->quirks = 0;
+	wl->platform_quirks = 0;
 	wl->sched_scanning = false;
 
 	memset(wl->tx_frames_map, 0, sizeof(wl->tx_frames_map));
