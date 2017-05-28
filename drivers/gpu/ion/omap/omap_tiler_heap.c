@@ -22,6 +22,7 @@
 #include <linux/mm.h>
 #include <linux/omap_ion.h>
 #include <linux/scatterlist.h>
+#include <linux/dma-mapping.h>
 #include <linux/slab.h>
 #include <linux/vmalloc.h>
 #include <mach/tiler.h>
@@ -46,6 +47,7 @@ struct omap_tiler_info {
 	bool lump;                      /* true for a single lump allocation */
 	u32 n_phys_pages;               /* number of physical pages */
 	u32 *phys_addrs;                /* array addrs of pages */
+	void **tokens;                  /* array addrs of tokens */
 	u32 n_tiler_pages;              /* number of tiler pages */
 	u32 *tiler_addrs;               /* array of addrs of tiler pages */
 	u32 tiler_start;                /* start addr in tiler -- if not page
@@ -123,40 +125,36 @@ static int omap_tiler_alloc_dynamicpages(struct omap_tiler_info *info)
 {
 	int i;
 	int ret;
-	struct page *pg;
+
+	info->tokens = (void **) (info->tiler_addrs + info->n_tiler_pages);
 
 	for (i = 0; i < info->n_phys_pages; i++) {
-		pg = alloc_page(GFP_KERNEL | GFP_DMA | GFP_HIGHUSER);
-		if (!pg) {
+		info->tokens[i] = dma_alloc_writecombine(NULL, PAGE_SIZE,
+			info->phys_addrs+i, GFP_KERNEL | GFP_HIGHUSER);
+		if (!info->tokens[i]) {
 			ret = -ENOMEM;
-			pr_err("%s: alloc_page failed\n",
-				__func__);
+			pr_err("%s: dma_alloc_writecombine failed\n", __func__);
 			goto err_page_alloc;
 		}
-		info->phys_addrs[i] = page_to_phys(pg);
-		dmac_flush_range((void *)page_address(pg),
-			(void *)page_address(pg) + PAGE_SIZE);
-		outer_flush_range(info->phys_addrs[i],
-			info->phys_addrs[i] + PAGE_SIZE);
 	}
 	return 0;
 
 err_page_alloc:
-	for (i -= 1; i >= 0; i--) {
-		pg = phys_to_page(info->phys_addrs[i]);
-		__free_page(pg);
-	}
+	for (i -= 1; i >= 0; i--)
+		dma_free_writecombine(NULL, PAGE_SIZE, info->tokens[i],
+			info->phys_addrs[i]);
 	return ret;
 }
 
 static void omap_tiler_free_dynamicpages(struct omap_tiler_info *info)
 {
 	int i;
-	struct page *pg;
 
-	for (i = 0; i < info->n_phys_pages; i++) {
-		pg = phys_to_page(info->phys_addrs[i]);
-		__free_page(pg);
+	for (i = info->n_phys_pages - 1; i >= 0; i--) {
+		if (!info->tokens[i])
+			continue;
+		dma_free_writecombine(NULL, PAGE_SIZE, info->tokens[i],
+			info->phys_addrs[i]);
 	}
 	return;
 }
@@ -269,6 +267,7 @@ int omap_tiler_alloc(struct ion_heap *heap,
 
 	info = kzalloc(sizeof(struct omap_tiler_info) +
 		       sizeof(u32) * n_phys_pages +
+		       (use_dynamic_pages ? sizeof(void *) * n_phys_pages : 0) +
 		       sizeof(u32) * n_tiler_pages, GFP_KERNEL);
 	if (!info)
 		goto err_alloc;
