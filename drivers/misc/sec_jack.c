@@ -232,6 +232,16 @@ static void determine_jack_type(struct sec_jack_info *hi)
 	int i;
 	unsigned npolarity = !hi->pdata->det_active_high;
 
+#ifdef CONFIG_MACH_OMAP4_ESPRESSO
+	/* Set mic bias to enable adc
+	 *
+	 * NOTE: It needs to be enabled after de-bounce
+	 * time of headset jack to avoid pop noise while
+	 * inserting.
+	 */
+	hi->pdata->set_micbias_state(true);
+#endif
+
 	while (gpio_get_value(hi->pdata->det_gpio) ^ npolarity) {
 		adc = hi->pdata->get_adc_value();
 		pr_debug("%s: adc = %d\n", __func__, adc);
@@ -251,7 +261,12 @@ static void determine_jack_type(struct sec_jack_info *hi)
 							  zones[i].jack_type);
 					return;
 				}
+#ifdef CONFIG_MACH_OMAP4_ESPRESSO
+				usleep_range(zones[i].delay_ms*1000,
+						zones[i].delay_ms*1100);
+#else
 				msleep(zones[i].delay_ms);
+#endif
 				break;
 			}
 		}
@@ -277,12 +292,16 @@ void sec_jack_detect_work(struct work_struct *work)
 {
 	struct sec_jack_info *hi =
 		container_of(work, struct sec_jack_info, detect_work);
+#ifndef CONFIG_MACH_OMAP4_ESPRESSO
 	struct sec_jack_platform_data *pdata = hi->pdata;
+#endif
 	int time_left_ms = DET_CHECK_TIME_MS;
 	unsigned npolarity = !hi->pdata->det_active_high;
 
+#ifndef CONFIG_MACH_OMAP4_ESPRESSO
 	/* set mic bias to enable adc */
 	pdata->set_micbias_state(true);
+#endif
 
 	/* debounce headset jack.  don't try to determine the type of
 	 * headset until the detect state is true for a while.
@@ -293,7 +312,11 @@ void sec_jack_detect_work(struct work_struct *work)
 			handle_jack_not_inserted(hi);
 			return;
 		}
+#ifdef CONFIG_MACH_OMAP4_ESPRESSO
+		usleep_range(10000, 11000);
+#else
 		msleep(10);
+#endif
 		time_left_ms -= 10;
 	}
 	/* jack presence was detected the whole time, figure out which type */
