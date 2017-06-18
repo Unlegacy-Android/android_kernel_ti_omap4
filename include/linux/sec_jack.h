@@ -31,7 +31,7 @@ enum {
 };
 
 struct sec_jack_zone {
-	unsigned int adc_high;
+	int adc_high;
 	unsigned int delay_ms;
 	unsigned int check_count;
 	unsigned int jack_type;
@@ -39,8 +39,8 @@ struct sec_jack_zone {
 
 struct sec_jack_buttons_zone {
 	unsigned int code;
-	unsigned int adc_low;
-	unsigned int adc_high;
+	int adc_low;
+	int adc_high;
 };
 
 struct sec_jack_platform_data {
@@ -54,6 +54,9 @@ struct sec_jack_platform_data {
 	int	send_end_gpio;
 	bool	det_active_high;
 	bool	send_end_active_high;
+#ifdef CONFIG_JACK_RESELECTOR_SUPPORT
+	int     ear_reselector_zone;
+#endif
 };
 #endif
 

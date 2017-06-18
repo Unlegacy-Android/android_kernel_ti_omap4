@@ -232,9 +232,17 @@ static void determine_jack_type(struct sec_jack_info *hi)
 	int i;
 	unsigned npolarity = !hi->pdata->det_active_high;
 
+	/* Set mic bias to enable adc
+	 *
+	 * NOTE: It needs to be enabled after de-bounce
+	 * time of headset jack to avoid pop noise while
+	 * inserting.
+	 */
+	hi->pdata->set_micbias_state(true);
+
 	while (gpio_get_value(hi->pdata->det_gpio) ^ npolarity) {
 		adc = hi->pdata->get_adc_value();
-		pr_debug("%s: adc = %d\n", __func__, adc);
+		pr_debug("%s: %d(mV)\n", __func__, adc);
 
 		/* determine the type of headset based on the
 		 * adc value.  An adc value can fall in various
@@ -251,11 +259,13 @@ static void determine_jack_type(struct sec_jack_info *hi)
 							  zones[i].jack_type);
 					return;
 				}
-				msleep(zones[i].delay_ms);
+				usleep_range(zones[i].delay_ms*1000,
+						zones[i].delay_ms*1100);
 				break;
 			}
 		}
 	}
+
 	/* jack removed before detection complete */
 	pr_debug("%s : jack removed before detection complete\n", __func__);
 	handle_jack_not_inserted(hi);
@@ -277,12 +287,8 @@ void sec_jack_detect_work(struct work_struct *work)
 {
 	struct sec_jack_info *hi =
 		container_of(work, struct sec_jack_info, detect_work);
-	struct sec_jack_platform_data *pdata = hi->pdata;
 	int time_left_ms = DET_CHECK_TIME_MS;
 	unsigned npolarity = !hi->pdata->det_active_high;
-
-	/* set mic bias to enable adc */
-	pdata->set_micbias_state(true);
 
 	/* debounce headset jack.  don't try to determine the type of
 	 * headset until the detect state is true for a while.
@@ -293,9 +299,10 @@ void sec_jack_detect_work(struct work_struct *work)
 			handle_jack_not_inserted(hi);
 			return;
 		}
-		msleep(10);
+		usleep_range(10000, 11000);
 		time_left_ms -= 10;
 	}
+
 	/* jack presence was detected the whole time, figure out which type */
 	determine_jack_type(hi);
 }
@@ -328,8 +335,8 @@ void sec_jack_buttons_work(struct work_struct *work)
 			hi->pressed_code = btn_zones[i].code;
 			input_report_key(hi->input_dev, btn_zones[i].code, 1);
 			input_sync(hi->input_dev);
-			pr_debug("%s: keycode=%d, is pressed\n", __func__,
-				btn_zones[i].code);
+			pr_info("%s: %d(mV) keycode=%d, is pressed\n", __func__,
+				adc, btn_zones[i].code);
 			return;
 		}
 
