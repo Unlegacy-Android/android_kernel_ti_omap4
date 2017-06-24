@@ -191,6 +191,7 @@ static int iva_toggle_wa_applied;
 u16 pm44xx_errata;
 #define is_pm44xx_erratum(erratum) (pm44xx_errata & OMAP4_PM_ERRATUM_##erratum)
 
+#ifdef CONFIG_MACH_TUNA
 /* HACK: check CAWAKE wakeup event */
 #define USBB1_ULPITLL_CLK	0x4A1000C0
 #define CONTROL_PADCONF_WAKEUPEVENT_2	0x4A1001E0
@@ -203,6 +204,7 @@ void check_cawake_wakeup_event(void)
 		cawake_event_flag = 1;
 	}
 }
+#endif
 
 #define MAX_IOPAD_LATCH_TIME 1000
 
@@ -925,8 +927,10 @@ static int omap4_pm_suspend(void)
 	 */
 	omap4_enter_sleep(0, PWRDM_POWER_OFF, true);
 
+#ifdef CONFIG_MACH_TUNA
 	/* HACK: check CAWAKE wakeup event */
 	check_cawake_wakeup_event();
+#endif
 
 	omap4_print_wakeirq();
 	prcmdebug_dump(PRCMDEBUG_LASTSLEEP);
@@ -1353,6 +1357,7 @@ static irqreturn_t prcm_interrupt_handler (int irq, void *dev_id)
 		/* Check if HSI caused the IO wakeup */
 		omap_hsi_io_wakeup_check();
 
+#ifdef CONFIG_MACH_TUNA
 		/* HACK: check CAWAKE wakeup event */
 		if (cawake_event_flag) {
 			hsi_port = 1;
@@ -1361,6 +1366,7 @@ static irqreturn_t prcm_interrupt_handler (int irq, void *dev_id)
 		} else
 			if (omap_hsi_is_io_wakeup_from_hsi(&hsi_port))
 				omap_hsi_wakeup(hsi_port);
+#endif
 
 		omap_uart_resume_idle();
 		usbhs_wakeup();
