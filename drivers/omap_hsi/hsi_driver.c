@@ -1093,8 +1093,12 @@ static int hsi_pm_resume(struct device *dev)
 	/* Perform (optional) HSI board specific action after platform wakeup */
 	if (pdata->board_resume)
 		for (i = 0; i < hsi_ctrl->max_p; i++)
+#ifdef CONFIG_MACH_TUNA
+			pdata->board_resume(hsi_ctrl->hsi_port[i].port_number);
+#else
 			pdata->board_resume(hsi_ctrl->hsi_port[i].port_number,
 					    device_may_wakeup(dev));
+#endif
 
 	return 0;
 }
@@ -1111,6 +1115,10 @@ int hsi_runtime_resume(struct device *dev)
 {
 	struct platform_device *pd = to_platform_device(dev);
 	struct hsi_dev *hsi_ctrl = platform_get_drvdata(pd);
+#ifdef CONFIG_MACH_TUNA
+	struct hsi_platform_data *pdata = dev_get_platdata(dev);
+	unsigned int i;
+#endif
 
 	dev_dbg(dev, "%s\n", __func__);
 
@@ -1121,6 +1129,12 @@ int hsi_runtime_resume(struct device *dev)
 
 	/* Restore context */
 	hsi_restore_ctx(hsi_ctrl);
+
+#ifdef CONFIG_MACH_TUNA
+	/* When HSI is ON, no need for IO wakeup mechanism on any HSI port */
+	for (i = 0; i < hsi_ctrl->max_p; i++)
+		pdata->wakeup_disable(hsi_ctrl->hsi_port[i].port_number);
+#endif
 
 	/* HSI device is now fully operational and _must_ be able to */
 	/* complete I/O operations */
@@ -1140,6 +1154,10 @@ int hsi_runtime_suspend(struct device *dev)
 {
 	struct platform_device *pd = to_platform_device(dev);
 	struct hsi_dev *hsi_ctrl = platform_get_drvdata(pd);
+#ifdef CONFIG_MACH_TUNA
+	struct hsi_platform_data *pdata = dev_get_platdata(dev);
+	int i; 
+#endif
 
 	dev_dbg(dev, "%s\n", __func__);
 
@@ -1150,6 +1168,17 @@ int hsi_runtime_suspend(struct device *dev)
 	hsi_save_ctx(hsi_ctrl);
 
 	hsi_ctrl->clock_enabled = false;
+
+#ifdef CONFIG_MACH_TUNA
+	/* HSI is going to IDLE, it needs IO wakeup mechanism enabled */
+	if (device_may_wakeup(dev))
+		for (i = 0; i < hsi_ctrl->max_p; i++)
+			pdata->wakeup_enable(hsi_ctrl->hsi_port[i].port_number);
+	else
+		for (i = 0; i < hsi_ctrl->max_p; i++)
+			pdata->wakeup_disable(
+				hsi_ctrl->hsi_port[i].port_number);
+#endif
 
 	/* HSI is now ready to be put in low power state */
 
