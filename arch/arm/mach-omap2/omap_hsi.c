@@ -110,16 +110,13 @@ void omap_hsi_allow_registration(void)
 
 static u32 omap_hsi_configure_errata(void)
 {
-	u32 errata;
+	u32 errata = 0;
 
-	if (cpu_is_omap44xx())
+	if (cpu_is_omap44xx()) {
 		SET_HSI_ERRATA(errata, HSI_ERRATUM_i696_SW_RESET_FSM_STUCK);
-
-	if (cpu_is_omap44xx())
 		SET_HSI_ERRATA(errata, HSI_ERRATUM_ixxx_3WIRES_NO_SWAKEUP);
-
-	if (cpu_is_omap44xx())
 		SET_HSI_ERRATA(errata, HSI_ERRATUM_i702_PM_HSI_SWAKEUP);
+	}
 
 	return errata;
 }
