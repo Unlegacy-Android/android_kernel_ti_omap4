@@ -350,10 +350,12 @@ int hsi_open(struct hsi_device *dev)
 	/* Restart with flags cleaned up */
 	ch->flags = HSI_CH_OPEN;
 
+#ifdef CONFIG_MACH_TUNA
 	if (port->wake_rx_3_wires_mode)
 		hsi_driver_enable_interrupt(port, HSI_ERROROCCURED
 						| HSI_BREAKDETECTED);
 	else
+#endif
 		hsi_driver_enable_interrupt(port, HSI_CAWAKEDETECTED
 						| HSI_ERROROCCURED
 						| HSI_BREAKDETECTED);
@@ -1149,10 +1151,12 @@ void hsi_set_port_event_cb(struct hsi_device *dev,
 	hsi_clocks_enable_channel(hsi_ctrl->dev, dev->ch->channel_number,
 					__func__);
 
+#ifdef CONFIG_MACH_TUNA
 	if (port->wake_rx_3_wires_mode)
 		hsi_driver_enable_interrupt(port, HSI_ERROROCCURED
 						| HSI_BREAKDETECTED);
 	else
+#endif
 		hsi_driver_enable_interrupt(port, HSI_CAWAKEDETECTED
 						| HSI_ERROROCCURED
 						| HSI_BREAKDETECTED);
