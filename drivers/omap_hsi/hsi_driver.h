@@ -153,7 +153,9 @@ struct hsi_port {
 	int cawake_gpio_irq;
 	int cawake_status;
 	bool cawake_off_event;
+#ifndef CONFIG_MACH_TUNA
 	bool cawake_double_int;
+#endif
 	unsigned int acwake_status;	/* HSI_TODO : fine tune init values */
 	bool in_int_tasklet;
 	bool in_cawake_tasklet;
