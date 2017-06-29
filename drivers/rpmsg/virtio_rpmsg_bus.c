@@ -70,7 +70,9 @@ struct virtproc_info {
 	spinlock_t endpoints_lock;
 	wait_queue_head_t sendq;
 	struct rpmsg_endpoint *ns_ept;
+#ifndef CONFIG_MACH_TUNA
 	struct rproc *rproc;
+#endif
 };
 
 #define to_rpmsg_channel(d) container_of(d, struct rpmsg_channel, dev)
@@ -538,6 +540,7 @@ out:
 }
 EXPORT_SYMBOL(rpmsg_send_offchannel_raw);
 
+#ifndef CONFIG_MACH_TUNA
 struct rproc *rpmsg_get_rproc_handle(struct rpmsg_channel *rpdev)
 {
 	if (!rpdev || !rpdev->vrp)
@@ -545,6 +548,7 @@ struct rproc *rpmsg_get_rproc_handle(struct rpmsg_channel *rpdev)
 	return rpdev->vrp->rproc;
 }
 EXPORT_SYMBOL(rpmsg_get_rproc_handle);
+#endif
 
 static void rpmsg_recv_done(struct virtqueue *rvq)
 {
@@ -713,9 +717,11 @@ static int rpmsg_probe(struct virtio_device *vdev)
 	vdev->config->get(vdev, VPROC_SIM_BASE, &vrp->sim_base,
 							sizeof(vrp->sim_base));
 
+#ifndef CONFIG_MACH_TUNA
 	/* also store reference to remote proc */
 	vdev->config->get(vdev, VPROC_RPROC_REF,
 			&vrp->rproc, sizeof(vrp->rproc));
+#endif
 
 	/* set up the receive buffers */
 	for (i = 0; i < num_bufs / 2; i++) {
