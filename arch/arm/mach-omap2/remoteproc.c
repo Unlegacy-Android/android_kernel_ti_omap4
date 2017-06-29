@@ -20,19 +20,24 @@
 #include <linux/slab.h>
 #include <linux/remoteproc.h>
 #include <linux/memblock.h>
+#ifndef CONFIG_MACH_TUNA
 #include <plat/common.h>
+#endif
 #include <plat/omap_device.h>
 #include <plat/omap_hwmod.h>
 #include <plat/remoteproc.h>
 #include <plat/dsp.h>
 #include <plat/io.h>
 #include "cm2_44xx.h"
+#ifndef CONFIG_MACH_TUNA
 #include "cm1_44xx.h"
+#endif
 #include "cm-regbits-44xx.h"
 
 #define OMAP4430_CM_M3_M3_CLKCTRL (OMAP4430_CM2_BASE + OMAP4430_CM2_CORE_INST \
 		+ OMAP4_CM_DUCATI_DUCATI_CLKCTRL_OFFSET)
 
+#ifndef CONFIG_MACH_TUNA
 #define OMAP4430_CM_DSP_DSP_CLKCTRL (OMAP4430_CM1_BASE \
 		+ OMAP4430_CM1_TESLA_INST + OMAP4_CM_TESLA_TESLA_CLKCTRL_OFFSET)
 
@@ -98,6 +103,7 @@ static struct rproc_ops ipu_ops = {
 static struct rproc_ops dsp_ops = {
 	.dump_registers = dump_dsp_registers,
 };
+#endif
 
 static struct omap_rproc_timers_info ipu_timers[] = {
 	{ .id = 3 },
@@ -108,12 +114,14 @@ static struct omap_rproc_timers_info ipu_timers[] = {
 #endif
 };
 
+#ifndef CONFIG_MACH_TUNA
 static struct omap_rproc_timers_info dsp_timers[] = {
 	{ .id = 5 },
 #ifdef CONFIG_REMOTEPROC_WATCHDOG
 	{ .id = 6 },
 #endif
 };
+#endif
 
 static struct omap_rproc_pdata omap4_rproc_data[] = {
 	{
@@ -121,6 +129,9 @@ static struct omap_rproc_pdata omap4_rproc_data[] = {
 		.iommu_name	= "tesla",
 		.firmware	= "tesla-dsp.bin",
 		.oh_name	= "dsp_c0",
+#ifdef CONFIG_MACH_TUNA
+		.clkdm_name	= "dsp_clkdm",
+#else
 		.clkdm_name	= "tesla_clkdm",
 		.timers		= dsp_timers,
 		.timers_cnt	= ARRAY_SIZE(dsp_timers),
@@ -131,6 +142,7 @@ static struct omap_rproc_pdata omap4_rproc_data[] = {
 		.sus_mbox_name	= "mailbox-2",
 		.boot_reg	= CONTROL_DSP_BOOTADDR,
 		.ops		= &dsp_ops,
+#endif
 	},
 	{
 		.name		= "ipu",
@@ -143,10 +155,15 @@ static struct omap_rproc_pdata omap4_rproc_data[] = {
 		.timers_cnt	= ARRAY_SIZE(ipu_timers),
 		.idle_addr	= OMAP4430_CM_M3_M3_CLKCTRL,
 		.idle_mask	= OMAP4430_STBYST_MASK,
+#ifdef CONFIG_MACH_TUNA
+		.suspend_addr	= 0xb3bf02d8,
+#endif
 		.suspend_mask	= ~0,
 		.sus_timeout	= 5000,
 		.sus_mbox_name	= "mailbox-1",
+#ifndef CONFIG_MACH_TUNA
 		.ops		= &ipu_ops,
+#endif
 	},
 };
 
@@ -159,6 +176,40 @@ static struct omap_device_pm_latency omap_rproc_latency[] = {
 static struct rproc_mem_pool *omap_rproc_get_pool(const char *name)
 {
 	struct rproc_mem_pool *pool = NULL;
+
+#ifdef CONFIG_MACH_TUNA
+	/* check for ipu currently. dsp will be handled later */
+	if (!strcmp("ipu", name)) {
+		phys_addr_t paddr1 = omap_ipu_get_mempool_base(
+						OMAP_RPROC_MEMPOOL_STATIC);
+		phys_addr_t paddr2 = omap_ipu_get_mempool_base(
+						OMAP_RPROC_MEMPOOL_DYNAMIC);
+		u32 len1 = omap_ipu_get_mempool_size(OMAP_RPROC_MEMPOOL_STATIC);
+		u32 len2 = omap_ipu_get_mempool_size(OMAP_RPROC_MEMPOOL_DYNAMIC);
+
+		if (!paddr1 && !paddr2) {
+			pr_err("no carveout memory available at all for "
+				"remotproc\n");
+			return pool;
+		}
+		if (!paddr1 || !len1)
+			pr_warn("static memory is unavailable: 0x%x, 0x%x\n",
+				paddr1, len1);
+		if (!paddr2 || !len2)
+			pr_warn("carveout memory is unavailable: 0x%x, 0x%x\n",
+				paddr2, len2);
+
+		pool = kzalloc(sizeof(*pool), GFP_KERNEL);
+		if (pool) {
+			pool->st_base = paddr1;
+			pool->st_size = len1;
+			pool->mem_base = paddr2;
+			pool->mem_size = len2;
+			pool->cur_base = paddr2;
+			pool->cur_size = len2;
+		}
+	}
+#else
 	phys_addr_t paddr1;
 	phys_addr_t paddr2;
 	u32 len1;
@@ -203,6 +254,7 @@ static struct rproc_mem_pool *omap_rproc_get_pool(const char *name)
 		pool->cur_base = paddr2;
 		pool->cur_size = len2;
 	}
+#endif
 
 	return pool;
 }
@@ -223,6 +275,7 @@ static int __init omap_rproc_init(void)
 		const char *oh_name_opt = omap4_rproc_data[i].oh_name_opt;
 		oh_count = 0;
 
+#ifndef CONFIG_MACH_TUNA
 		if (omap_total_ram_size() == SZ_512M) {
 			if (!strcmp("ipu", omap4_rproc_data[i].name))
 				omap4_rproc_data[i].firmware =
@@ -231,6 +284,7 @@ static int __init omap_rproc_init(void)
 				omap4_rproc_data[i].firmware =
 					"tesla-dsp.512MB.bin";
 		}
+#endif
 
 		oh[0] = omap_hwmod_lookup(oh_name);
 
