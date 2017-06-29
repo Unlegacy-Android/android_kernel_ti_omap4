@@ -61,7 +61,9 @@ enum {
 	RPRM_DISCONNECT		= 3,
 	RPRM_REQ_CONSTRAINTS	= 4,
 	RPRM_REL_CONSTRAINTS	= 5,
+#ifndef CONFIG_MACH_TUNA
 	RPRM_REQ_DATA		= 6,
+#endif
 };
 
 enum {
@@ -70,9 +72,11 @@ enum {
 	RPRM_BANDWIDTH		= 0x4,
 };
 
+#ifndef CONFIG_MACH_TUNA
 enum {
 	RPRM_MAX_FREQ		= 0,
 };
+#endif
 
 struct rprm_request {
 	u32 res_type;
@@ -133,9 +137,11 @@ struct rprm_constraints_data {
 	long latency;
 };
 
+#ifndef CONFIG_MACH_TUNA
 struct rprm_request_data {
 	u32 type;
 	char data[];
 } __packed;
+#endif
 
 #endif /* _LINUX_RPMSG_RESMGR_H */
