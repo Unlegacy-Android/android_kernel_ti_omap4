@@ -35,7 +35,9 @@
 #include <linux/rpmsg.h>
 #include <linux/rpmsg_omx.h>
 #include <linux/completion.h>
+#ifndef CONFIG_MACH_TUNA
 #include <linux/remoteproc.h>
+#endif
 #include <linux/fdtable.h>
 
 #include <mach/tiler.h>
@@ -90,11 +92,13 @@ struct rpmsg_omx_instance {
 	int state;
 #ifdef CONFIG_ION_OMAP
 	struct ion_client *ion_client;
+#ifndef CONFIG_MACH_TUNA
 	struct list_head buffer_list;
+#endif
 #endif
 };
 
-#ifdef CONFIG_ION_OMAP
+#if defined(CONFIG_ION_OMAP) && !defined(CONFIG_MACH_TUNA)
 struct rpmsg_buffer {
 	struct list_head next;
 	struct ion_handle *ion_handle;
@@ -120,6 +124,31 @@ static LIST_HEAD(rpmsg_omx_services_list);
 #endif
 #endif
 
+#ifdef CONFIG_MACH_TUNA
+/*
+ * TODO: Need to do this using lookup with rproc, but rproc is not
+ * visible to rpmsg_omx
+ */
+#define TILER_START	0x60000000
+#define TILER_END	0x80000000
+#define ION_1D_START	0xBA300000
+#define ION_1D_END	0xBFD00000
+#define ION_1D_VA	0x88000000
+
+static int _rpmsg_pa_to_da(u32 pa, u32 *da)
+{
+	int ret = 0;
+
+	if (pa >= TILER_START && pa < TILER_END)
+		*da = pa;
+	else if (pa >= ION_1D_START && pa < ION_1D_END)
+		*da = (pa - ION_1D_START + ION_1D_VA);
+	else
+		ret = -EIO;
+
+	return ret;
+}
+#else
 static int _rpmsg_pa_to_da(struct rpmsg_omx_instance *omx, u32 pa, u32 *da)
 {
 	int ret;
@@ -142,8 +171,9 @@ static int _rpmsg_pa_to_da(struct rpmsg_omx_instance *omx, u32 pa, u32 *da)
 
 	return ret;
 }
+#endif
 
-#ifdef CONFIG_ION_OMAP
+#if defined(CONFIG_ION_OMAP) && !defined(CONFIG_MACH_TUNA)
 static void _rpmsg_buffer_update_page_list(struct rpmsg_omx_instance *omx,
 					   struct rpmsg_buffer *buffer)
 {
@@ -262,7 +292,9 @@ static int _rpmsg_omx_buffer_lookup(struct rpmsg_omx_instance *omx,
 	 */
 #ifdef CONFIG_ION_OMAP
 	{
+#ifndef CONFIG_MACH_TUNA
 		struct rpmsg_buffer *buf;
+#endif
 		struct ion_handle *handle;
 		ion_phys_addr_t paddr;
 		size_t unused;
@@ -270,6 +302,10 @@ static int _rpmsg_omx_buffer_lookup(struct rpmsg_omx_instance *omx,
 		/* is it an ion handle? */
 		handle = (struct ion_handle *)buffer;
 		if (!ion_phys(omx->ion_client, handle, &paddr, &unused)) {
+#ifdef CONFIG_MACH_TUNA
+			ret = _rpmsg_pa_to_da((phys_addr_t)paddr, va);
+				goto exit;
+#else
 			ret = _rpmsg_pa_to_da(omx, (phys_addr_t)paddr, va);
 			goto exit;
 		}
@@ -282,17 +318,23 @@ static int _rpmsg_omx_buffer_lookup(struct rpmsg_omx_instance *omx,
 			if (buf->page_list) {
 				*va = buf->page_list_pa;
 				ret = 0;
+
 				goto exit;
 			}
+#endif
 		}
 	}
 #endif
 
+#ifdef CONFIG_MACH_TUNA
+	ret = _rpmsg_pa_to_da((phys_addr_t)tiler_virt2phys(buffer), va);
+#else
 	/* is it a tiler virtual address? */
 	/* This usage is deprecated, and is present only for non-ION backward
 	 * compatibility reasons.
 	 */
 	ret = _rpmsg_pa_to_da(omx, (phys_addr_t)tiler_virt2phys(buffer), va);
+#endif
 exit:
 	if (ret)
 		pr_err("%s: buffer lookup failed %x\n", __func__, ret);
@@ -536,6 +578,9 @@ long rpmsg_omx_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 					handle = ion_import(omx->ion_client,
 							   ion_bufs[i]);
 
+#ifdef CONFIG_MACH_TUNA
+				if (!IS_ERR_OR_NULL(handle))
+#else
 				/* num_handles returned from
 				 * omap_ion_share_fd_to_buffers isn't reliable
 				 * in conveying the actual number of valid
@@ -551,6 +596,7 @@ long rpmsg_omx_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 					data.handles[i] = (void *)
 						_rpmsg_buffer_new(omx, handle);
 				else
+#endif
 					data.handles[i] = handle;
 			}
 		}
@@ -567,7 +613,9 @@ long rpmsg_omx_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	case OMX_IOCIONUNREGISTER:
 	{
 		struct ion_fd_data data;
+#ifndef CONFIG_MACH_TUNA
 		struct rpmsg_buffer *buffer;
+#endif
 
 		if (copy_from_user(&data, (char __user *) arg, sizeof(data))) {
 			dev_err(omxserv->dev,
@@ -575,10 +623,13 @@ long rpmsg_omx_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 				_IOC_NR(cmd), ret);
 			return -EFAULT;
 		}
+
+#ifndef CONFIG_MACH_TUNA
 		buffer = (struct rpmsg_buffer *) data.handle;
 		if (_rpmsg_buffer_validate(omx, buffer))
 			_rpmsg_buffer_free(omx, buffer);
 		else
+#endif
 			ion_free(omx->ion_client, data.handle);
 		if (copy_to_user((char __user *) arg, &data, sizeof(data))) {
 			dev_err(omxserv->dev,
@@ -616,7 +667,7 @@ static int rpmsg_omx_open(struct inode *inode, struct file *filp)
 	mutex_init(&omx->lock);
 	skb_queue_head_init(&omx->queue);
 	init_waitqueue_head(&omx->readq);
-#ifdef CONFIG_ION_OMAP
+#if defined(CONFIG_ION_OMAP) && !defined(CONFIG_MACH_TUNA)
 	INIT_LIST_HEAD(&omx->buffer_list);
 #endif
 	omx->omxserv = omxserv;
@@ -633,8 +684,12 @@ static int rpmsg_omx_open(struct inode *inode, struct file *filp)
 #ifdef CONFIG_ION_OMAP
 	omx->ion_client = ion_client_create(omap_ion_device,
 					    (1 << ION_HEAP_TYPE_CARVEOUT) |
+#ifdef CONFIG_MACH_TUNA
+					    (1 << OMAP_ION_HEAP_TYPE_TILER),
+#else
 					    (1 << OMAP_ION_HEAP_TYPE_TILER) |
 					    (1 << ION_HEAP_TYPE_SYSTEM),
+#endif
 					    "rpmsg-omx");
 #endif
 
@@ -659,7 +714,7 @@ static int rpmsg_omx_release(struct inode *inode, struct file *filp)
 	struct omx_msg_hdr *hdr = (struct omx_msg_hdr *) kbuf;
 	struct omx_disc_req *disc_req = (struct omx_disc_req *)hdr->data;
 	int use, ret;
-#ifdef CONFIG_ION_OMAP
+#if defined(CONFIG_ION_OMAP) && !defined(CONFIG_MACH_TUNA)
 	struct list_head *pos, *tmp;
 #endif
 
@@ -694,11 +749,13 @@ static int rpmsg_omx_release(struct inode *inode, struct file *filp)
 	rpmsg_destroy_ept(omx->ept);
 out:
 #ifdef CONFIG_ION_OMAP
+#ifndef CONFIG_MACH_TUNA
 	list_for_each_safe(pos, tmp, &omx->buffer_list) {
 		struct rpmsg_buffer *buffer =
 				list_entry(pos, struct rpmsg_buffer, next);
 		_rpmsg_buffer_free(omx, buffer);
 	}
+#endif
 	ion_client_destroy(omx->ion_client);
 #endif
 	mutex_lock(&omxserv->lock);
@@ -911,7 +968,11 @@ static int rpmsg_omx_probe(struct rpmsg_channel *rpdev)
 
 	omxserv->dev = device_create(rpmsg_omx_class, &rpdev->dev,
 			MKDEV(major, minor), NULL,
+#ifdef CONFIG_MACH_TUNA
+			"rpmsg-omx%d", minor);
+#else
 			rpdev->id.name);
+#endif
 	if (IS_ERR(omxserv->dev)) {
 		ret = PTR_ERR(omxserv->dev);
 		dev_err(&rpdev->dev, "device_create failed: %d\n", ret);
@@ -987,12 +1048,20 @@ static void rpmsg_omx_driver_cb(struct rpmsg_channel *rpdev, void *data,
 }
 
 static struct rpmsg_device_id rpmsg_omx_id_table[] = {
+#ifdef CONFIG_MACH_TUNA
+	{ .name	= "rpmsg-omx" },
+#else
 	{ .name	= "rpmsg-omx0" }, /* ipu_c0 */
 	{ .name	= "rpmsg-omx1" }, /* ipu_c1 */
 	{ .name	= "rpmsg-omx2" }, /* dsp */
+#endif
 	{ },
 };
+#ifdef CONFIG_MACH_TUNA
+MODULE_DEVICE_TABLE(platform, rpmsg_omx_id_table);
+#else
 MODULE_DEVICE_TABLE(rpmsg, rpmsg_omx_id_table);
+#endif
 
 static struct rpmsg_driver rpmsg_omx_driver = {
 	.drv.name	= KBUILD_MODNAME,
