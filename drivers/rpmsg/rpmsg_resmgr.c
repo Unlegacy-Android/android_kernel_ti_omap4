@@ -43,6 +43,9 @@
 #define AUX_CLK_MIN	0
 #define AUX_CLK_MAX	5
 #define GPTIMERS_MAX	11
+#ifdef CONFIG_MACH_TUNA
+#define MHZ		1000000
+#endif
 #define MAX_MSG		(sizeof(struct rprm_ack) + sizeof(struct rprm_sdma))
 
 static struct dentry *rprm_dbg;
@@ -208,7 +211,11 @@ static int rprm_auxclk_request(struct rprm_elem *e, struct rprm_auxclk *obj)
 		goto error_aux_src;
 	}
 
+#ifdef CONFIG_MACH_TUNA
+	ret = clk_set_rate(src_parent, (obj->parent_src_clk_rate * MHZ));
+#else
 	ret = clk_set_rate(src_parent, obj->parent_src_clk_rate);
+#endif
 	if (ret) {
 		pr_err("%s: rate not supported by %s\n", __func__,
 					clk_src_name[obj->parent_src_clk]);
@@ -230,7 +237,11 @@ static int rprm_auxclk_request(struct rprm_elem *e, struct rprm_auxclk *obj)
 		goto error_aux_src_parent;
 	}
 
+#ifdef CONFIG_MACH_TUNA
+	ret = clk_set_rate(acd->aux_clk, (obj->clk_rate * MHZ));
+#else
 	ret = clk_set_rate(acd->aux_clk, obj->clk_rate);
+#endif
 	if (ret) {
 		pr_err("%s: rate not supported by %s\n", __func__, clk_name);
 		goto error_aux_enable;
@@ -538,7 +549,9 @@ int _set_constraints(struct rprm_elem *e, struct rprm_constraints_data *c)
 		_set_constraints_func = _rpres_set_constraints;
 		break;
 	case RPRM_IPU:
+#ifndef CONFIG_MACH_TUNA
 	case RPRM_DSP:
+#endif
 		_set_constraints_func = _rproc_set_constraints;
 		break;
 	default:
@@ -896,6 +909,7 @@ out:
 	return ret;
 }
 
+#ifndef CONFIG_MACH_TUNA
 static int _request_max_freq(struct rprm_elem *e, unsigned long *freq)
 {
 	int ret = 0;
@@ -960,6 +974,7 @@ out:
 	mutex_unlock(&rprm->lock);
 	return ret;
 }
+#endif
 
 static void rprm_cb(struct rpmsg_channel *rpdev, void *data, int len,
 			void *priv, u32 src)
@@ -1029,6 +1044,7 @@ static void rprm_cb(struct rpmsg_channel *rpdev, void *data, int len,
 		if (ret)
 			dev_err(dev, "rel constraints failed! ret %d\n", ret);
 		return;
+#ifndef CONFIG_MACH_TUNA
 	case RPRM_REQ_DATA:
 		r_sz = len - sizeof(*req);
 		if (r_sz < 0) {
@@ -1040,6 +1056,7 @@ static void rprm_cb(struct rpmsg_channel *rpdev, void *data, int len,
 		if (ret)
 			dev_err(dev, "request data failed! ret %d\n", ret);
 		break;
+#endif
 	default:
 		dev_err(dev, "Unknow request\n");
 		ret = -EINVAL;
@@ -1241,7 +1258,11 @@ static struct rpmsg_device_id rprm_id_table[] = {
 	},
 	{ },
 };
+#ifdef CONFIG_MACH_TUNA
+MODULE_DEVICE_TABLE(platform, rprm_id_table);
+#else
 MODULE_DEVICE_TABLE(rpmsg, rprm_id_table);
+#endif
 
 static struct rpmsg_driver rprm_driver = {
 	.drv.name	= KBUILD_MODNAME,

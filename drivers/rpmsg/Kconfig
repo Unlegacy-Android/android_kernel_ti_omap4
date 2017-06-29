@@ -31,6 +31,7 @@ config RPMSG_OMX
 config RPC_OMAP
 	tristate "OMAP Remote Procedure Call driver"
 	default y
+	depends on !MACH_TUNA
 	depends on RPMSG
 	depends on REMOTEPROC || REMOTE_PROC
 	depends on OMAP_REMOTEPROC || OMAP_REMOTE_PROC

@@ -281,7 +281,7 @@ phys_addr_t omap_dsp_get_mempool_size(void)
 EXPORT_SYMBOL(omap_dsp_get_mempool_size);
 #endif
 
-#if defined(CONFIG_OMAP_REMOTE_PROC_DSP)
+#if defined(CONFIG_OMAP_REMOTE_PROC_DSP) && !defined(CONFIG_MACH_TUNA)
 static phys_addr_t omap_dsp_phys_st_mempool_base;
 static phys_addr_t omap_dsp_phys_st_mempool_size;
 
@@ -318,7 +318,7 @@ phys_addr_t omap_dsp_get_mempool_tsize(enum omap_rproc_mempool_type type)
 EXPORT_SYMBOL(omap_dsp_get_mempool_tsize);
 #endif
 
-#if defined(CONFIG_OMAP_REMOTE_PROC_IPU)
+#if defined(CONFIG_OMAP_REMOTE_PROC_IPU) || defined(CONFIG_MACH_TUNA) && defined(CONFIG_OMAP_REMOTE_PROC)
 static phys_addr_t omap_ipu_phys_mempool_base;
 static u32 omap_ipu_phys_mempool_size;
 static phys_addr_t omap_ipu_phys_st_mempool_base;
