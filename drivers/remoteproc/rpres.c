@@ -15,7 +15,9 @@
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/err.h>
+#ifndef CONFIG_MACH_TUNA
 #include <linux/opp.h>
+#endif
 #include <plat/omap_device.h>
 #include <plat/rpres.h>
 
@@ -125,6 +127,7 @@ int rpres_set_constraints(struct rpres *obj, enum rpres_constraint type,
 }
 EXPORT_SYMBOL(rpres_set_constraints);
 
+#ifndef CONFIG_MACH_TUNA
 unsigned long rpres_get_max_freq(struct rpres *obj)
 {
 	struct platform_device *pdev = obj->pdev;
@@ -140,6 +143,7 @@ unsigned long rpres_get_max_freq(struct rpres *obj)
 	return maxfreq;
 }
 EXPORT_SYMBOL(rpres_get_max_freq);
+#endif
 
 static int rpres_probe(struct platform_device *pdev)
 {

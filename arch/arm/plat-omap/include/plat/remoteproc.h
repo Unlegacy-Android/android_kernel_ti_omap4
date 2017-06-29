@@ -61,7 +61,9 @@ struct omap_rproc_pdata {
 	u32 suspend_addr;
 	u32 suspend_mask;
 	unsigned sus_timeout;
+#ifndef CONFIG_MACH_TUNA
 	u32 boot_reg;
+#endif
 	char *sus_mbox_name;
 	u8 timers_cnt;
 };
@@ -71,6 +73,9 @@ enum omap_rproc_mempool_type {
 	OMAP_RPROC_MEMPOOL_DYNAMIC
 };
 
+#if defined(CONFIG_MACH_TUNA) && defined(CONFIG_OMAP_REMOTE_PROC)
+// skip
+#else
 #if defined(CONFIG_OMAP_REMOTE_PROC_DSP)
 extern void omap_dsp_reserve_sdram_memblock(void);
 phys_addr_t omap_dsp_get_mempool_tsize(enum omap_rproc_mempool_type type);
@@ -89,8 +94,9 @@ static inline phys_addr_t omap_dsp_get_mempool_tbase(
 }
 static inline void omap_dsp_set_static_mempool(u32 start, u32 size) { }
 #endif
+#endif
 
-#if defined(CONFIG_OMAP_REMOTE_PROC_IPU)
+#if defined(CONFIG_OMAP_REMOTE_PROC_IPU) || defined(CONFIG_MACH_TUNA)
 void omap_ipu_reserve_sdram_memblock(void);
 u32 omap_ipu_get_mempool_size(enum omap_rproc_mempool_type type);
 phys_addr_t omap_ipu_get_mempool_base(enum omap_rproc_mempool_type type);
@@ -145,6 +151,7 @@ struct exc_regs {
 	u32  AFSR;
 };
 
+#ifndef CONFIG_MACH_TUNA
 struct exc_dspRegs {
 	u32 ILC;
 	u32 RILC;
@@ -221,6 +228,7 @@ struct exc_dspRegs {
 	u32 a0;
 	u32 a1;
 };
+#endif
 
 static inline void remoteproc_fill_pt_regs(struct pt_regs *regs,
 				struct exc_regs *xregs)
