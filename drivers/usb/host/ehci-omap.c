@@ -149,6 +149,7 @@ again:
 	return status;
 }
 
+#ifndef CONFIG_MACH_TUNA
 void omap_ehci_hw_phy_reset(const struct usb_hcd *hcd)
 {
 	struct device *dev = hcd->self.controller;
@@ -183,6 +184,7 @@ static void tll_WA_func(void *info)
 	while (!tll_WA_info.done)
 		cpu_relax();
 }
+#endif
 
 static int omap4_ehci_tll_hub_control(
 	struct usb_hcd	*hcd,
@@ -200,7 +202,9 @@ static int omap4_ehci_tll_hub_control(
 	unsigned long	flags;
 	int		retval = 0;
 	u32		runstop, temp_reg, tll_reg;
+#ifndef CONFIG_MACH_TUNA
 	u32		cpu;
+#endif
 
 	tll_reg = (u32)OMAP2_L4_IO_ADDRESS(L3INIT_HSUSBTLL_CLKCTRL);
 
@@ -275,6 +279,7 @@ static int omap4_ehci_tll_hub_control(
 						"port %d would not halt!\n",
 						wIndex);
 
+#ifndef CONFIG_MACH_TUNA
 				/* If we have another CPU online, force it
 				   to not mess with MPCore */
 				cpu = smp_processor_id();
@@ -288,6 +293,7 @@ static int omap4_ehci_tll_hub_control(
 					udelay(1);
 					dsb();
 				}
+#endif
 
 				temp_reg = __raw_readl(tll_reg);
 				temp_reg &= ~(1 << (wIndex + 8));
@@ -301,9 +307,11 @@ static int omap4_ehci_tll_hub_control(
 				__raw_writel(temp_reg, tll_reg);
 				dmb();
 
+#ifndef CONFIG_MACH_TUNA
 				/*Release other CPU*/
 				tll_WA_info.done = 1;
 				dsb();
+#endif
 
 				retval = handshake(ehci, status_reg,
 					   PORT_RESUME, 0, 2000 /* 2msec */);
@@ -424,6 +432,7 @@ static int omap4_ehci_tll_hub_control(
 	return retval;
 }
 
+#ifndef CONFIG_MACH_TUNA
 struct usb_hcd	*omap_ehci_hcd;
 
 enum omap_hsic_state {
@@ -464,6 +473,7 @@ static struct omap_hsic_channel hsic_channel[OMAP3_HS_USB_PORTS] = {
 static void hsic_reconnect_work(struct work_struct *work);
 
 static DECLARE_WORK(hsic_work, hsic_reconnect_work);
+#endif
 
 
 static int omap_ehci_hub_control(
@@ -537,6 +547,7 @@ static int omap_ehci_hub_control(
 		}
 	}
 
+#ifndef CONFIG_MACH_TUNA
 	if ((wIndex > 0) && (wIndex < OMAP3_HS_USB_PORTS) &&
 			(pdata->port_mode[wIndex-1] == OMAP_EHCI_PORT_MODE_HSIC)) {
 		struct ehci_hcd *ehci = hcd_to_ehci(hcd);
@@ -576,6 +587,7 @@ static int omap_ehci_hub_control(
 		}
 		spin_unlock_irqrestore(&ehci->lock, flags);
 	}
+#endif
 
 	return ehci_hub_control(hcd, typeReq, wValue, wIndex, buf, wLength);
 }
@@ -610,6 +622,7 @@ static void omap_ehci_soft_phy_reset(struct platform_device *pdev, u8 port)
 	}
 }
 
+#ifndef CONFIG_MACH_TUNA
 static irqreturn_t hsic_aux_irq(int irq, void *__hcd)
 {
 	struct ehci_hcd	*ehci = hcd_to_ehci((struct usb_hcd *)__hcd);
@@ -670,6 +683,7 @@ static irqreturn_t hsic_aux_irq(int irq, void *__hcd)
 
 	return IRQ_NONE;
 }
+#endif
 
 
 /* configure so an HC device and id are always provided */
@@ -682,6 +696,10 @@ static irqreturn_t hsic_aux_irq(int irq, void *__hcd)
  * then invokes the start() method for the HCD associated with it
  * through the hotplug entry's driver_data.
  */
+#ifdef CONFIG_MACH_TUNA
+#define USBHS_OHCI_HWMODNAME    "usbhs_ohci"
+#define HCCONTROL_OFFSET	(4)
+#endif
 static int ehci_hcd_omap_probe(struct platform_device *pdev)
 {
 	struct device				*dev = &pdev->dev;
@@ -689,7 +707,13 @@ static int ehci_hcd_omap_probe(struct platform_device *pdev)
 	struct resource				*res;
 	struct usb_hcd				*hcd;
 	void __iomem				*regs;
+#ifdef CONFIG_MACH_TUNA
+	void __iomem				*ohci_base;
+#endif
 	struct ehci_hcd				*omap_ehci;
+#ifdef CONFIG_MACH_TUNA
+	struct omap_hwmod			*oh;
+#endif
 	int					ret = -ENODEV;
 	int					irq;
 	int					i;
@@ -731,6 +755,7 @@ static int ehci_hcd_omap_probe(struct platform_device *pdev)
 		goto err_io;
 	}
 
+#ifndef CONFIG_MACH_TUNA
 	omap_ehci_hcd = hcd;
 	for (i = 0; i < OMAP3_HS_USB_PORTS; i++) {
 		int hsic_aux_port = pdata->hsic_aux_port[i];
@@ -771,6 +796,7 @@ static int ehci_hcd_omap_probe(struct platform_device *pdev)
 			enable_irq_wake(hsic_irq);
 		}
 	}
+#endif
 
 	hcd->rsrc_start = res->start;
 	hcd->rsrc_len = resource_size(res);
@@ -862,6 +888,16 @@ static int ehci_hcd_omap_probe(struct platform_device *pdev)
 	/* root ports should always stay powered */
 	ehci_port_power(omap_ehci, 1);
 
+#ifdef CONFIG_MACH_TUNA
+
+	/* Ensure OHCI is kept in suspended state */
+	oh = omap_hwmod_lookup(USBHS_OHCI_HWMODNAME);
+	ohci_base = omap_hwmod_get_mpu_rt_va(oh);
+	__raw_writel(OHCI_USB_SUSPEND, ohci_base + HCCONTROL_OFFSET);
+	(void)__raw_readl(ohci_base + HCCONTROL_OFFSET);
+
+	return 0;
+#else
 	return 0;
 
 err_hsic_aux:
@@ -879,6 +915,9 @@ err_hsic_aux:
 
 	usb_remove_hcd(hcd);
 	usb_put_hcd(hcd);
+#endif
+
+
 
 err_add_hcd:
 	pm_runtime_put_sync(dev->parent);
@@ -899,8 +938,11 @@ err_io:
 static int ehci_hcd_omap_remove(struct platform_device *pdev)
 {
 	struct device *dev	= &pdev->dev;
+#ifndef CONFIG_MACH_TUNA
 	struct ehci_hcd_omap_platform_data *pdata = dev->platform_data;
+#endif
 	struct usb_hcd *hcd	= dev_get_drvdata(dev);
+#ifndef CONFIG_MACH_TUNA
 	int i;
 
 	for (i = 0; i < OMAP3_HS_USB_PORTS; i++) {
@@ -914,6 +956,7 @@ static int ehci_hcd_omap_remove(struct platform_device *pdev)
 			gpio_free(hsic_aux_port);
 		}
 	}
+#endif
 
 	usb_remove_hcd(hcd);
 	pm_runtime_put_sync(dev->parent);
@@ -1018,6 +1061,7 @@ static struct platform_driver ehci_hcd_omap_driver = {
 	}
 };
 
+#ifndef CONFIG_MACH_TUNA
 static int omap_ehci_hub_status_data(struct usb_hcd *hcd, char *buf)
 {
 	struct ehci_hcd *ehci = hcd_to_ehci(hcd);
@@ -1216,6 +1260,7 @@ static void hsic_reconnect_work(struct work_struct *work)
 
 	return;
 }
+#endif
 
 /*-------------------------------------------------------------------------*/
 
@@ -1254,14 +1299,20 @@ static const struct hc_driver ehci_omap_hc_driver = {
 	/*
 	 * root hub support
 	 */
+#ifdef CONFIG_MACH_TUNA
+	.hub_status_data	= ehci_hub_status_data,
+#else
 	.hub_status_data	= omap_ehci_hub_status_data,
+#endif
 	.hub_control		= omap_ehci_hub_control,
 	.bus_suspend		= ehci_omap_bus_suspend,
 	.bus_resume		= ehci_omap_bus_resume,
 
+#ifndef CONFIG_MACH_TUNA
 	/* HSIC disconnect-reconnect*/
 	.disconnect		= omap_hsic_disconnect,
 	.reconnect		= omap_hsic_reconnect,
+#endif
 
 	.clear_tt_buffer_complete = ehci_clear_tt_buffer_complete,
 };
