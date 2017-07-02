@@ -24,6 +24,7 @@
 #include <linux/platform_data/modem.h>
 #include "board-tuna.h"
 #include "mux.h"
+#include <plat/omap_hsi.h>
 
 #define OMAP_GPIO_MIPI_HSI_CP_ON	53
 #define OMAP_GPIO_MIPI_HSI_RESET_REQ_N	50
@@ -797,6 +798,8 @@ static int __init init_modem(void)
 #ifdef CONFIG_OMAP_HSI_DEVICE
 		/* HSI devices registration */
 		tuna_hsi_pad_conf();
+		/* Allow HSI omap_device to be registered later */
+		omap_hsi_allow_registration();
 #endif
 		/* umts gpios configuration */
 		umts_modem_cfg_gpio();
