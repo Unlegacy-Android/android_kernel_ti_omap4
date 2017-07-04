@@ -120,9 +120,6 @@ void __init omap4_register_ion(void)
 void __init omap_ion_init(void)
 {
 	int i, ret = 0;
-#ifndef CONFIG_ION_OMAP_TILER_DYNAMIC_ALLOC
-	u32 nonsecure = omap4_ion_pdata.nonsecure_tiler2d_size;
-#endif
 #ifdef CONFIG_CMA
 	size_t ipu_cma_pages_count;
 	phys_addr_t cma_area_addr;
