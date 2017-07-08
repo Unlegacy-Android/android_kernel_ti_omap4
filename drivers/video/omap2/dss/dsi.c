@@ -2257,19 +2257,19 @@ static void dsi_cio_timings(struct platform_device *dsidev)
 	/* min tclk-prepare + tclk-zero = 300ns */
 	tclk_zero = ns2ddr(dsidev, 260);
 
-	DSSDBG("ths_prepare %u (%uns), ths_prepare_ths_zero %u (%uns)\n",
+	printk("ths_prepare %u (%uns), ths_prepare_ths_zero %u (%uns)\n",
 		ths_prepare, ddr2ns(dsidev, ths_prepare),
 		ths_prepare_ths_zero, ddr2ns(dsidev, ths_prepare_ths_zero));
-	DSSDBG("ths_trail %u (%uns), ths_exit %u (%uns)\n",
+	printk("ths_trail %u (%uns), ths_exit %u (%uns)\n",
 			ths_trail, ddr2ns(dsidev, ths_trail),
 			ths_exit, ddr2ns(dsidev, ths_exit));
 
-	DSSDBG("tlpx_half %u (%uns), tclk_trail %u (%uns), "
+	printk("tlpx_half %u (%uns), tclk_trail %u (%uns), "
 			"tclk_zero %u (%uns)\n",
 			tlpx_half, ddr2ns(dsidev, tlpx_half),
 			tclk_trail, ddr2ns(dsidev, tclk_trail),
 			tclk_zero, ddr2ns(dsidev, tclk_zero));
-	DSSDBG("tclk_prepare %u (%uns)\n",
+	printk("tclk_prepare %u (%uns)\n",
 			tclk_prepare, ddr2ns(dsidev, tclk_prepare));
 
 	/* program timings */
