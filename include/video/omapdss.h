@@ -328,6 +328,7 @@ struct omap_video_timings {
 	u16 vbp;	/* Vertical back porch */
 };
 
+#ifndef CONFIG_MACH_TUNA
 struct omap_dsi_timings {
 	/* Unit: HS DSI byte clocks */
 	u16 tl;		/* Total line length */
@@ -366,6 +367,7 @@ struct omap_dsi_timings {
 	/* Unit: HS DSI byte clocks */
 	u16 exit_lat;	/* Exit HS mode latency */
 };
+#endif
 
 #ifdef CONFIG_OMAP2_DSS_VENC
 /* Hardcoded timings for tv modes. Venc only uses these to
@@ -632,7 +634,9 @@ struct omap_dss_device {
 
 			bool ext_te;
 			u8 ext_te_gpio;
+#ifndef CONFIG_MACH_TUNA
 			u8 line_bufs;
+#endif
 		} dsi;
 
 		struct {
@@ -661,6 +665,7 @@ struct omap_dss_device {
 			u16 lp_clk_div;
 			unsigned offset_ddr_clk;
 			enum omap_dss_clk_source dsi_fclk_src;
+#ifndef CONFIG_MACH_TUNA
 			u8 tlpx;
 			struct {
 				u8 zero;
@@ -673,6 +678,7 @@ struct omap_dss_device {
 				u8 trail;
 				u8 exit;
 			} ths;
+#endif
 		} dsi;
 
 		struct {
@@ -738,8 +744,10 @@ struct omap_dss_device {
 	int (*set_backlight)(struct omap_dss_device *dssdev, int level);
 	int (*get_backlight)(struct omap_dss_device *dssdev);
 
+#ifndef CONFIG_MACH_TUNA
 	struct omap_video_timings *dispc_timings;
 	struct omap_dsi_timings *dsi_timings;
+#endif
 };
 
 struct omap_dss_hdmi_data
