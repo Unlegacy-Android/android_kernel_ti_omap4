@@ -2222,12 +2222,45 @@ static inline unsigned ddr2ns(struct platform_device *dsidev, unsigned ddr)
 	return ddr * 1000 * 1000 / (ddr_clk / 1000);
 }
 
+#ifdef CONFIG_MACH_TUNA
+static void dsi_cio_timings(struct platform_device *dsidev)
+#else
 static void dsi_cio_timings(struct omap_dss_device *dssdev)
+#endif
 {
 	u32 r;
 	u32 ths_prepare, ths_prepare_ths_zero, ths_trail, ths_exit;
 	u32 tlpx_half, tclk_trail, tclk_zero;
 	u32 tclk_prepare;
+#ifdef CONFIG_MACH_TUNA
+	/* calculate timings */
+
+	/* 1 * DDR_CLK = 2 * UI */
+
+	/* min 40ns + 4*UI	max 85ns + 6*UI */
+	ths_prepare = ns2ddr(dsidev, 70) + 2;
+
+	/* min 145ns + 10*UI */
+	ths_prepare_ths_zero = ns2ddr(dsidev, 175) + 2;
+
+	/* min max(8*UI, 60ns+4*UI) */
+	ths_trail = ns2ddr(dsidev, 60) + 5;
+
+	/* min 100ns */
+	ths_exit = ns2ddr(dsidev, 145);
+
+	/* tlpx min 50n */
+	tlpx_half = ns2ddr(dsidev, 25);
+
+	/* min 60ns */
+	tclk_trail = ns2ddr(dsidev, 60) + 2;
+
+	/* min 38ns, max 95ns */
+	tclk_prepare = ns2ddr(dsidev, 65);
+
+	/* min tclk-prepare + tclk-zero = 300ns */
+	tclk_zero = ns2ddr(dsidev, 260);
+#else
 	struct platform_device *dsidev = dsi_get_dsidev_from_dssdev(dssdev);
 
 	ths_prepare		= dssdev->clocks.dsi.ths.prepare;
@@ -2238,6 +2271,7 @@ static void dsi_cio_timings(struct omap_dss_device *dssdev)
 	tclk_trail		= dssdev->clocks.dsi.tclk.trail;
 	tclk_prepare		= dssdev->clocks.dsi.tclk.prepare;
 	tclk_zero		= dssdev->clocks.dsi.tclk.zero;
+#endif
 
 	DSSDBG("ths_prepare %u (%uns), ths_prepare_ths_zero %u (%uns)\n",
 		ths_prepare, ddr2ns(dsidev, ths_prepare),
@@ -2506,7 +2540,11 @@ static int dsi_cio_init(struct omap_dss_device *dssdev)
 	/* FORCE_TX_STOP_MODE_IO */
 	REG_FLD_MOD(dsidev, DSI_TIMING1, 0, 15, 15);
 
+#ifdef CONFIG_MACH_TUNA
+	dsi_cio_timings(dsidev);
+#else
 	dsi_cio_timings(dssdev);
+#endif
 
 	dsi->ulps_enabled = false;
 
@@ -3837,10 +3875,17 @@ static int dsi_video_proto_config(struct omap_dss_device *dssdev)
 {
 	struct platform_device *dsidev = dsi_get_dsidev_from_dssdev(dssdev);
 	struct omap_video_timings *timings = &dssdev->panel.timings;
+#ifdef CONFIG_MACH_TUNA
+	int buswidth = 0;
+	u32 r;
+	int hbp, hfp, hsa, tl, line;
+	int lanes;
+#else
 	struct omap_dsi_timings t;
 	int buswidth = 0;
 	u32 r;
 	int lanes, line;
+#endif
 
 	dsi_config_tx_fifo(dsidev, DSI_FIFO_SIZE_32,
 			DSI_FIFO_SIZE_32,
@@ -3879,7 +3924,11 @@ static int dsi_video_proto_config(struct omap_dss_device *dssdev)
 	r = FLD_MOD(r, 1, 9, 9);	/* VP_DE_POL */
 	r = FLD_MOD(r, 0, 10, 10);	/* VP_HSYNC_POL */
 	r = FLD_MOD(r, 1, 11, 11);	/* VP_VSYNC_POL */
+#ifdef CONFIG_MACH_TUNA
+	r = FLD_MOD(r, 2, 13, 12);	/* LINE_BUFFER */
+#else
 	r = FLD_MOD(r, dssdev->phy.dsi.line_bufs, 13, 12);/* LINE_BUFFER */
+#endif
 	r = FLD_MOD(r, 1, 14, 14);	/* TRIGGER_RESET_MODE */
 	r = FLD_MOD(r, 1, 15, 15);	/* VP_VSYNC_START */
 	r = FLD_MOD(r, 1, 17, 17);	/* VP_HSYNC_START */
@@ -3898,6 +3947,59 @@ static int dsi_video_proto_config(struct omap_dss_device *dssdev)
 		dsi_vc_initial_config(dsidev, 3);
 	}
 
+#ifdef CONFIG_MACH_TUNA
+	lanes = dsi_get_num_data_lanes_dssdev(dssdev);
+
+	hbp = dispc_to_dsi_clock((timings->hsw - 1) + (timings->hbp - 1),
+				dssdev->ctrl.pixel_size, lanes);
+	hfp = dispc_to_dsi_clock(timings->hfp - 1,
+		dssdev->ctrl.pixel_size, lanes);
+	hsa = 0;
+
+	line = timings->hbp + timings->hfp + timings->hsw + timings->x_res;
+	WARN((line * dssdev->ctrl.pixel_size / 8) % lanes != 0, "TL should be an exact "
+			"integer, try changing DISPC horizontal blanking parameters");
+
+	tl =  dispc_to_dsi_clock(line, dssdev->ctrl.pixel_size, lanes);
+
+	r = dsi_read_reg(dsidev, DSI_VM_TIMING1);
+	r = FLD_MOD(r, hbp, 11, 0);   /* HBP */
+	r = FLD_MOD(r, hfp, 23, 12);  /* HFP */
+	r = FLD_MOD(r, hsa, 31, 24);  /* HSA */
+	dsi_write_reg(dsidev, DSI_VM_TIMING1, r);
+
+	r = dsi_read_reg(dsidev, DSI_VM_TIMING2);
+	r = FLD_MOD(r, timings->vbp, 7, 0);    /* VBP */
+	r = FLD_MOD(r, timings->vfp, 15, 8);   /* VFP */
+	r = FLD_MOD(r, timings->vsw, 23, 16);  /* VSA */
+	r = FLD_MOD(r, 4, 27, 24);	/* WINDOW_SYNC */
+	dsi_write_reg(dsidev, DSI_VM_TIMING2, r);
+
+	r = dsi_read_reg(dsidev, DSI_VM_TIMING3);
+	r = FLD_MOD(r, timings->y_res, 14, 0);
+	r = FLD_MOD(r, tl, 31, 16);
+	dsi_write_reg(dsidev, DSI_VM_TIMING3, r);
+
+	/* TODO: either calculate these values or make them configurable */
+	r = FLD_VAL(72, 23, 16) |       /* HSA_HS_INTERLEAVING */
+		FLD_VAL(114, 15, 8) |   /* HFB_HS_INTERLEAVING */
+		FLD_VAL(150, 7, 0);     /* HbB_HS_INTERLEAVING */
+	dsi_write_reg(dsidev, DSI_VM_TIMING4, r);
+
+	r = FLD_VAL(130, 23, 16) |      /* HSA_LP_INTERLEAVING */
+		FLD_VAL(223, 15, 8) |   /* HFB_LP_INTERLEAVING */
+		FLD_VAL(59, 7, 0);      /* HBB_LP_INTERLEAVING */
+	dsi_write_reg(dsidev, DSI_VM_TIMING5, r);
+
+	r = FLD_VAL(0x7A67, 31, 16) |   /* BL_HS_INTERLEAVING */
+		FLD_VAL(0x31D1, 15, 0); /* BL_LP_INTERLEAVING */
+	dsi_write_reg(dsidev, DSI_VM_TIMING6, r);
+
+	r = FLD_VAL(18, 31, 16) |       /* ENTER_HS_MODE_LATENCY */
+		FLD_VAL(15, 15, 0);	/* EXIT_HS_MODE_LATENCY */
+	dsi_write_reg(dsidev, DSI_VM_TIMING7, r);
+
+#else
 	if (dssdev->dsi_timings) {
 		memcpy(&t, dssdev->dsi_timings, sizeof(t));
 	} else {
@@ -3973,6 +4075,7 @@ static int dsi_video_proto_config(struct omap_dss_device *dssdev)
 	r = FLD_VAL(t.enter_lat, 31, 16) |	/* ENTER_HS_MODE_LATENCY */
 		FLD_VAL(t.exit_lat, 15, 0);	/* EXIT_HS_MODE_LATENCY */
 	dsi_write_reg(dsidev, DSI_VM_TIMING7, r);
+#endif
 
 	return 0;
 }
@@ -4534,6 +4637,10 @@ static int dsi_display_init_dispc(struct omap_dss_device *dssdev)
 
 		dispc_set_lcd_timings(dssdev->manager->id, &timings);
 	} else {
+#ifdef CONFIG_MACH_TUNA
+		dispc_set_lcd_timings(dssdev->manager->id,
+				       &dssdev->panel.timings);
+#else
 		if (dssdev->dispc_timings) {
 			dispc_set_lcd_timings(dssdev->manager->id,
 				dssdev->dispc_timings);
@@ -4541,6 +4648,7 @@ static int dsi_display_init_dispc(struct omap_dss_device *dssdev)
 			dispc_set_lcd_timings(dssdev->manager->id,
 				&dssdev->panel.timings);
 		}
+#endif
 	}
 
 	return 0;
