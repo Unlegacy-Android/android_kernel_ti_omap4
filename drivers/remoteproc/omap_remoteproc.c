@@ -597,7 +597,7 @@ static struct rproc_ops omap_rproc_ops = {
 static int omap_rproc_probe(struct platform_device *pdev)
 {
 	struct omap_rproc_pdata *pdata = pdev->dev.platform_data;
-#ifdef CONFIG_REMOTE_PROC_AUTOSUSPEND_TIMEOUT
+#if defined(CONFIG_REMOTE_PROC_AUTOSUSPEND_TIMEOUT) && CONFIG_REMOTE_PROC_AUTOSUSPEND_TIMEOUT > 0
 	unsigned timeout = CONFIG_REMOTE_PROC_AUTOSUSPEND_TIMEOUT * 1000;
 #else
 	unsigned timeout = pdata->sus_timeout;
