@@ -137,11 +137,13 @@ static int __init vibrator_init(void)
 	if (vibdata.gptimer == NULL)
 		return -1;
 
+#ifdef CONFIG_OMAP_DM_TIMER_DEBUG
 	omap_dm_timer_dump_regs(vibdata.gptimer);
 	ret = vibrator_timer_init();
 	if (ret < 0)
 		goto err_dm_timer_init;
 	omap_dm_timer_dump_regs(vibdata.gptimer);
+#endif
 
 	wake_lock_init(&vibdata.wklock, WAKE_LOCK_SUSPEND, "vibrator");
 	mutex_init(&vibdata.lock);
@@ -156,11 +158,13 @@ err_to_dev_reg:
 	mutex_destroy(&vibdata.lock);
 	wake_lock_destroy(&vibdata.wklock);
 
+#ifdef CONFIG_OMAP_DM_TIMER_DEBUG
 err_dm_timer_init:
 	omap_dm_timer_free(vibdata.gptimer);
 	vibdata.gptimer = NULL;
 
 	return -1;
+#endif
 }
 
 static int __init omap4_tuna_vibrator_init(void)
