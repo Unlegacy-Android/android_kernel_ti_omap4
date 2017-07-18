@@ -997,6 +997,19 @@ static struct omap_dss_device tuna_oled_device = {
 						 */
 
 			.dsi_fclk_src   = OMAP_DSS_CLK_SRC_DSI_PLL_HSDIV_DSI,
+
+			.tlpx = 12,
+			.tclk = {
+				.zero		= 62,
+				.prepare	= 16,
+				.trail		= 17,
+			},
+			.ths = {
+				.zero		= 44,
+				.prepare	= 19,
+				.trail		= 20,
+				.exit		= 35,
+			},
 		},
 	},
 
