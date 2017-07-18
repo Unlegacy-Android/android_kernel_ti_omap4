@@ -963,6 +963,7 @@ static struct omap_dss_device tuna_oled_device = {
 		.data3_pol	= 0,
 		.data4_lane	= 5,
 		.data4_pol	= 0,
+		.line_bufs	= 2,
 	},
 	.panel = {
 		.timings = {
@@ -994,6 +995,19 @@ static struct omap_dss_device tuna_oled_device = {
 						 */
 
 			.dsi_fclk_src   = OMAP_DSS_CLK_SRC_DSI_PLL_HSDIV_DSI,
+
+			.tlpx = 12,
+			.tclk = {
+				.zero		= 62,
+				.prepare	= 16,
+				.trail		= 17,
+			},
+			.ths = {
+				.zero		= 25,
+				.prepare	= 19,
+				.trail		= 20,
+				.exit		= 35,
+			},
 		},
 	},
 
