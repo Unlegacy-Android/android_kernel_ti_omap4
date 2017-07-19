@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1c368feb_4332a33e",
+        "filename": "arch/arm/mach-omap2/board-tuna-display.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 1008,
+      "author": {
+        "id": 1000002
+      },
+      "writtenOn": "2017-07-19T19:55:05Z",
+      "side": 1,
+      "message": "Needs to be 25.",
+      "range": {
+        "startLine": 1008,
+        "startChar": 13,
+        "endLine": 1008,
+        "endChar": 15
+      },
+      "revId": "259fd0e2b55686ecc8e34d99f6dbdc6608205b58",
+      "serverId": "d5e41ece-075f-43fb-b5a6-48951f3d7b1d",
+      "unresolved": false
+    }
+  ]
+}
