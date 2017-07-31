@@ -103,7 +103,7 @@ enum fw_resource_type {
 	RSC_TRACE	= 4,
 	RSC_BOOTADDR	= 5,
 	RSC_CRASHDUMP	= 6,
-#ifndef CONFIG_MACH_TUNA
+#ifdef CONFIG_MACH_TUNA
 	RSC_END		= 7,
 #else
 	RSC_SUSPENDADDR	= 7,
