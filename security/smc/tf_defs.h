@@ -183,6 +183,7 @@ struct tf_shmem_desc {
 
 /*----------------------------------------------------------------------------*/
 
+#ifdef CONFIG_MACH_TUNA
 struct tf_init_buffer {
 	u32 exit_code;
 	u32 protocol_version;
@@ -194,6 +195,7 @@ struct tf_init_buffer {
 	u32 properties_length;
 	u8 properties_buffer[1];
 };
+#endif
 
 /*
  * This structure describes the communication with the Secure World
@@ -258,8 +260,10 @@ struct tf_comm {
 	 */
 	int se_initialized;
 
+#ifdef CONFIG_MACH_TUNA
         /* Virtual address of the L0 communication buffer */
 	struct tf_init_buffer *init_shared_buffer;
+#endif
 
 	/*
 	 * Lock to be held by a client when executing an RPC
