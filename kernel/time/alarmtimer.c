@@ -118,7 +118,8 @@ static void alarmtimer_triggered_func(void *p)
 	struct rtc_device *rtc = rtcdev;
 	if (!(rtc->irq_data & RTC_AF))
 		return;
-	__pm_wakeup_event(ws, 2 * MSEC_PER_SEC);
+	wake_lock_timeout(&suspend_alarm_lock,
+			  msecs_to_jiffies(2 * MSEC_PER_SEC));
 }
 
 static struct rtc_task alarmtimer_rtc_task = {
