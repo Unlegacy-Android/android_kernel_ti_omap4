@@ -165,6 +165,7 @@ static struct sg_table *omap_tiler_map_dma(struct omap_tiler_info *info,
 						struct ion_buffer *buffer)
 {
 	struct sg_table *table;
+	struct scatterlist* sg_temp;
 	int ret, i;
 
 	if (buffer->sg_table) {
@@ -191,9 +192,11 @@ static struct sg_table *omap_tiler_map_dma(struct omap_tiler_info *info,
 		return table;
 	}
 
+	sg_temp = table->sgl;
 	for (i = 0; i < info->n_tiler_pages; i++) {
-		sg_set_page(table->sgl, phys_to_page(info->tiler_addrs[i]),
+		sg_set_page(sg_temp, phys_to_page(info->tiler_addrs[i]),
 			    PAGE_SIZE, 0);
+		sg_temp = sg_next(sg_temp);
 	}
 	return table;
 }
