@@ -1722,7 +1722,7 @@ ErrorExit:
 	return NULL;
 }
 
-#if defined(CONFIG_OMAPLFB)
+#if defined(CONFIG_OMAPLFB) || defined(CONFIG_OMAPLFB_MODULE)
 int OMAPLFBRegisterPVRDriver(PFN_DC_GET_PVRJTABLE pfnFuncTable)
 {
 	gpfnGetPVRJTable = pfnFuncTable;
@@ -1744,7 +1744,7 @@ OMAPLFB_ERROR OMAPLFBInit(void)
 	unsigned i;
 	unsigned uiDevicesFound = 0;
 
-#if !defined(CONFIG_OMAPLFB)
+#if !(defined(CONFIG_OMAPLFB) || defined(CONFIG_OMAPLFB_MODULE))
 	if(OMAPLFBGetLibFuncAddr ("PVRGetDisplayClassJTable", &gpfnGetPVRJTable) != OMAPLFB_OK)
 	{
 		return OMAPLFB_ERROR_INIT_FAILURE;
