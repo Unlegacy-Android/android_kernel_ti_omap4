@@ -199,7 +199,7 @@ void OMAPLFBAtomicIntInc(OMAPLFB_ATOMIC_INT *psAtomic)
 	atomic_inc(psAtomic);
 }
 
-#if !defined(CONFIG_OMAPLFB)
+#if !(defined(CONFIG_OMAPLFB) || defined(CONFIG_OMAPLFB_MODULE))
 OMAPLFB_ERROR OMAPLFBGetLibFuncAddr (char *szFunctionName, PFN_DC_GET_PVRJTABLE *ppfnFuncTable)
 {
 	if(strcmp("PVRGetDisplayClassJTable", szFunctionName) != 0)
@@ -1114,7 +1114,7 @@ static int omaplfb_probe(struct platform_device *pdev)
 		return -ENODEV;
 	}
 
-#if !defined(CONFIG_OMAPLFB)
+#if !(defined(CONFIG_OMAPLFB) || defined(CONFIG_OMAPLFB_MODULE))
 	if(OMAPLFBInit() != OMAPLFB_OK)
 	{
 		dev_err(&pdev->dev, "failed to probe omaplfb\n");
@@ -1190,6 +1190,9 @@ static void __exit OMAPLFB_Cleanup(void)
 	platform_driver_unregister(&omaplfb_driver);
 #endif
 }
+
+MODULE_DESCRIPTION("OMAPLFB Support");
+MODULE_LICENSE("GPL v2");
 
 #if !defined(SUPPORT_DRI_DRM)
 late_initcall(OMAPLFB_Init);
