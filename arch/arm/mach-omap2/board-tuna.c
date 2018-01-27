@@ -1389,8 +1389,6 @@ static void __init tuna_map_io(void)
 static void omap4_tuna_init_carveout_sizes(
 		struct omap_ion_platform_data *ion)
 {
-	/* WFD is not supported in tuna So the size is zero */
-	ion->secure_output_wfdhdcp_size = 0;
 	ion->ducati_heap_size = (SZ_1M * 105);
 #ifndef CONFIG_ION_OMAP_TILER_DYNAMIC_ALLOC
 	ion->tiler1d_size = (SZ_1M * 90);
@@ -1425,7 +1423,8 @@ static void __init tuna_reserve(void)
 
 	/* ipu needs to recognize secure input buffer area as well */
 	omap_ipu_set_static_mempool(PHYS_ADDR_DUCATI_MEM,
-				  PHYS_ADDR_DUCATI_SIZE + OMAP4_ION_HEAP_SECURE_INPUT_SIZE);
+				    PHYS_ADDR_DUCATI_SIZE +
+				    OMAP4_ION_HEAP_SECURE_INPUT_SIZE);
 
 	omap_reserve();
 }

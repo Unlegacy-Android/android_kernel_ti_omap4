@@ -455,8 +455,6 @@ static void __init espresso_map_io(void)
 static void omap4_espresso_init_carveout_sizes(
 		struct omap_ion_platform_data *ion)
 {
-	/* WFD is not supported in espresso So the size is zero */
-	ion->secure_output_wfdhdcp_size = 0;
 	ion->ducati_heap_size = (SZ_1M * 65);
 #ifndef CONFIG_ION_OMAP_TILER_DYNAMIC_ALLOC
 	ion->tiler1d_size = (SZ_1M * 14);
@@ -487,8 +485,7 @@ static void __init espresso_reserve(void)
 	/* ipu needs to recognize secure input buffer area as well */
 	omap_ipu_set_static_mempool(PHYS_ADDR_DUCATI_MEM,
 				    PHYS_ADDR_DUCATI_SIZE +
-				    OMAP4_ION_HEAP_SECURE_INPUT_SIZE +
-				    OMAP4_ION_HEAP_SECURE_OUTPUT_WFDHDCP_SIZE);
+				    OMAP4_ION_HEAP_SECURE_INPUT_SIZE);
 	omap_reserve();
 }
 
