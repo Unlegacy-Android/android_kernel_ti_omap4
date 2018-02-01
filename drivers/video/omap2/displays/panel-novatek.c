@@ -44,14 +44,16 @@ struct novatek_data {
 	int channel0;
 	int channel_cmd;
 	struct dentry *dbg_dir;
-	const struct panel_dsi_fps_data *current_fps;
+	//const struct panel_dsi_fps_data *current_fps;
 	char cabc_mode[6];
 };
 
+#if 0
 static inline struct panel_dsi_fps_data ** get_dsi_fps_data(struct omap_dss_device *dssdev)
 {
 	return dssdev->data;
 }
+#endif
 
 static inline u8 bpp_to_datatype(int bpp)
 {
@@ -210,6 +212,7 @@ static void novatek_get_resolution(struct omap_dss_device *dssdev,
 	*yres = dssdev->panel.timings.y_res;
 }
 
+#if 0
 static int novatek_set_current_fps(struct omap_dss_device *dssdev, const char *fps)
 {
 	struct novatek_data *ndata = dev_get_drvdata(&dssdev->dev);
@@ -277,6 +280,7 @@ static ssize_t novatek_get_fps(struct omap_dss_device *dssdev, char *buf, size_t
 
 	return r;
 }
+#endif
 
 static ssize_t novatek_reg_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
 {
@@ -405,8 +409,10 @@ static int novatek_probe(struct omap_dss_device *dssdev)
 	d2d->dssdev = dssdev;
 	strcpy(d2d->cabc_mode, "none");
 	
+#if 0
 	if (get_dsi_fps_data(dssdev))
 		d2d->current_fps = get_dsi_fps_data(dssdev)[0];
+#endif
 
 	mutex_init(&d2d->lock);
 
@@ -922,9 +928,11 @@ static struct omap_dss_driver novatek_driver = {
 	.set_timings	= novatek_set_timings,
 	.check_timings	= novatek_check_timings,
 
+#if 0
 	.set_current_fps	= novatek_set_current_fps,
 	.get_current_fps	= novatek_get_current_fps,
 	.get_fps		= novatek_get_fps,
+#endif
 
 	.driver         = {
 		.name   = "novatek-panel",

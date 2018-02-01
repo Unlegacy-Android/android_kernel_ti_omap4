@@ -39,7 +39,7 @@ struct orise_data {
 
 	int channel0;
 	int channel_cmd;
-	const struct panel_dsi_fps_data *current_fps;
+	//const struct panel_dsi_fps_data *current_fps;
 	char cabc_mode[6];
 };
 
@@ -66,10 +66,12 @@ static inline u8 bpp_to_datatype(int bpp)
 	return 0;
 } 
 
+#if 0
 static inline struct panel_dsi_fps_data ** get_dsi_data(struct omap_dss_device *dssdev)
 {
 	return dssdev->data;
 }
+#endif
 
 static void orise_get_timings(struct omap_dss_device *dssdev,
 		struct omap_video_timings *timings)
@@ -106,6 +108,7 @@ static void orise_get_resolution(struct omap_dss_device *dssdev,
 	*yres = dssdev->panel.timings.y_res;
 }
 
+#if 0
 static int orise_set_current_fps(struct omap_dss_device *dssdev, const char *fps)
 {
 	struct orise_data *odata = dev_get_drvdata(&dssdev->dev);
@@ -173,6 +176,7 @@ static ssize_t orise_get_fps(struct omap_dss_device *dssdev, char *buf, size_t l
 
 	return r;
 }
+#endif
 
 static int orise_read_reg(struct omap_dss_device *dssdev, u16 reg, u8 *value)
 {
@@ -383,8 +387,10 @@ static int orise_probe(struct omap_dss_device *dssdev)
 	d2d->dssdev = dssdev;
 	strcpy(d2d->cabc_mode, "none");
 
+#if 0
 	if (get_dsi_data(dssdev))
 		d2d->current_fps = get_dsi_data(dssdev)[0];
+#endif
 
 	mutex_init(&d2d->lock);
 
@@ -549,9 +555,11 @@ static struct omap_dss_driver orise_driver = {
 	.set_timings	= orise_set_timings,
 	.check_timings	= orise_check_timings,
 
+#if 0
 	.set_current_fps	= orise_set_current_fps,
 	.get_current_fps	= orise_get_current_fps,
 	.get_fps		= orise_get_fps,
+#endif
 
 	.driver         = {
 		.name   = "orise-panel",
