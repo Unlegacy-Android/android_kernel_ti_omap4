@@ -200,6 +200,9 @@ struct dsi_reg { u16 idx; };
 	 DSI_CIO_IRQ_ERRCONTENTIONLP0_4 | DSI_CIO_IRQ_ERRCONTENTIONLP1_4 | \
 	 DSI_CIO_IRQ_ERRCONTENTIONLP0_5 | DSI_CIO_IRQ_ERRCONTENTIONLP1_5)
 
+#ifdef CONFIG_MACH_OMAP_BN_HD
+#define DSI_DT_GENERIC_SHORT_WRITE	0x03
+#endif
 #define DSI_DT_DCS_SHORT_WRITE_0	0x05
 #define DSI_DT_DCS_SHORT_WRITE_1	0x15
 #define DSI_DT_DCS_READ			0x06
@@ -3461,6 +3464,30 @@ err:
 	return r;
 }
 EXPORT_SYMBOL(dsi_vc_gen_write);
+
+#ifdef CONFIG_MACH_OMAP_BN_HD
+int dsi_vc_gen_short_write_nosync(struct omap_dss_device *dssdev, int channel,
+		u8 *data, int len)
+{
+	u16 buf = 0;
+	struct platform_device *dsidev = dsi_get_dsidev_from_dssdev(dssdev);
+
+	BUG_ON(len < 0);
+	BUG_ON(len > 2);
+
+	if (len > 0) {
+		buf = data[0];
+	}
+
+	if (len > 1) {
+		buf |= (data[1] << 8);
+	}
+
+	return dsi_vc_send_short(dsidev, channel, DSI_DT_GENERIC_SHORT_WRITE | (len << 4),
+				 buf, 0);
+}
+EXPORT_SYMBOL(dsi_vc_gen_short_write_nosync);
+#endif
 
 static int dsi_vc_gen_read(struct omap_dss_device *dssdev, int channel,
 		u16 read_cmd, u16 cmd, u8 *buf, int buflen)

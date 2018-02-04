@@ -268,6 +268,10 @@ int dsi_vc_gen_write_nosync(struct omap_dss_device *dssdev, int channel,
 		u8 *data, int len);
 int dsi_vc_gen_write(struct omap_dss_device *dssdev, int channel,
 		u8 *data, int len);
+#ifdef CONFIG_MACH_OMAP_BN_HD
+int dsi_vc_gen_short_write_nosync(struct omap_dss_device *dssdev, int channel, 
+		u8 *data, int len);
+#endif
 int dsi_vc_set_max_rx_packet_size(struct omap_dss_device *dssdev, int channel,
 		u16 len);
 int dsi_vc_send_null(struct omap_dss_device *dssdev, int channel);
