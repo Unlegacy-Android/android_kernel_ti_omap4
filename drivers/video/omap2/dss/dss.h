@@ -437,6 +437,9 @@ void dispc_runtime_put(void);
 
 void dispc_enable_sidle(void);
 void dispc_disable_sidle(void);
+#ifdef CONFIG_MACH_OMAP_BN
+void dispc_disable_clk(void);
+#endif
 
 void dispc_lcd_enable_signal_polarity(bool act_high);
 void dispc_lcd_enable_signal(bool enable);

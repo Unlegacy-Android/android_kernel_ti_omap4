@@ -4867,6 +4867,9 @@ int omapdss_dsi_display_enable(struct omap_dss_device *dssdev)
 	struct dsi_data *dsi = dsi_get_dsidrv_data(dsidev);
 	struct omap_display_platform_data *dss_plat_data;
 	int r = 0;
+#ifdef CONFIG_MACH_OMAP_BN
+	static bool first_boot = true;
+#endif
 
 	DSSDBG("dsi_display_enable\n");
 
@@ -4916,6 +4919,15 @@ initirq:
 	r = dsi_display_init_dsi(dssdev);
 	if (r)
 		goto err_init_dsi;
+
+#if defined(CONFIG_MACH_OMAP_BN) && defined(CONFIG_FB_OMAP_BOOTLOADER_INIT)
+	// decrease the ref counts for these clocks - they are enabled on init by hwmod
+	if (first_boot == true) {
+		clk_disable( omap_hwmod_lookup("dss_core")->_clk );
+		dispc_disable_clk();
+		first_boot = false;
+	}
+#endif
 
 	mutex_unlock(&dsi->lock);
 
