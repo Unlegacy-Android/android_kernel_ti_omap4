@@ -588,7 +588,11 @@ static struct omap_dss_device ovation_evt1b_lcd_device = {
 	},
 
 	.channel = OMAP_DSS_CHANNEL_LCD,
+#ifdef CONFIG_FB_OMAP_BOOTLOADER_INIT
 	.skip_init = true,
+#else
+	.skip_init = false,
+#endif
 
 	.platform_enable = ovation_enable_lcd,
 	.platform_disable = ovation_disable_lcd,

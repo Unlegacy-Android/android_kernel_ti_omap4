@@ -544,7 +544,11 @@ static struct omap_dss_device hummingbird_lcd_device_novatek = {
 	},
 
 	.channel = OMAP_DSS_CHANNEL_LCD,
+#ifdef CONFIG_FB_OMAP_BOOTLOADER_INIT
 	.skip_init = true,
+#else
+	.skip_init = false,
+#endif
 
 	.platform_enable = lg_enable_dsi,
 	.platform_disable = lg_disable_dsi,
@@ -644,7 +648,11 @@ static struct omap_dss_device hummingbird_lcd_device_orise = {
 
 
 	.channel = OMAP_DSS_CHANNEL_LCD,
+#ifdef CONFIG_FB_OMAP_BOOTLOADER_INIT
 	.skip_init = true,
+#else
+	.skip_init = false,
+#endif
 
 	.platform_enable = auo_enable_dsi,
 	.platform_disable = auo_disable_dsi,
