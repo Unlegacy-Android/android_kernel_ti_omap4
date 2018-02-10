@@ -20,7 +20,11 @@
 #include <linux/power_supply.h>
 #include <linux/max17040_battery.h>
 #include <linux/slab.h>
+#ifdef CONFIG_RTC_INTF_ALARM_DEV
 #include <linux/android_alarm.h>
+#else
+#include <linux/alarmtimer.h>
+#endif
 #include <linux/suspend.h>
 #include <linux/interrupt.h>
 #include <linux/reboot.h>
@@ -75,7 +79,9 @@ struct max17040_chip {
 	struct wake_lock	work_wake_lock;
 
 	struct alarm	alarm;
+#ifdef CONFIG_RTC_INTF_ALARM_DEV
 	ktime_t last_poll;
+#endif
 	int slow_poll;
 	int shutdown;
 	/* chip version */
@@ -285,14 +291,20 @@ static void max17040_get_temp_status(struct max17040_chip *chip)
 
 static void max17040_charger_update(struct max17040_chip *chip)
 {
+#ifdef CONFIG_RTC_INTF_ALARM_DEV
 	ktime_t ktime;
+#endif
 	struct timespec cur_time;
 
 	if (!chip->pdata->is_full_charge || !chip->pdata->allow_charging)
 		return;
 
+#ifdef CONFIG_RTC_INTF_ALARM_DEV
 	ktime = alarm_get_elapsed_realtime();
 	cur_time = ktime_to_timespec(ktime);
+#else
+	get_monotonic_boottime(&cur_time);
+#endif
 
 	switch (chip->charger_status) {
 	case STATUS_CHARGABLE:
@@ -385,26 +397,30 @@ static void max17040_update(struct max17040_chip *chip)
 
 static void max17040_program_alarm(struct max17040_chip *chip, int seconds)
 {
+#ifdef CONFIG_RTC_INTF_ALARM_DEV
 	ktime_t low_interval = ktime_set(seconds - 10, 0);
 	ktime_t slack = ktime_set(20, 0);
 	ktime_t next;
 
 	next = ktime_add(chip->last_poll, low_interval);
 	alarm_start_range(&chip->alarm, next, ktime_add(next, slack));
+#else
+	alarm_start_relative(&chip->alarm, ktime_set(seconds, 0));
+#endif
 }
 
 static void max17040_work(struct work_struct *work)
 {
 	unsigned long flags;
-	struct timespec ts;
 	struct max17040_chip *chip;
 
 	chip = container_of(work, struct max17040_chip, work);
 
 	max17040_update(chip);
 
+#ifdef CONFIG_RTC_INTF_ALARM_DEV
 	chip->last_poll = alarm_get_elapsed_realtime();
-	ts = ktime_to_timespec(chip->last_poll);
+#endif
 
 	local_irq_save(flags);
 	wake_unlock(&chip->work_wake_lock);
@@ -413,14 +429,20 @@ static void max17040_work(struct work_struct *work)
 	local_irq_restore(flags);
 }
 
+#ifdef CONFIG_RTC_INTF_ALARM_DEV
 static void max17040_battery_alarm(struct alarm *alarm)
+#else
+static enum alarmtimer_restart max17040_battery_alarm(struct alarm *alarm, ktime_t now)
+#endif
 {
 	struct max17040_chip *chip =
 		container_of(alarm, struct max17040_chip, alarm);
 
 	wake_lock(&chip->work_wake_lock);
 	schedule_work(&chip->work);
-
+#ifndef CONFIG_RTC_INTF_ALARM_DEV
+	return ALARMTIMER_NORESTART;
+#endif
 }
 
 static void max17040_ext_power_changed(struct power_supply *psy)
@@ -556,9 +578,13 @@ static int __devinit max17040_probe(struct i2c_client *client,
 	if (!chip->pdata->limit_recharging_time)
 		chip->pdata->limit_recharging_time = 5400;
 
+#ifdef CONFIG_RTC_INTF_ALARM_DEV
 	chip->last_poll = alarm_get_elapsed_realtime();
 	alarm_init(&chip->alarm, ANDROID_ALARM_ELAPSED_REALTIME_WAKEUP,
 			max17040_battery_alarm);
+#else
+	alarm_init(&chip->alarm, ALARM_BOOTTIME, max17040_battery_alarm);
+#endif
 
 	wake_lock_init(&chip->work_wake_lock, WAKE_LOCK_SUSPEND,
 			"max17040-battery");
