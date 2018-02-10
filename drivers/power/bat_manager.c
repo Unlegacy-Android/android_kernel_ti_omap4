@@ -25,7 +25,11 @@
 #include <linux/delay.h>
 #include <linux/mutex.h>
 #include <linux/slab.h>
+#ifdef CONFIG_RTC_INTF_ALARM_DEV
 #include <linux/android_alarm.h>
+#else
+#include <linux/alarmtimer.h>
+#endif
 #include <linux/proc_fs.h>
 #include <linux/usb/otg.h>
 #include <linux/notifier.h>
@@ -79,8 +83,9 @@ struct charger_device_info {
 	bool			once_fully_charged;
 	bool			low_batt_boot_flag;
 	bool			is_low_batt_alarm;
-
+#ifdef CONFIG_RTC_INTF_ALARM_DEV
 	ktime_t                 last_poll;
+#endif
 };
 
 static char *supply_list[] = {
@@ -304,11 +309,17 @@ static int batman_charging_status_check(struct charger_device_info *di)
 {
 	int ret = 0;
 
+#ifdef CONFIG_RTC_INTF_ALARM_DEV
 	ktime_t ktime;
+#endif
 	struct timespec cur_time;
 
+#ifdef CONFIG_RTC_INTF_ALARM_DEV
 	ktime = alarm_get_elapsed_realtime();
 	cur_time = ktime_to_timespec(ktime);
+#else
+	get_monotonic_boottime(&cur_time);
+#endif
 
 	switch (di->discharge_status) {
 	case STATUS_BATT_CHARGABLE:
@@ -455,12 +466,16 @@ static int batman_get_bat_level(struct charger_device_info *di)
 
 static void batman_program_alarm(struct charger_device_info *di, int seconds)
 {
+#ifdef CONFIG_RTC_INTF_ALARM_DEV
 	ktime_t low_interval = ktime_set(seconds - 10, 0);
 	ktime_t slack = ktime_set(20, 0);
 	ktime_t next;
 
 	next = ktime_add(di->last_poll, low_interval);
 	alarm_start_range(&di->alarm, next, ktime_add(next, slack));
+#else
+	alarm_start_relative(&di->alarm, ktime_set(seconds, 0));
+#endif
 }
 
 static void battery_manager_work(struct work_struct *work)
@@ -472,7 +487,6 @@ static void battery_manager_work(struct work_struct *work)
 	int prev_soc = di->bat_info.soc;
 
 	unsigned long flags;
-	struct timespec ts;
 
 	mutex_lock(&di->mutex);
 	if (di->pdata->get_fuel_value) {
@@ -504,8 +518,9 @@ static void battery_manager_work(struct work_struct *work)
 		di->bat_info.health, di->bat_info.temp,
 		di->discharge_status, di->chg_limit_time, di->pdata->bootmode);
 
+#ifdef CONFIG_RTC_INTF_ALARM_DEV
 	di->last_poll = alarm_get_elapsed_realtime();
-	ts = ktime_to_timespec(di->last_poll);
+#endif
 
 	local_irq_save(flags);
 	wake_unlock(&di->work_wake_lock);
@@ -513,13 +528,20 @@ static void battery_manager_work(struct work_struct *work)
 	local_irq_restore(flags);
 }
 
+#ifdef CONFIG_RTC_INTF_ALARM_DEV
 static void batman_battery_alarm(struct alarm *alarm)
+#else
+static enum alarmtimer_restart batman_battery_alarm(struct alarm *alarm, ktime_t now)
+#endif
 {
 	struct charger_device_info *di =
 		container_of(alarm, struct charger_device_info, alarm);
 
 	wake_lock(&di->work_wake_lock);
 	queue_work(di->monitor_wqueue, &di->bat_work);
+#ifndef CONFIG_RTC_INTF_ALARM_DEV
+	return ALARMTIMER_NORESTART;
+#endif
 }
 
 static int otg_handle_notification(struct notifier_block *nb,
@@ -790,8 +812,12 @@ static int __devinit batman_probe(struct platform_device *pdev)
 	if (ret)
 		pr_err("%s : Failed to create_attrs\n", __func__);
 
+#ifdef CONFIG_RTC_INTF_ALARM_DEV
 	alarm_init(&di->alarm, ANDROID_ALARM_ELAPSED_REALTIME_WAKEUP,
 			batman_battery_alarm);
+#else
+	alarm_init(&di->alarm, ALARM_BOOTTIME, batman_battery_alarm);
+#endif
 
 	di->callbacks.set_full_charge = set_full_charge;
 	di->callbacks.fuel_alert_lowbat = lowbat_fuel_alert;
