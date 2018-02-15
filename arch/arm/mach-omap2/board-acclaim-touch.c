@@ -22,7 +22,7 @@
 #include <linux/io.h>
 #include <linux/gpio.h>
 #include <plat/i2c.h>
-#include <linux/input/ft5x06.h>
+#include <linux/input/ft5x06_ts.h>
 
 #include "board-acclaim.h"
 #include "mux.h"
@@ -32,8 +32,7 @@
 #define OMAP_FT5x06_GPIO         37 /*99*/
 #define OMAP_FT5x06_RESET_GPIO   39 /*46*/
 
-
-
+#if 0
 int ft5x06_dev_init(int resource)
 {
         if (resource){
@@ -68,12 +67,25 @@ static void ft5x06_platform_resume(void)
 {
 //        omap_mux_init_signal("gpmc_ad13.gpio_37", OMAP_PIN_INPUT | OMAP_PIN_OFF_WAKEUPENABLE);
 }
+#endif
 
-static struct ft5x06_platform_data ft5x06_platform_data = {
+static inline int ft5x06_power_stub(bool on) { return 0; }
+
+static struct ft5x06_ts_platform_data ft5x06_platform_data = {
+        .irqflags = IRQF_TRIGGER_FALLING,
+        .irq_gpio = OMAP_FT5x06_GPIO,
+        .irq_gpio_flags = GPIOF_IN,
+        .reset_gpio = OMAP_FT5x06_RESET_GPIO,
+        .reset_gpio_flags = GPIOF_OUT_INIT_LOW,
+        .x_max = 600,
+        .y_max = 1024,
+        .ignore_id_check = true,
+        .power_init = ft5x06_power_stub,
+        .power_on = ft5x06_power_stub,
+#if 0 // AM: old pdata left here mostly for reference
         .maxx = 600,
         .maxy = 1024,
         .flags = 0, // FLIP_DATA_FLAG, // | REVERSE_Y_FLAG,
-        .reset_gpio = OMAP_FT5x06_RESET_GPIO,
         .use_st = FT_USE_ST,
         .use_mt = FT_USE_MT,
         .use_trk_id = FT_USE_TRACKING_ID,
@@ -81,11 +93,12 @@ static struct ft5x06_platform_data ft5x06_platform_data = {
         .use_gestures = 1,
 //      .platform_suspend = ft5x06_platform_suspend,
 //      .platform_resume = ft5x06_platform_resume,
+#endif
 };
 
 static struct i2c_board_info __initdata sdp4430_i2c_2_boardinfo[] = {
         {
-                I2C_BOARD_INFO(FT_I2C_NAME, FT5x06_I2C_SLAVEADDRESS),
+                I2C_BOARD_INFO("ft5x06_ts", FT5x06_I2C_SLAVEADDRESS),
                 .platform_data = &ft5x06_platform_data,
                 .irq = OMAP_GPIO_IRQ(OMAP_FT5x06_GPIO),
         },
