@@ -141,12 +141,19 @@ int omap_dm_timer_set_load_start(struct omap_dm_timer *timer,
 	int autoreload, unsigned int value);
 int omap_dm_timer_set_match(struct omap_dm_timer *timer, int enable,
 	unsigned int match);
+#ifdef CONFIG_OMAP_PWM_LED_TYPE_DMTIMER
+unsigned int omap_dm_timer_get_match(struct omap_dm_timer *timer);
+#endif
 int omap_dm_timer_set_pwm(struct omap_dm_timer *timer, int def_on,
 	int toggle, int trigger);
 int omap_dm_timer_set_prescaler(struct omap_dm_timer *timer, int prescaler);
 
 int omap_dm_timer_set_int_enable(struct omap_dm_timer *timer,
 	unsigned int value);
+#ifdef CONFIG_OMAP_PWM_LED_TYPE_DMTIMER
+int omap_dm_timer_set_int_disable(struct omap_dm_timer *timer,
+	unsigned int value);
+#endif
 
 unsigned int omap_dm_timer_read_status(struct omap_dm_timer *timer);
 int omap_dm_timer_write_status(struct omap_dm_timer *timer, unsigned int value);
