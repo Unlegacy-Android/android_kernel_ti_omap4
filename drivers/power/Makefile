@@ -30,7 +30,11 @@ obj-$(CONFIG_BATTERY_BQ27x00)	+= bq27x00_battery.o
 endif
 obj-$(CONFIG_BATTERY_DA9030)	+= da9030_battery.o
 obj-$(CONFIG_BATTERY_MAX17040)	+= max17040_battery.o
+ifdef CONFIG_MACH_OMAP_BN
+obj-$(CONFIG_BATTERY_MAX17042)	+= max17042_battery-bn.o
+else
 obj-$(CONFIG_BATTERY_MAX17042)	+= max17042_battery.o
+endif
 obj-$(CONFIG_BATTERY_MAX17042_MANAGER)	+= max17042_battery_manager.o
 obj-$(CONFIG_BATTERY_Z2)	+= z2_battery.o
 obj-$(CONFIG_BATTERY_S3C_ADC)	+= s3c_adc_battery.o
