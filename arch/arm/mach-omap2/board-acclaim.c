@@ -60,7 +60,7 @@
 #include "prm-regbits-44xx.h"
 #include "prm44xx.h"
 #include "board-acclaim.h"
-#include "omap4_ion.h"
+#include <mach/omap4_ion.h>
 #include "omap_ram_console.h"
 
 #ifdef CONFIG_INPUT_KXTF9
