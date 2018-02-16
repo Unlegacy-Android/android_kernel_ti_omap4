@@ -31,6 +31,7 @@
 #include <linux/regulator/fixed.h>
 
 #include <plat/vram.h>
+#include <plat/android-display.h>
 #include <plat/omap_apps_brd_id.h>
 #include <mach/board-4430-acclaim.h>
 
@@ -129,6 +130,12 @@ static struct omap_dss_device tablet_lcd_device = {
         .phy.dpi.data_lines     = 24,
         .channel                = OMAP_DSS_CHANNEL_LCD2,
         .data                   = &boxer_panel,
+	.panel          = {
+		.timings	= {
+			.x_res          = 600,
+			.y_res          = 1024,
+		},
+	},
 };
 
 static struct omap_dss_device tablet_hdmi_device = {
@@ -212,7 +219,14 @@ static struct spi_board_info sdp4430_spi_board_info[] __initdata = {
 	},
 };
 
-
+void acclaim_android_display_setup(struct omap_ion_platform_data *ion)
+{
+	omap_android_display_setup(&tablet_dss_data,
+				   NULL,
+				   NULL,
+				   &tablet_fb_pdata,
+				   ion);
+}
 
 int __init acclaim_panel_init(void)
 {
@@ -220,7 +234,7 @@ int __init acclaim_panel_init(void)
 	acclaim4430_disp_backlight_init();
 	tablet_lcd_init();
 	/* disabling HDMI since Acclaim does not provide such support */
-	omap_vram_set_sdram_vram(TABLET_FB_RAM_SIZE, 0);
+	//omap_vram_set_sdram_vram(TABLET_FB_RAM_SIZE, 0);
 	omapfb_set_platform_data(&tablet_fb_pdata);
 
 	omap_display_init(&tablet_dss_data);

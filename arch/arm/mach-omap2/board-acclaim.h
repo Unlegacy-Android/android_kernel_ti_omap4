@@ -19,6 +19,8 @@
 
 int acclaim_touch_init(void);
 void omap4_create_board_props(void);
+struct omap_ion_platform_data;
+void acclaim_android_display_setup(struct omap_ion_platform_data *ion);
 int acclaim_panel_init(void);
 int acclaim_button_init(void);
 
