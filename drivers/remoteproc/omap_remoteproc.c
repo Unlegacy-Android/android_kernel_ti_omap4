@@ -543,7 +543,11 @@ static inline int omap_rproc_start(struct rproc *rproc, u64 bootaddr)
 		/* GPT 9 & 11 (ipu); GPT 6 (dsp) are used as watchdog timers */
 		if ((!strcmp(rproc->name, "dsp") && timers[i].id == 6) ||
 		    (!strcmp(rproc->name, "ipu") &&
+#ifdef CONFIG_MACH_OMAP_ACCLAIM
+				(timers[i].id == 9 || timers[i].id == 10))) {
+#else
 				(timers[i].id == 9 || timers[i].id == 11))) {
+#endif
 #endif
 			ret = request_irq(omap_dm_timer_get_irq(timers[i].odt),
 					 omap_rproc_watchdog_isr, IRQF_DISABLED,
@@ -645,7 +649,11 @@ static inline int omap_rproc_stop(struct rproc *rproc)
 		/* GPT 9 & 11 (ipu); GPT 6 (dsp) are used as watchdog timers */
 		if ((!strcmp(rproc->name, "dsp") && timers[i].id == 6) ||
 		    (!strcmp(rproc->name, "ipu") &&
+#ifdef CONFIG_MACH_OMAP_ACCLAIM
+				(timers[i].id == 9 || timers[i].id == 10)))
+#else
 				(timers[i].id == 9 || timers[i].id == 11)))
+#endif
 #endif
 			free_irq(omap_dm_timer_get_irq(timers[i].odt), rproc);
 #endif

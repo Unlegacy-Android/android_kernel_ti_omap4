@@ -110,7 +110,11 @@ static struct omap_rproc_timers_info ipu_timers[] = {
 	{ .id = 4 },
 #ifdef CONFIG_REMOTEPROC_WATCHDOG
 	{ .id = 9 },
+#ifdef CONFIG_MACH_OMAP_ACCLAIM
+	{ .id = 10 },
+#else
 	{ .id = 11 },
+#endif
 #endif
 };
 
