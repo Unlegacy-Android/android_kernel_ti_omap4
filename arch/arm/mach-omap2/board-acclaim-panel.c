@@ -138,6 +138,7 @@ static struct omap_dss_device tablet_lcd_device = {
 	},
 };
 
+#ifdef CONFIG_OMAP4_DSS_HDMI
 static struct omap_dss_device tablet_hdmi_device = {
 	.name = "hdmi",
 	.driver_name = "hdmi_panel",
@@ -153,10 +154,13 @@ static struct omap_dss_device tablet_hdmi_device = {
 	},
 	.channel = OMAP_DSS_CHANNEL_DIGIT,
 };
+#endif
 
 static struct omap_dss_device *tablet_dss_devices[] = {
 	&tablet_lcd_device,
+#ifdef CONFIG_OMAP4_DSS_HDMI
 	&tablet_hdmi_device,
+#endif
 };
 
 static struct omap_dss_board_info tablet_dss_data = {
