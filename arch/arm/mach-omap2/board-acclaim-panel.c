@@ -132,8 +132,8 @@ static struct omap_dss_device tablet_lcd_device = {
         .data                   = &boxer_panel,
 	.panel          = {
 		.timings	= {
-			.x_res          = 600,
-			.y_res          = 1024,
+			.x_res          = 1024,
+			.y_res          = 600,
 		},
 	},
 };
