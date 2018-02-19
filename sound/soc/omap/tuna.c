@@ -89,18 +89,17 @@ static int sdp4430_modem_mcbsp_configure(struct snd_pcm_substream *substream,
 			modem_substream[substream->stream]->private_data;
 
 		if (!mcbsp_cfg) {
-			/* Set cpu DAI configuration */
-			ret = snd_soc_dai_set_fmt(modem_rtd->cpu_dai,
-					SND_SOC_DAIFMT_I2S |
-					SND_SOC_DAIFMT_NB_NF |
-					SND_SOC_DAIFMT_CBM_CFM);
-
-			if (unlikely(ret < 0)) {
-				printk(KERN_ERR "can't set Modem cpu DAI configuration\n");
-				goto exit;
-			}
-
 			if (omap4_tuna_get_type() == TUNA_TYPE_TORO) {
+				/* Set cpu DAI configuration */
+				ret = snd_soc_dai_set_fmt(modem_rtd->cpu_dai,
+						SND_SOC_DAIFMT_I2S |
+						SND_SOC_DAIFMT_NB_NF |
+						SND_SOC_DAIFMT_CBS_CFS);
+				if (unlikely(ret < 0)) {
+					printk(KERN_ERR "can't set Modem cpu DAI configuration\n");
+					goto exit;
+				}
+
 				/* McBSP2 fclk reparented to ABE_24M_FCLK */
 				ret = snd_soc_dai_set_sysclk(modem_rtd->cpu_dai,
 						OMAP_MCBSP_SYSCLK_CLKS_FCLK,
@@ -115,6 +114,17 @@ static int sdp4430_modem_mcbsp_configure(struct snd_pcm_substream *substream,
 				ret = snd_soc_dai_set_clkdiv(modem_rtd->cpu_dai, 0, 96);
 				if (unlikely(ret < 0)) {
 					printk(KERN_ERR "can't set Modem cpu DAI clkdiv\n");
+					goto exit;
+				}
+			} else {
+				/* Set cpu DAI configuration */
+				ret = snd_soc_dai_set_fmt(modem_rtd->cpu_dai,
+						SND_SOC_DAIFMT_I2S |
+						SND_SOC_DAIFMT_NB_NF |
+						SND_SOC_DAIFMT_CBM_CFM);
+
+				if (unlikely(ret < 0)) {
+					printk(KERN_ERR "can't set Modem cpu DAI configuration\n");
 					goto exit;
 				}
 			}
