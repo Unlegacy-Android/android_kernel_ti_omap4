@@ -193,17 +193,6 @@ config SND_OMAP_SOC_IGEP0020
 	help
 	  Say Y if you want to add support for Soc audio on IGEP v2 board.
 
-config SND_OMAP_SOC_ACCLAIM
-	tristate "SoC Audio support for OMAP4 Panda-AIC board with AIC3100"
-	depends on SND_OMAP_SOC
-	select SND_OMAP_SOC_MCBSP
-	select SND_SOC_TLV320AIC3100
-	select SND_OMAP_SOC_ABE
-	select SND_OMAP_SOC_ABE_DSP
-	help
-	  Say Y if you want to add support for SoC audio on the OMAP4 Acclaim
-	  board. Uses MCBSP2.
-
 config SND_OMAP_SOC_ESPRESSO
 	tristate "SoC Audio support for espresso using Wolfson WM1811 Codec"
 	depends on MACH_OMAP4_ESPRESSO
