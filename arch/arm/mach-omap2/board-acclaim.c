@@ -652,12 +652,19 @@ static struct i2c_board_info __initdata sdp4430_i2c_boardinfo[] = {
 #endif //CONFIG_BATTERY_MAX17042
 };
 
+#if 0
 static struct i2c_board_info __initdata tablet_i2c_3_boardinfo[] = {
 	{
 		I2C_BOARD_INFO("tlv320aic31xx-codec", 0x18),
 	}
 
 };
+#else
+static struct platform_device acclaim_aic3110 = {
+        .name = "tlv320aic3110-codec",
+        .id = -1,
+};
+#endif
 
 static void __init tablet_pmic_mux_init(void)
 {
@@ -714,7 +721,7 @@ static int __init omap4_i2c_init(void)
 	max17042_dev_init();
 #endif //CONFIG_BATTERY_MAX17042
 	i2c_register_board_info(1, sdp4430_i2c_boardinfo, ARRAY_SIZE(sdp4430_i2c_boardinfo));
-	i2c_register_board_info(2, tablet_i2c_3_boardinfo, ARRAY_SIZE(tablet_i2c_3_boardinfo));
+	//i2c_register_board_info(2, tablet_i2c_3_boardinfo, ARRAY_SIZE(tablet_i2c_3_boardinfo));
 	omap_register_i2c_bus(2, 400, NULL, 0);
 	omap_register_i2c_bus(3, 400, NULL, 0);
 	omap_register_i2c_bus(4, 400, NULL, 0);
@@ -946,6 +953,9 @@ static void __init omap_tablet_init(void)
 	acclaim_panel_init();
 	tablet_pmic_mux_init();
 	acclaim_button_init();
+
+	platform_device_register(&acclaim_aic3110);
+
 	omap4_register_ion();
 	board_serial_init();
 	omap4_tablet_wifi_init();
