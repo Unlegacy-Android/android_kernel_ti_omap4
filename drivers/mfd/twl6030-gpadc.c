@@ -1232,7 +1232,7 @@ static int twl6032_calibration(struct twl6030_gpadc_data *gpadc)
 				d2 = -d2;
 
 			d2 += temp;
-#ifdef CONFIG_MACH_OMAP_BN_HD
+#ifdef CONFIG_MACH_OMAP_BN
 			break;
 #endif
 		case 10:
