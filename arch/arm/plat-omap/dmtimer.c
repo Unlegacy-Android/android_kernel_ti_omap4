@@ -189,11 +189,15 @@ static inline u32 omap_dm_timer_read_reg(struct omap_dm_timer *timer, u32 reg)
 
 #ifdef CONFIG_OMAP_PWM_LED_TYPE_DMTIMER
 	if (reg != OMAP_TIMER_INT_CLR_REG)
+	{
 #endif
 		if (reg >= OMAP_TIMER_WAKEUP_EN_REG)
 			reg += timer->func_offset;
 		else if (reg >= OMAP_TIMER_STAT_REG)
 			reg += timer->intr_offset;
+#ifdef CONFIG_OMAP_PWM_LED_TYPE_DMTIMER
+	}
+#endif
 
 	if (timer->posted) {
 		omap_test_timeout(!(readl(timer->io_base +
@@ -225,11 +229,15 @@ static void omap_dm_timer_write_reg(struct omap_dm_timer *timer, u32 reg,
 
 #ifdef CONFIG_OMAP_PWM_LED_TYPE_DMTIMER
 	if (reg != OMAP_TIMER_INT_CLR_REG)
+	{
 #endif
 		if (reg >= OMAP_TIMER_WAKEUP_EN_REG)
 			reg += timer->func_offset;
 		else if (reg >= OMAP_TIMER_STAT_REG)
 			reg += timer->intr_offset;
+#ifdef CONFIG_OMAP_PWM_LED_TYPE_DMTIMER
+	}
+#endif
 
 	if (timer->posted) {
 		omap_test_timeout(!(readl(timer->io_base +
