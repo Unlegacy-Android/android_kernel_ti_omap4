@@ -125,11 +125,6 @@ static int bq2419x_wall_get_property(struct power_supply *psy,
 	return ret;
 }
 
-/* HOW-NOT: USB event comes before we register in the notifiers,
-* so we do not know that there is SDP/DCP connected on boot, so
-* we get it manually on probe. */
-int twl6030_usbotg_get_status(void);
-
 /* i2c read/write util functions */
 static int bq2419x_write_block(struct bq2419x_device_info *di, u8 *value,
 			       u8 reg, unsigned num_bytes)
@@ -2180,7 +2175,10 @@ static int __devinit bq2419x_charger_probe(struct i2c_client *client,
 						" failed %d\n", ret);
 			goto err_otg;
 		}
-		di->event = twl6030_usbotg_get_status();
+		/* HOW-NOT: USB event comes before we register in the notifiers,
+		* so we do not know that there is SDP/DCP connected on boot, so
+		* we get it manually on probe. */
+		di->event = di->otg->last_event;
 		if (di->event)
 			schedule_work(&di->ework);
 	} else {

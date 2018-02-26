@@ -176,11 +176,6 @@ MODULE_PARM_DESC(show_bulk_cache_reg_dump, "1 enable i2c cached reg dump");
 extern bool bq2419x_is_charging_done(void);
 #endif /* CHARGER_BQ2419x */
 
-/* HOW-NOT: USB event comes before we register in the notifiers,
-* so we do not know that there is SDP/DCP connected on boot, so
-* we get it manually on probe. */
-extern int twl6030_usbotg_get_status(void);
-
 static struct bq27x00_device_info *bq27x00_di;
 
 static unsigned int poll_interval = 30000;
@@ -1212,7 +1207,10 @@ static int bq27x00_battery_probe(struct i2c_client *client,
 						" failed %d\n", retval);
 			goto batt_failed_3;
 		}
-		di->current_usb_event = twl6030_usbotg_get_status();
+		/* HOW-NOT: USB event comes before we register in the notifiers,
+		* so we do not know that there is SDP/DCP connected on boot, so
+		* we get it manually on probe. */
+		di->current_usb_event = di->otg->last_event;
 	} else {
 		dev_err(di->dev, "otg_get_transceiver failed %d\n", retval);
 		goto batt_failed_3;
