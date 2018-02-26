@@ -419,7 +419,7 @@ static void max8903_usb_charger_atboot(struct max8903_charger *di)
 {
 	unsigned long irq_flags;
 
-	unsigned long detected_event = otg_get_link_status(di->otg);
+	unsigned long detected_event = di->otg->last_event;
 	ENGPRINT("%s: Charger detected at boot = %ld\n", __func__, detected_event);
 	switch (detected_event)
 	{
