@@ -118,11 +118,6 @@ struct otg_transceiver {
 	/* start or continue HNP role switch */
 	int	(*start_hnp)(struct otg_transceiver *otg);
 
-#if defined(CONFIG_MACH_OMAP_BN) && defined(CONFIG_CHARGER_MAX8903)
-	/* get current status of the link */
-	int	(*get_link_status)(struct otg_transceiver *otg);
-#endif
-
 };
 
 
@@ -258,20 +253,6 @@ otg_start_srp(struct otg_transceiver *otg)
 {
 	return otg->start_srp(otg);
 }
-
-#if defined(CONFIG_MACH_OMAP_BN) && defined(CONFIG_CHARGER_MAX8903)
-static inline int otg_get_link_status(struct otg_transceiver *otg)
-{
-	if ((otg != NULL) && (otg->get_link_status != NULL))
-	{
-		return otg->get_link_status(otg);
-	}
-	else
-	{
-		return 0;
-	}
-}
-#endif
 
 /* notifiers */
 static inline int
