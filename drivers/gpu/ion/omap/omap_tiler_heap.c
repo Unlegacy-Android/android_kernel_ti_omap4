@@ -321,8 +321,11 @@ int omap_tiler_alloc(struct ion_heap *heap,
 	buffer->size = v_size;
 	buffer->priv_virt = info;
 	sg_table = omap_tiler_map_dma(info, buffer);
-	if (IS_ERR(sg_table))
+	if (IS_ERR(sg_table)) {
+		ret = PTR_ERR(sg_table);
+		pr_err("%s: failed to map DMA buffers\n", __func__);
 		goto err;
+	}
 	buffer->sg_table = sg_table;
 	data->handle = handle;
 	data->offset = (size_t)(info->tiler_start & ~PAGE_MASK);
