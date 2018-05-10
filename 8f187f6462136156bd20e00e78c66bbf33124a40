@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "22f47064_af58583f",
+        "filename": "security/selinux/avc.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 746,
+      "author": {
+        "id": 1000003
+      },
+      "writtenOn": "2018-05-10T14:13:38Z",
+      "side": 1,
+      "message": "The one issue here is that if selinux_audit_data is NULL, but a isn\u0027t, the a pointer will be overwritten anyway. I guess that\u0027s fine on KK, and we never hit this condition w/o a being NULL on LP and higher? Hopefully, that\u0027s the case.",
+      "range": {
+        "startLine": 746,
+        "startChar": 2,
+        "endLine": 746,
+        "endChar": 31
+      },
+      "revId": "8f187f6462136156bd20e00e78c66bbf33124a40",
+      "serverId": "d5e41ece-075f-43fb-b5a6-48951f3d7b1d",
+      "unresolved": false
+    }
+  ]
+}
