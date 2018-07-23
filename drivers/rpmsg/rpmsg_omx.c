@@ -583,7 +583,7 @@ long rpmsg_omx_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 				if (!IS_ERR_OR_NULL(ion_handles[i]))
 #else
 				if (IS_ERR_OR_NULL(ion_handles[i]))
-					break;
+					continue;
 
 				if (_is_page_list(omx, ion_handles[i]))
 					data.handles[i] = (void *)
