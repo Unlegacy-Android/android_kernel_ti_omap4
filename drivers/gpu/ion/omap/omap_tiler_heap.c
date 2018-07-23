@@ -33,7 +33,7 @@
 #include "../ion_priv.h"
 
 bool use_dynamic_pages;
-#define TILER_ENABLE_NON_PAGE_ALIGNED_ALLOCATIONS  1
+#define TILER_ENABLE_NON_PAGE_ALIGNED_ALLOCATIONS  0
 
 struct omap_ion_heap {
 	struct ion_heap heap;
