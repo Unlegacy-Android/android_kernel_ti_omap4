@@ -1,6 +1,6 @@
 config OMAPLFB
         tristate "OMAPLFB support: interface between display and kernel side PowerVR graphics driver"
         depends on OMAP2_DSS && DSSCOMP
-	default y
+	default n
 	help
 	  Support for in-kernel or modular omaplfb. This is used by PVR kernel module.
