@@ -155,7 +155,7 @@ static void set_tiler1d_slot_size(struct dsscomp_platform_data *dsscomp,
 		goto done;
 
 	/*
-	 * 4 bytes per pixel, and ICS factor of 4.  The ICS factor
+	 * 4 bytes per pixel, and ICS factor of 5.  The ICS factor
 	 * is chosen somewhat arbitrarily to support the home screen layers
 	 * to be displayed by DSS.  The size of the home screen layers is
 	 * roughly (1 + 2.5 + 0.1 + 0.1) * size_of_the_screen
@@ -164,7 +164,7 @@ static void set_tiler1d_slot_size(struct dsscomp_platform_data *dsscomp,
 	 * slot size directly.
 	 */
 	data.tiler1d_slotsz =
-		PAGE_ALIGN(mem->width * mem->height * 4 * 4);
+		PAGE_ALIGN(mem->width * mem->height * 4 * 5);
 
 done:
 	if (dsscomp)
