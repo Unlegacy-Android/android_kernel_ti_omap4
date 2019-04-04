@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8dd5926c_4a70122f",
+        "filename": "arch/arm/mach-omap2/board-espresso.c",
+        "patchSetId": 7
+      },
+      "lineNbr": 276,
+      "author": {
+        "id": 1000038
+      },
+      "writtenOn": "2019-04-04T15:52:31Z",
+      "side": 1,
+      "message": "we can skip this too on CONFIG_OMAP_SKIP_BOARDDETECTION ?",
+      "revId": "873faaecbe4609e16d8a3ef63134d08756893c6b",
+      "serverId": "d5e41ece-075f-43fb-b5a6-48951f3d7b1d",
+      "unresolved": true
+    }
+  ]
+}
