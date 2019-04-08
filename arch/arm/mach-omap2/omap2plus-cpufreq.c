@@ -45,6 +45,10 @@
 #include <mach/omap4-common.h>
 #endif
 
+#ifdef CONFIG_OMAP4_VOLTAGE_LEVEL
+#include "smartreflex.h"
+#endif
+
 #include "dvfs.h"
 
 #ifdef CONFIG_SMP
@@ -487,8 +491,144 @@ static int omap_cpu_exit(struct cpufreq_policy *policy)
 	return 0;
 }
 
+#ifdef CONFIG_OMAP4_VOLTAGE_LEVEL
+/*
+ * Each opp needs to have a discrete entry in both volt data and  dependent volt
+ * data (opp4xxx_data.c). Make a new voltage entry for each opp.
+ */
+struct opp {
+        struct list_head node;
+
+        bool available;
+        unsigned long rate;
+        unsigned long u_volt;
+
+        struct device_opp *dev_opp;
+ };
+
+static ssize_t show_voltage_table(struct cpufreq_policy *policy, char *buf)
+{
+	int i = 0;
+	unsigned long volt_cur;
+	char *out = buf;
+	struct opp *opp_cur;
+
+	while(freq_table[i].frequency != CPUFREQ_TABLE_END)
+		i++;
+
+	/* For each entry in the cpufreq table, print the voltage */
+	for(i--; i >= 0; i--) {
+		if(freq_table[i].frequency != CPUFREQ_ENTRY_INVALID) {
+			/* Find the opp for this frequency */
+			rcu_read_lock();
+			opp_cur = opp_find_freq_exact(mpu_dev,
+				freq_table[i].frequency*1000, true);
+			rcu_read_unlock();
+			volt_cur = opp_cur->u_volt;
+			out += sprintf(out, "%umhz: %lu mV\n", freq_table[i].frequency/1000, volt_cur/1000);
+		}
+	}
+        return out-buf;
+}
+
+static ssize_t store_voltage_table(struct cpufreq_policy *policy,
+	const char *buf, size_t count)
+{
+	int i = 0;
+	unsigned long volt_cur, volt_old;
+	int ret;
+	char size_cur[16];
+	struct opp *opp_cur;
+	struct voltagedomain *mpu_voltdm;
+	struct omap_volt_data *vdata;
+	unsigned int policymin, policymax;
+
+	mpu_voltdm = voltdm_lookup("mpu");
+
+	while(freq_table[i].frequency != CPUFREQ_TABLE_END)
+		i++;
+
+	policymin = policy->min;
+	policymax = policy->max;
+
+    for(i--; i >= 0; i--) {
+        if(freq_table[i].frequency != CPUFREQ_ENTRY_INVALID) {
+            ret = sscanf(buf, "%lu", &volt_cur);
+            if(ret != 1) {
+                return -EINVAL;
+            }
+            policy->cur = policy->max = policy->min = freq_table[i].frequency;
+            ret = omap_device_scale(mpu_dev, mpu_dev, freq_table[i].frequency);
+
+            /* Alter voltage. First do it in opp */
+            rcu_read_lock();
+            opp_cur = opp_find_freq_exact(mpu_dev, freq_table[i].frequency*1000, true);
+            opp_cur->u_volt = volt_cur*1000;
+            rcu_read_unlock();
+
+            /* Save old voltage */
+            volt_old = mpu_voltdm->vdd->volt_data[i].volt_nominal;
+            /* Change main and dependent voltage tables */
+            mpu_voltdm->vdd-> volt_data[i].volt_nominal = volt_cur*1000;
+            mpu_voltdm->vdd->dep_vdd_info-> dep_table[i].main_vdd_volt = volt_cur*1000;
+
+			if (mpu_voltdm->vdd->dep_vdd_info-> dep_table[i].dep_vdd_volt > volt_cur*1000) {
+				if (volt_cur < 1127) {
+					if (volt_cur < 962)
+					   mpu_voltdm->vdd->dep_vdd_info-> dep_table[i].dep_vdd_volt = 650000;
+					else
+					   mpu_voltdm->vdd->dep_vdd_info-> dep_table[i].dep_vdd_volt = 962000;
+				} else mpu_voltdm->vdd->dep_vdd_info->
+						dep_table[i].dep_vdd_volt = 1127000;
+			}
+
+			ret = sscanf(buf, "%s", size_cur);
+			buf += (strlen(size_cur)+1);
+
+#ifdef CONFIG_OMAP4430_CPU_HAS_MPU_1_2GHZ
+            if (freq_table[i].frequency <= 1216000 &&
+#else
+            if (freq_table[i].frequency <= 1008000 &&
+#endif
+            freq_table[i].frequency >= policymin) {
+                vdata = omap_voltage_get_curr_vdata(mpu_voltdm);
+                    if (!vdata) {
+                        pr_err("%s: unable to find current voltage for vdd_%s\n", __func__, mpu_voltdm->name);
+                    } else {
+                    if (volt_old > mpu_voltdm->curr_volt->volt_nominal) {
+                        omap_sr_disable(mpu_voltdm);
+                        ret = omap_device_scale(mpu_dev, mpu_dev, freq_table[i].frequency);
+                        omap_voltage_calib_reset(mpu_voltdm);
+                        voltdm_reset(mpu_voltdm);
+                        omap_sr_enable(mpu_voltdm, vdata);
+                        pr_info("calibration reset for %s at %d.\n",
+                        mpu_voltdm->name, policy->cur);
+                    } else
+                        pr_info("nominal voltage too high, bailing!\n");
+				}
+			}
+		}
+		else {
+			pr_err("%s: frequency invalid for %u\n", __func__, freq_table[i].frequency);
+		}
+	}
+	policy->min = policymin;
+	policy->max = policymax;
+	return count;
+}
+
+static struct freq_attr omap_voltage_table = {
+	.attr = {.name = "UV_mV_table", .mode=0664,},
+	.show = show_voltage_table,
+	.store = store_voltage_table,
+};
+#endif	/* CONFIG_OMAP4_VOLTAGE_LEVEL */
+
 static struct freq_attr *omap_cpufreq_attr[] = {
 	&cpufreq_freq_attr_scaling_available_freqs,
+#ifdef CONFIG_OMAP4_VOLTAGE_LEVEL
+	&omap_voltage_table,
+#endif
 	NULL,
 };
 

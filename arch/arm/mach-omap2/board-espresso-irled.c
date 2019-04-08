@@ -166,8 +166,24 @@ static ssize_t clock_store(struct device *dev, struct device_attribute *attr,
 {
 	unsigned int _data;
 	if (sscanf(buf, "%u", &_data) == 1)
-		if (_data == 300000 || _data == 600000 || _data == 800000
-		    || _data == 1008000)
+		if (_data == 300000
+		    || _data == 600000
+#ifndef CONFIG_OMAP4430_CPU_HAS_MPU_1_2GHZ
+		    || _data == 800000
+		    || _data 1008000
+#else
+#ifndef CONFIG_OMAP4430_CPU_HAS_MPU_1_4GHZ
+		    || _data == 800000
+		    || _data == 1008000
+		    || _data == 1216000
+#else
+		    || _data == 912000
+		    || _data == 1216000
+		    || _data == 1360000
+		    || _data == 1472000
+#endif
+#endif
+		)
 			ir_data.cpu_frequency = _data;
 
 	return size;
