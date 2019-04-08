@@ -32,6 +32,11 @@
 
 #include <trace/events/power.h>
 
+#ifdef CONFIG_OMAP4430_CPU_HAS_MPU_1_4GHZ
+/* Limited boot frequency */
+#define LimitedBootSpeed 1216000
+#endif
+
 /**
  * The "cpufreq driver" - the arch- or hardware-dependent low
  * level driver of CPUFreq support, and its spinlock. This lock
@@ -941,6 +946,11 @@ static int cpufreq_add_dev(struct sys_device *sys_dev)
 		pr_debug("initialization failed\n");
 		goto err_unlock_policy;
 	}
+
+#ifdef CONFIG_OMAP4430_CPU_HAS_MPU_1_4GHZ
+	policy->max = LimitedBootSpeed;
+#endif
+
 	policy->user_policy.min = policy->min;
 	policy->user_policy.max = policy->max;
 

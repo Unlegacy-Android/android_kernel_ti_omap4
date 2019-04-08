@@ -532,8 +532,43 @@ config OMAP_RFKILL_STE_MODEM
 	  of the modem as well as necessary dynamic pin muxing of AP/CP
 	  interfaces (platform data dependant)
 
+config OMAP4_VOLTAGE_LEVEL
+	bool "Enables OMAP4 voltage level changes"
+    depends on ARCH_OMAP4
+	help
+	   This config allows you to change the voltage
+	   used for a given frequency
+
+config OMAP4430_CPU_HAS_MPU_1_2GHZ
+	bool "Up to 1216 MHz CPU frequency for OMAP4430 devices"
+	depends on ARCH_OMAP4
+	help
+	  Enables 1216 MHz CPU frequency for OMAP4430 devices
+
+config OMAP4430_CPU_HAS_MPU_1_4GHZ
+	bool "Up to 1460 MHz CPU frequency for OMAP4430 devices"
+	depends on ARCH_OMAP4
+	select OMAP4430_CPU_HAS_MPU_1_2GHZ
+	help
+	  Enables 1360, 1420 and 1460 MHz CPU frequencies for OMAP4430 devices
+
+config OMAP4430_GPU_HAS_GPU_384MHZ
+	bool "Up to 384 MHz frequency for OMAP4430 GPU"
+	depends on ARCH_OMAP4
+    select OMAP4430_CPU_HAS_MPU_1_2GHZ
+	help
+	  Enables the 384 MHz GPU frequency for OMAP4430 devices.
+
+config OMAP4430_GPU_HAS_GPU_512MHZ
+	bool "Up to 512 MHz frequency for OMAP4430 GPU"
+	depends on ARCH_OMAP4
+    select OMAP4430_GPU_HAS_GPU_384MHZ
+    select OMAP4430_CPU_HAS_MPU_1_4GHZ
+	help
+	  Enables the 512 MHz GPU frequency for OMAP4430 devices.
+
 config OMAP4460_GPU_OVERCLOCK
-	bool "OMAP4460 GPU overclock"
+	bool "Up to 512 MHz frequency for OMAP4460 GPU"
 	depends on ARCH_OMAP4
 	help
 	  Enables the 512 MHz GPU frequency for OMAP4460 devices.
