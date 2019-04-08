@@ -85,7 +85,7 @@ config OMAP_SMARTREFLEX
 
 config OMAP_SMARTREFLEX_CLASS3
 	bool "Class 3 mode of Smartreflex Implementation"
-	depends on OMAP_SMARTREFLEX && TWL4030_CORE
+	depends on OMAP_SMARTREFLEX && TWL4030_CORE && !OMAP4430_CPU_HAS_MPU_1_2GHZ
 	help
 	  Say Y to enable Class 3 implementation of Smartreflex
 
@@ -94,7 +94,7 @@ config OMAP_SMARTREFLEX_CLASS3
 
 config OMAP_SMARTREFLEX_CLASS1P5
 	bool "Class 1.5 mode of Smartreflex Implementation"
-	depends on OMAP_SMARTREFLEX
+	depends on OMAP_SMARTREFLEX && !OMAP4430_CPU_HAS_MPU_1_2GHZ
 	help
 	  Say Y to enable Class 1.5 implementation of Smartreflex.
 
