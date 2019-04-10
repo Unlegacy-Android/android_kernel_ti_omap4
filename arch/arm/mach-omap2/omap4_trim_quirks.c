@@ -30,11 +30,7 @@
 #define OMAP4_PROD_ID_I684_MASK		0x000C0000
 
 static bool bgap_trim_sw_overide;
-#if defined(CONFIG_OMAP4430_CPU_OVERCLOCK) || defined(CONFIG_OMAP4430_GPU_OVERCLOCK)
-static bool dpll_trim_override = true;
-#else
 static bool dpll_trim_override;
-#endif
 static bool ddr_io_trim_override;
 
 /**
@@ -81,13 +77,13 @@ int omap4_ldo_trim_configure(void)
 			OMAP4_CTRL_MODULE_PAD_CORE_CONTROL_EFUSE_2);
 	}
 
-	/* Required for DPLL_MPU to lock at 2.4 GHz */
-	if (dpll_trim_override)
 #if defined(CONFIG_OMAP4430_CPU_OVERCLOCK) || defined(CONFIG_OMAP4430_GPU_OVERCLOCK)
 		omap_ctrl_writel(0x2b, OMAP4_CTRL_MODULE_CORE_DPLL_NWELL_TRIM_0);
-#else
-		omap_ctrl_writel(0x29, OMAP4_CTRL_MODULE_CORE_DPLL_NWELL_TRIM_0);
 #endif
+
+	/* Required for DPLL_MPU to lock at 2.4 GHz */
+	if (dpll_trim_override)
+		omap_ctrl_writel(0x29, OMAP4_CTRL_MODULE_CORE_DPLL_NWELL_TRIM_0);
 
 	return 0;
 }
