@@ -616,7 +616,12 @@ static ssize_t store_uv_mv_table(struct cpufreq_policy *policy,
 			buf += (strlen(size_cur)+1);
 
 			// imoseyon - force smartreflex to recalibrate based on new voltages
+#ifdef CONFIG_OMAP4430_CPU_OVERCLOCK
 			if (freq_table[i].frequency <= 1200000 &&
+#else
+			if (freq_table[i].frequency <= 1008000 &&
+#endif
+
 				freq_table[i].frequency >= policymin) {
 				vdata = omap_voltage_get_curr_vdata(mpu_voltdm);
 				if (!vdata) {
