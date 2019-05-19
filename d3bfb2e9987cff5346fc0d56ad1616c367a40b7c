@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "17969b48_3afdb6da",
+        "filename": "arch/arm/mach-omap2/board-espresso.c",
+        "patchSetId": 11
+      },
+      "lineNbr": 228,
+      "author": {
+        "id": 1000002
+      },
+      "writtenOn": "2019-05-19T11:13:08Z",
+      "side": 1,
+      "message": "I think you need to move this to line 214 (below sec_vendor); otherwise, you may hit build errors.",
+      "range": {
+        "startLine": 228,
+        "startChar": 1,
+        "endLine": 228,
+        "endChar": 6
+      },
+      "revId": "d3bfb2e9987cff5346fc0d56ad1616c367a40b7c",
+      "serverId": "d5e41ece-075f-43fb-b5a6-48951f3d7b1d",
+      "unresolved": true
+    }
+  ]
+}
