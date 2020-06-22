@@ -190,31 +190,16 @@ static void smb347_set_charging_state(struct smb_charger_callbacks *ptr,
 		/* Init smb347 charger */
 		smb347_charger_init(chg);
 
-		switch (cable_status) {
-		case CABLE_TYPE_AC:
-			/* Input current limit : DCIN 1800mA, USBIN HC 1800mA */
-			smb347_i2c_write(chg->client,
-				SMB347_INPUT_CURRENTLIMIT, 0x66);
+		/* Input current limit : DCIN 1800mA, USBIN HC 1800mA */
+		smb347_i2c_write(chg->client,
+			SMB347_INPUT_CURRENTLIMIT, 0x66);
 
-			/* CommandB : High-current mode */
-			smb347_i2c_write(chg->client, SMB347_COMMAND_B, 0x03);
+		/* CommandB : High-current mode */
+		smb347_i2c_write(chg->client, SMB347_COMMAND_B, 0x03);
 
-			dev_info(&chg->client->dev,
-				"charging current limit set to 1.8A\n");
-			break;
-		case CABLE_TYPE_USB:
-			/* CommandB : USB5 */
-			smb347_i2c_write(chg->client, SMB347_COMMAND_B, 0x02);
-			dev_info(&chg->client->dev,
-				"charging current limit set to 0.5A\n");
-			break;
-		default:
-			/* CommandB : USB1 */
-			smb347_i2c_write(chg->client, SMB347_COMMAND_B, 0x00);
-			dev_info(&chg->client->dev,
-				"charging current limit set to 0.1A\n");
-			break;
-		}
+		dev_info(&chg->client->dev,
+			"charging current limit set to 1.8A for all power supplies, best greets, html6405\n");
+
 	}
 }
 
