@@ -103,6 +103,9 @@ static void acc_dock_check(struct acc_con_info *acc, bool connected)
 	char *stat_ptr;
 	char *envp[3];
 	int dock_state;
+	pr_info("docking station attached or detached\n");
+	pr_info("connected %d\n", connected);
+	pr_info("acc->current_dock %d\n", acc->current_dock);
 
 	if (connected) {
 		stat_ptr = "STATE=online";
@@ -113,26 +116,27 @@ static void acc_dock_check(struct acc_con_info *acc, bool connected)
 				acc->current_dock = DOCK_KEYBOARD;
 				_detected(acc, P30_KEYBOARDDOCK, 1);
 			} else {
-				env_ptr = "DOCK=deskdock";
-				acc->current_dock = DOCK_DESK;
-				_detected(acc, P30_DESKDOCK, 1);
+				env_ptr = "DOCK=keyboard";
+				acc->current_dock = DOCK_KEYBOARD;
+				_detected(acc, P30_KEYBOARDDOCK, 1);
 			}
 		} else {
-			env_ptr = "DOCK=deskdock";
-			dock_state = DOCK_DESK;
-			_detected(acc, P30_DESKDOCK, connected);
+			env_ptr = "DOCK=none";
+			dock_state = DOCK_NONE;
+			_detected(acc, P30_KEYBOARDDOCK, connected);
 		}
 	} else {
 		if (acc->pdata->dock_keyboard_cb)
-			acc->pdata->dock_keyboard_cb(connected);
+			dock_state = acc->pdata->dock_keyboard_cb(connected);
 		stat_ptr = "STATE=offline";
-
+		pr_info("connected zero path\n");
 		if (acc->current_dock == DOCK_KEYBOARD)
 			_detected(acc, P30_KEYBOARDDOCK, 0);
 		else
 			_detected(acc, P30_DESKDOCK, 0);
 	}
 
+	pr_info("acc->current_dock == %d after the dock_check\n", acc->current_dock);
 	envp[0] = env_ptr;
 	envp[1] = stat_ptr;
 	envp[2] = NULL;
@@ -228,13 +232,20 @@ static void acc_notified(struct acc_con_info *acc, s16 acc_adc)
 			env_ptr = "ACCESSORY=TV";
 			acc->current_accessory = ACCESSORY_TVOUT;
 			_detected(acc, P30_ANAL_TV_OUT, 1);
+		} else if ((1100 < acc_adc) && (1400 > acc_adc)) {
+			/* 3 pole earjack 1220 */
+			env_ptr = "ACCESSORY=lineout";
+			acc->current_accessory = ACCESSORY_LINEOUT;
+			_detected(acc, P30_EARJACK_WITH_DOCK, 1);
+#if 0
 		} else if ((1590 < acc_adc) && (acc_adc < 1840)) {
 			/* Car Mount (charge 5V/2A) */
 			env_ptr = "ACCESSORY=carmount";
 			acc->current_accessory = ACCESSORY_CARMOUNT;
 			_detected(acc, P30_CARDOCK, 1);
-		} else if ((1100 < acc_adc) && (acc_adc < 1360)) {
-			/* 3-Pole Ear-Jack with Deskdock*/
+#endif
+		} else if ((1600 < acc_adc) && (2350 > acc_adc)) {
+			/* 4-Pole Ear-Jack with Deskdock*/
 			env_ptr = "ACCESSORY=lineout";
 			acc->current_accessory = ACCESSORY_LINEOUT;
 			_detected(acc, P30_EARJACK_WITH_DOCK, 1);

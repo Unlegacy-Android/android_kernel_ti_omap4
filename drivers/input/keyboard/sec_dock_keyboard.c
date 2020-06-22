@@ -40,6 +40,8 @@
 #define MASK_PRESS	0x80	/* press mask */
 #define MASK_SCAN_CODE	0x7F	/* scan code mask */
 
+static int is_registered = 0;
+
 static int __devinit dock_keyboard_probe(struct platform_device *pdev);
 static int __devexit dock_keyboard_remove(struct platform_device *pdev);
 static int dock_keyboard_serio_connect(struct serio *serio,
@@ -354,14 +356,14 @@ static void key_event_work(struct work_struct *work)
 				data->kl = US_KEYLAYOUT;
 				dock_keycodes[49].keycode = KEY_BACKSLASH;
 				data->handshaking = true;
-				pr_info("kbd: US keyboard is attacted.\n");
+				pr_info("kbd: US keyboard is attached.\n");
 				break;
 
 			case UK_KEYBOARD:
 				data->kl = UK_KEYLAYOUT;
 				dock_keycodes[49].keycode = KEY_NUMERIC_POUND;
 				data->handshaking = true;
-				pr_info("kbd: UK keyboard is attacted.\n");
+				pr_info("kbd: UK keyboard is attached.\n");
 				break;
 
 			default:
@@ -410,11 +412,19 @@ static int dock_keyboard_cb(struct input_dev *dev, bool connected)
 		/* for wakeup case */
 		cancel_delayed_work_sync(&data->dwork_off);
 		if (data->handshaking) {
+			/* for sure 30pin connector is fully connected */
+			msleep(400);
 			pr_info("kbd: keyboard is reattached\n");
 			data->dockconnected = true;
+
+		} else {
+			pr_info("kbd: keyboard is not handshaking\n");
 		}
 
+		pr_info("kbd: dock_connected  %d\n", data->dockconnected);
+
 		if (!data->dockconnected) {
+			pr_info("keyboard seems to be connected, lets wait.\n");
 			/* for sure 30pin connector is fully connected */
 			msleep(400);
 
@@ -435,22 +445,33 @@ static int dock_keyboard_cb(struct input_dev *dev, bool connected)
 					break;
 				}
 
-				/* the accessory is dettached. */
+				/* the accessory is detached. */
 				if (gpio_get_value(data->dock_irq_gpio)) {
 					data->dockconnected = false;
+					pr_info("accessory detached..\n");
 					break;
 				}
 			}
+		} else {
+			pr_info("keyboard doesn't seem to be the first time connected.\n");
 		}
 	}
 
-	if (data->dockconnected) {
+	if ((data->dockconnected) && (is_registered == 0)) {
+
 		ret = input_register_device(data->input_dev);
-		if (unlikely(ret))
+		if (unlikely(ret)) {
 			pr_err("kbd: failed to register input device.\n");
-		return 1;
-	} else {
-		input_unregister_device(data->input_dev);
+			return 0;
+		} else {
+			pr_info("Input device registered, return 1.\n");
+			is_registered = 1;
+			return 1;
+		}
+
+	} else if (!(data->dockconnected) && (is_registered == 1)) {
+		pr_info("Input device unregistered, return 0.\n");
+
 		cancel_delayed_work_sync(&data->dwork_off);
 		schedule_delayed_work(&data->dwork_off, HZ * 2 / 3);
 		return 0;
@@ -485,10 +506,10 @@ static int __devinit dock_keyboard_probe(struct platform_device *pdev)
 	int i;
 	int ret;
 
-	pr_debug("kbd: probe\n");
+	pr_info("kbd: probe\n");
 
 	if (!pdata) {
-		pr_err("kbd: invalid platform_data.\n");
+		pr_info("kbd: invalid platform_data.\n");
 		return -ENODEV;
 	}
 
@@ -506,7 +527,7 @@ static int __devinit dock_keyboard_probe(struct platform_device *pdev)
 
 	input = input_allocate_device();
 	if (unlikely(IS_ERR(input))) {
-		pr_err("kbd: failed to allocate input device.\n");
+		pr_info("kbd: failed to allocate input device.\n");
 		ret = -ENOMEM;
 		goto err_alloc_input_dev;
 	}
@@ -559,7 +580,7 @@ static int __devinit dock_keyboard_probe(struct platform_device *pdev)
 
 	ret = serio_register_driver(&sec_dock_kbd_driver.serio_drv);
 	if (unlikely(ret)) {
-		pr_err("kbd: failed to register serio driver!\n");
+		pr_info("kbd: failed to register serio driver!\n");
 		goto err_reg_serio_drv;
 	}
 
@@ -584,7 +605,7 @@ static int __devexit dock_keyboard_remove(struct platform_device *pdev)
 	struct dock_keyboard_platform_data *pdata = pdev->dev.platform_data;
 	struct dock_keyboard_data *data = platform_get_drvdata(pdev);
 
-	pr_debug("kbd: remove\n");
+	pr_info("kbd: remove\n");
 
 	serio_unregister_driver(&sec_dock_kbd_driver.serio_drv);
 
@@ -607,7 +628,7 @@ static int dock_keyboard_serio_connect(struct serio *serio,
 	int ret;
 	struct dock_keyboard_data *data;
 
-	pr_debug("kbd: serio_connect\n");
+	pr_info("kbd: serio_connect\n");
 
 	data = sec_dock_kbd_driver.private_data;
 	data->serio = serio;
@@ -616,12 +637,12 @@ static int dock_keyboard_serio_connect(struct serio *serio,
 	ret = serio_open(serio, drv);
 
 	if (unlikely(ret)) {
-		pr_err("kbd: failed to open serio!\n");
+		pr_info("kbd: failed to open serio!\n");
 		goto err_open_serio;
 	}
 
 	if (unlikely(!sec_dock_kbd_driver.private_data)) {
-		pr_err("kbd: failed to get platform device data!\n");
+		pr_info("kbd: failed to get platform device data!\n");
 		ret = -ENODEV;
 		goto err_plat_dev;
 	}
@@ -638,7 +659,7 @@ static void dock_keyboard_serio_disconnect(struct serio *serio)
 {
 	struct dock_keyboard_data *data = serio_get_drvdata(serio);
 
-	pr_debug("kbd: serio_disconnect\n");
+	pr_info("kbd: serio_disconnect\n");
 
 	data->serio = NULL;
 	serio_close(serio);
