@@ -116,6 +116,8 @@ config PARIDE
 
 source "drivers/block/paride/Kconfig"
 
+source "drivers/block/zram/Kconfig"
+
 source "drivers/block/mtip32xx/Kconfig"
 
 config BLK_CPQ_DA
